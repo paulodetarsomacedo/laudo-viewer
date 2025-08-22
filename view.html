@@ -4,17 +4,31 @@
     <meta charset="UTF-8">
     <title>Laudo Interativo</title>
     <style>
-        /* Seus estilos CSS permanecem os mesmos */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; display: flex; height: 100vh; background-color: #2c3e50; color: #ecf0f1; }
         #image-container { flex: 3; display: flex; justify-content: center; align-items: center; padding: 1rem; overflow: hidden; background-color: #232323; }
         #canvas-report { max-width: 100%; max-height: 100%; object-fit: contain; }
         #findings-container { flex: 1.2; padding: 1rem; background-color: #34495e; overflow-y: auto; font-size: 14px; border-left: 2px solid #2c3e50; display: flex; flex-direction: column; }
         #findings-container h1 { color: #3498db; border-bottom: 1px solid #3498db; padding-bottom: 10px; margin-top: 0; }
         #findings-container p { cursor: pointer; padding: 8px; border-radius: 4px; margin: 5px 0; transition: all 0.2s ease-in-out; border: 1px solid transparent; }
-        #toggle-all-btn { background-color: #3498db; color: white; border: none; border-radius: 5px; padding: 10px 15px; margin: 0 0 15px 0; cursor: pointer; width: 100%; font-size: 14px; font-weight: bold; transition: background-color 0.2s; flex-shrink: 0; }
+        
+        #toggle-all-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            margin: 0 0 15px 0;
+            cursor: pointer;
+            width: 100%;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
         #toggle-all-btn:hover { background-color: #2980b9; }
         #toggle-all-btn.active { background-color: #e74c3c; }
         #findings-list { flex-grow: 1; overflow-y: auto; }
+
     </style>
 </head>
 <body>
@@ -25,32 +39,237 @@
         document.addEventListener('DOMContentLoaded', () => {
             let DATA;
 
-            // ▼▼▼ BLOCO DE LEITURA DE DADOS CORRIGIDO E MAIS ROBUSTO ▼▼▼
             try {
                 const encodedData = window.location.hash.substring(1);
                 if (!encodedData) {
                     throw new Error("Nenhum dado de laudo encontrado na URL.");
                 }
-
                 const decodedJsonString = decodeURIComponent(escape(window.atob(encodedData)));
-                
-                // Transforma a string JSON de volta em um objeto JavaScript
                 DATA = JSON.parse(decodedJsonString);
-
             } catch (e) {
                 console.error("Erro ao carregar dados do laudo:", e);
-                document.body.innerHTML = `<h1>Erro ao carregar o laudo.</h1><p>${e.message}</p>`;
+                document.body.innerHTML = `<h1>Erro ao carregar o laudo.</h1><p>O link pode estar corrompido ou os dados são inválidos.</p><p style="font-size:12px; color: #ccc;">Detalhe do erro: ${e.message}</p>`;
                 return;
             }
             
-            // O resto do script agora usa o objeto DATA, que está garantido de ser correto
             const canvas = document.getElementById('canvas-report');
             const ctx = canvas.getContext('2d');
             const findingsContainer = document.getElementById('findings-container');
             
-            // ... (o restante do seu script do view.html, que já estava correto, continua aqui)
-            // ... (desde 'let hoverId = null, ...' até o final)
+            let hoverId = null, pinnedId = null;
+            let hoverColor = null, pinnedColor = null;
+            let hoverText = null, pinnedText = null;
+            let showAllMode = false;
 
+            findingsContainer.innerHTML = `
+                <h1>Achados Radiográficos</h1>
+                <button id="toggle-all-btn">Visualizar todos os achados na Imagem</button>
+                <div id="findings-list">${DATA.findingsHtml}</div>
+            `;
+            const toggleAllBtn = document.getElementById('toggle-all-btn');
+
+            const image = new Image();
+            image.onload = () => {
+                canvas.width = image.naturalWidth;
+                canvas.height = image.naturalHeight;
+                redrawAll();
+                findingsContainer.querySelectorAll('p[data-annotation-id]').forEach(p => p.classList.add('finding-item'));
+            };
+            image.src = DATA.image;
+
+            function findAnnotationById(id) { return id ? DATA.annotations.find(a => a.id === id) : null; }
+            function convertImgToCanvas(p) { return { x: p.x * canvas.width, y: p.y * canvas.height }; }
+            
+            function redrawAll() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(image, 0, 0);
+
+                if (showAllMode) {
+                    DATA.annotations.forEach(anno => {
+                        const isHovered = anno.id === hoverId;
+                        const findingEl = findingsContainer.querySelector(`[data-annotation-id="${anno.id}"]`);
+                        const color = findingEl ? findingEl.dataset.highlightColor : '#FFFFFF';
+                        drawAnnotation(anno, color, isHovered);
+                    });
+                } else {
+                    const annotation = findAnnotationById(pinnedId || hoverId);
+                    const color = pinnedColor || hoverColor;
+                    const text = pinnedText || hoverText;
+                    if (annotation) {
+                        drawAnnotation(annotation, color, true);
+                        if (text) {
+                            drawAnnotationText(text, annotation);
+                        }
+                    }
+                }
+            }
+            
+            toggleAllBtn.addEventListener('click', () => {
+                showAllMode = !showAllMode;
+                toggleAllBtn.classList.toggle('active', showAllMode);
+                toggleAllBtn.textContent = showAllMode ? 'Ocultar todos os achados' : 'Visualizar todos os achados na Imagem';
+                if (showAllMode) {
+                    pinnedId = null; pinnedColor = null; pinnedText = null;
+                    findingsContainer.querySelectorAll('.finding-item').forEach(el => {
+                        el.style.backgroundColor = '';
+                        el.style.borderColor = 'transparent';
+                        el.style.color = '';
+                    });
+                }
+                redrawAll();
+            });
+
+            findingsContainer.addEventListener('mouseover', e => {
+                const target = e.target.closest('.finding-item');
+                if (target) {
+                    hoverId = target.dataset.annotationId;
+                    if (!showAllMode) {
+                        hoverColor = target.dataset.highlightColor;
+                        hoverText = target.innerHTML;
+                    }
+                    redrawAll();
+                }
+            });
+
+            findingsContainer.addEventListener('mouseout', () => {
+                hoverId = null; 
+                if (!showAllMode) {
+                    hoverColor = null;
+                    hoverText = null;
+                }
+                redrawAll();
+            });
+
+            findingsContainer.addEventListener('click', e => {
+                const target = e.target.closest('.finding-item');
+                if (target) {
+                    if (showAllMode) {
+                        showAllMode = false;
+                        toggleAllBtn.classList.remove('active');
+                        toggleAllBtn.textContent = 'Visualizar todos os achados na Imagem';
+                    }
+                    const clickedId = target.dataset.annotationId;
+                    const clickedColor = target.dataset.highlightColor;
+                    const clickedText = target.innerHTML;
+                    findingsContainer.querySelectorAll('.finding-item').forEach(el => {
+                        el.style.backgroundColor = '';
+                        el.style.borderColor = 'transparent';
+                        el.style.color = '';
+                    });
+                    if (pinnedId === clickedId) {
+                        pinnedId = null; pinnedColor = null; pinnedText = null;
+                    } else {
+                        pinnedId = clickedId;
+                        pinnedColor = clickedColor;
+                        pinnedText = clickedText;
+                        target.style.backgroundColor = clickedColor;
+                        target.style.borderColor = '#fff';
+                        target.style.color = '#000';
+                    }
+                    redrawAll();
+                }
+            });
+            
+            function getAnnotationAnchorPoint(anno) {
+                if (!anno) return { x: 0, y: 0 };
+                if (anno.start && anno.end) {
+                    return convertImgToCanvas({ x: (anno.start.x + anno.end.x) / 2, y: (anno.start.y + anno.end.y) / 2 });
+                }
+                if (anno.points && anno.fillColor) {
+                    let maxY = 0, sumX = 0;
+                    anno.points.forEach(p => { if (p.y > maxY) maxY = p.y; sumX += p.x; });
+                    return convertImgToCanvas({ x: sumX / anno.points.length, y: maxY });
+                }
+                if (anno.points) {
+                    return convertImgToCanvas(anno.points[anno.points.length - 1]);
+                }
+                if (anno.x !== undefined && anno.y !== undefined) {
+                    return convertImgToCanvas({ x: anno.x, y: anno.y });
+                }
+                return { x: 10, y: 10 };
+            }
+
+            function drawAnnotationText(htmlText, anno) {
+                const tempEl = document.createElement('div');
+                tempEl.innerHTML = htmlText;
+                const cleanText = (tempEl.textContent || "").replace(/🔗|✅/g, '').trim();
+                const anchor = getAnnotationAnchorPoint(anno);
+                const padding = 8;
+                const fontSize = 16;
+                ctx.save();
+                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.textBaseline = 'top';
+                ctx.textAlign = 'left';
+                const textMetrics = ctx.measureText(cleanText);
+                const boxWidth = textMetrics.width + padding * 2;
+                const boxHeight = fontSize + padding * 2;
+                let boxX = anchor.x + 15;
+                let boxY = anchor.y + 15;
+                if (boxX + boxWidth > canvas.width) boxX = anchor.x - boxWidth - 15;
+                if (boxY + boxHeight > canvas.height) boxY = anchor.y - boxHeight - 15;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.strokeStyle = pinnedColor || hoverColor || '#FFFFFF';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(boxX, boxY, boxWidth, boxHeight, [6]);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillText(cleanText, boxX + padding, boxY + padding);
+                ctx.restore();
+            }
+
+            function drawAnnotation(anno, color, isHighlighted = false) {
+                const highlightColor = color || '#00FFFF';
+                ctx.save();
+                ctx.strokeStyle = highlightColor;
+                ctx.fillStyle = highlightColor + 'B3';
+                ctx.lineWidth = (anno.thickness || 2) + (isHighlighted ? 2 : 0);
+                if (isHighlighted) {
+                    ctx.shadowColor = highlightColor;
+                    ctx.shadowBlur = 20;
+                }
+                if (anno.points && anno.fillColor) {
+                    ctx.beginPath();
+                    const startPoint = convertImgToCanvas(anno.points[0]);
+                    ctx.moveTo(startPoint.x, startPoint.y);
+                    for (let i = 1; i < anno.points.length; i++) { ctx.lineTo(convertImgToCanvas(anno.points[i]).x, convertImgToCanvas(anno.points[i]).y); }
+                    ctx.closePath();
+                    ctx.stroke();
+                    ctx.fill();
+                } else if (anno.points) {
+                    ctx.beginPath();
+                    const startPoint = convertImgToCanvas(anno.points[0]);
+                    ctx.moveTo(startPoint.x, startPoint.y);
+                    for (let i = 1; i < anno.points.length; i++) { ctx.lineTo(convertImgToCanvas(anno.points[i]).x, convertImgToCanvas(anno.points[i]).y); }
+                    ctx.stroke();
+                } else if (anno.start && anno.end) {
+                    const p1 = convertImgToCanvas(anno.start); const p2 = convertImgToCanvas(anno.end);
+                    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                    ctx.font = '16px Arial'; ctx.textAlign = 'center'; ctx.fillStyle = highlightColor;
+                    ctx.fillText(anno.text, (p1.x + p2.x) / 2, (p1.y + p2.y) / 2 - 8);
+                } else if (anno.type && anno.size) {
+                    const center = convertImgToCanvas({x: anno.x, y: anno.y});
+                    const size = anno.size * canvas.width;
+                    ctx.translate(center.x, center.y);
+                    ctx.rotate(anno.rotation);
+                    ctx.scale(anno.scale, anno.scale);
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(-size / 2, 0);
+                    ctx.lineTo(size / 2, 0);
+                    ctx.lineTo(size / 2 - 10, -5);
+                    ctx.moveTo(size / 2, 0);
+                    ctx.lineTo(size / 2 - 10, 5);
+                    ctx.stroke();
+                } else if (anno.text && anno.font) {
+                     const coords = convertImgToCanvas({ x: anno.x, y: anno.y });
+                    ctx.font = anno.font; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillStyle = highlightColor;
+                    ctx.fillText(anno.text, coords.x, coords.y);
+                }
+                ctx.restore();
+            }
         });
     </script>
 </body>
