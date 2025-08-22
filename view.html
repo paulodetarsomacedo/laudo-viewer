@@ -1,0 +1,37 @@
+html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Visualizador de Laudo Interativo</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        iframe { width: 100%; height: 100%; border: none; }
+    </style>
+</head>
+<body>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const encodedData = window.location.hash.substring(1);
+                if (!encodedData) {
+                    document.body.innerHTML = '<h1>Erro: Nenhum dado de laudo encontrado na URL.</h1>';
+                    return;
+                }
+
+                // ▼▼▼ AQUI ESTÁ A CORREÇÃO CRÍTICA PARA OS ACENTOS ▼▼▼
+                // Em vez de atob(encodedData), usamos esta versão segura para decodificar.
+                const decodedHtml = decodeURIComponent(escape(window.atob(encodedData)));
+
+                const iframe = document.createElement('iframe');
+                iframe.srcdoc = decodedHtml;
+                document.body.appendChild(iframe);
+
+            } catch (e) {
+                console.error("Erro ao decodificar ou exibir o laudo:", e);
+                document.body.innerHTML = '<h1>Erro: Não foi possível carregar o laudo. O link pode estar corrompido.</h1>';
+            }
+        });
+    </script>
+</body>
+</html>
