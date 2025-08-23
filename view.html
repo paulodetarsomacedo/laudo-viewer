@@ -64,6 +64,10 @@
             findingsContainer.innerHTML = `
                 <h1>Achados Radiográficos</h1>
                 <button id="toggle-all-btn">Visualizar todos os achados na Imagem</button>
+                <!-- ▼▼▼ A FRASE FOI ADICIONADA MANUALMENTE AQUI ▼▼▼ -->
+        <div class="findings-instruction">
+            CLIQUE SEPARADAMENTE EM CADA TÓPICO PARA VISUALIZAR O ACHADO NA IMAGEM RADIOGRÁFICA.
+        </div>
                 <div id="findings-list">${DATA.findingsHtml}</div>
             `;
             const toggleAllBtn = document.getElementById('toggle-all-btn');
