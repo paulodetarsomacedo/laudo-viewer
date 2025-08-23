@@ -12,43 +12,36 @@
         #findings-container p { cursor: pointer; padding: 8px; border-radius: 4px; margin: 5px 0; transition: all 0.2s ease-in-out; border: 1px solid transparent; }
         
         #toggle-all-btn {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 15px;
-            margin: 0 0 15px 0;
-            cursor: pointer;
-            width: 100%;
-            font-size: 14px;
-            font-weight: bold;
-            transition: background-color 0.2s;
-            flex-shrink: 0;
+            background-color: #3498db; color: white; border: none; border-radius: 5px; padding: 10px 15px;
+            margin: 0 0 15px 0; cursor: pointer; width: 100%; font-size: 14px; font-weight: bold;
+            transition: background-color 0.2s; flex-shrink: 0;
         }
         #toggle-all-btn:hover { background-color: #2980b9; }
         #toggle-all-btn.active { background-color: #e74c3c; }
+        
+        .findings-instruction {
+            font-size: 12px; text-align: center; color: #bdc3c7; padding: 10px;
+            margin: 10px 0; background-color: rgba(0,0,0,0.2); border-radius: 5px; font-style: italic;
+        }
+        
         #findings-list { flex-grow: 1; overflow-y: auto; }
-
     </style>
 </head>
 <body>
     <div id="image-container"><canvas id="canvas-report"></canvas></div>
-    <div id="findings-container"><!-- Conteúdo será inserido dinamicamente --></div>
+    <div id="findings-container"><!-- O conteúdo será injetado aqui --></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             let DATA;
-
             try {
                 const encodedData = window.location.hash.substring(1);
-                if (!encodedData) {
-                    throw new Error("Nenhum dado de laudo encontrado na URL.");
-                }
+                if (!encodedData) throw new Error("Nenhum dado de laudo encontrado na URL.");
                 const decodedJsonString = decodeURIComponent(escape(window.atob(encodedData)));
                 DATA = JSON.parse(decodedJsonString);
             } catch (e) {
                 console.error("Erro ao carregar dados do laudo:", e);
-                document.body.innerHTML = `<h1>Erro ao carregar o laudo.</h1><p>O link pode estar corrompido ou os dados são inválidos.</p><p style="font-size:12px; color: #ccc;">Detalhe do erro: ${e.message}</p>`;
+                document.body.innerHTML = \`<h1>Erro ao carregar o laudo.</h1><p>\${e.message}</p>\`;
                 return;
             }
             
@@ -61,11 +54,15 @@
             let hoverText = null, pinnedText = null;
             let showAllMode = false;
 
-            findingsContainer.innerHTML = `
+            // Injeta o layout e os achados recebidos
+            findingsContainer.innerHTML = \`
                 <h1>Achados Radiográficos</h1>
                 <button id="toggle-all-btn">Visualizar todos os achados na Imagem</button>
-                <div id="findings-list">${DATA.findingsHtml}</div>
-            `;
+                <div class="findings-instruction">
+                    CLIQUE SEPARADAMENTE EM CADA TÓPICO PARA VISUALIZAR O ACHADO NA IMAGEM RADIOGRÁFICA.
+                </div>
+                <div id="findings-list">\${DATA.findingsHtml}</div>
+            \`;
             const toggleAllBtn = document.getElementById('toggle-all-btn');
 
             const image = new Image();
@@ -87,7 +84,7 @@
                 if (showAllMode) {
                     DATA.annotations.forEach(anno => {
                         const isHovered = anno.id === hoverId;
-                        const findingEl = findingsContainer.querySelector(`[data-annotation-id="${anno.id}"]`);
+                        const findingEl = findingsContainer.querySelector(\`[data-annotation-id="\${anno.id}"]\`);
                         const color = findingEl ? findingEl.dataset.highlightColor : '#FFFFFF';
                         drawAnnotation(anno, color, isHovered);
                     });
@@ -172,20 +169,14 @@
             
             function getAnnotationAnchorPoint(anno) {
                 if (!anno) return { x: 0, y: 0 };
-                if (anno.start && anno.end) {
-                    return convertImgToCanvas({ x: (anno.start.x + anno.end.x) / 2, y: (anno.start.y + anno.end.y) / 2 });
-                }
+                if (anno.start && anno.end) return convertImgToCanvas({ x: (anno.start.x + anno.end.x) / 2, y: (anno.start.y + anno.end.y) / 2 });
                 if (anno.points && anno.fillColor) {
                     let maxY = 0, sumX = 0;
                     anno.points.forEach(p => { if (p.y > maxY) maxY = p.y; sumX += p.x; });
                     return convertImgToCanvas({ x: sumX / anno.points.length, y: maxY });
                 }
-                if (anno.points) {
-                    return convertImgToCanvas(anno.points[anno.points.length - 1]);
-                }
-                if (anno.x !== undefined && anno.y !== undefined) {
-                    return convertImgToCanvas({ x: anno.x, y: anno.y });
-                }
+                if (anno.points) return convertImgToCanvas(anno.points[anno.points.length - 1]);
+                if (anno.x !== undefined && anno.y !== undefined) return convertImgToCanvas({ x: anno.x, y: anno.y });
                 return { x: 10, y: 10 };
             }
 
@@ -197,7 +188,7 @@
                 const padding = 8;
                 const fontSize = 16;
                 ctx.save();
-                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.font = \`bold \${fontSize}px Arial\`;
                 ctx.textBaseline = 'top';
                 ctx.textAlign = 'left';
                 const textMetrics = ctx.measureText(cleanText);
@@ -263,7 +254,7 @@
                     ctx.lineTo(size / 2 - 10, 5);
                     ctx.stroke();
                 } else if (anno.text && anno.font) {
-                     const coords = convertImgToCanvas({ x: anno.x, y: anno.y });
+                    const coords = convertImgToCanvas({ x: anno.x, y: anno.y });
                     ctx.font = anno.font; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                     ctx.fillStyle = highlightColor;
                     ctx.fillText(anno.text, coords.x, coords.y);
