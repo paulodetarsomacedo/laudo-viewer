@@ -55,14 +55,20 @@
             scrollbar-width: thin; scrollbar-color: #444 #222; 
         }
         
-        /* Item da Lista */
+        /* Item da Lista - Estilos base das bordas */
         .finding-item { 
             background: #2a2a2a; margin-bottom: 10px; padding: 12px; 
             border-radius: 6px; cursor: pointer; transition: 0.2s; 
             font-size: 14px; line-height: 1.4;
-            border-left-width: 5px; border-left-style: solid;
-            border-bottom-width: 2px; border-bottom-style: solid;
-            border-top: 1px solid transparent; border-right: 1px solid transparent;
+            
+            /* Configuração das bordas coloridas */
+            border-left-width: 5px; 
+            border-left-style: solid;
+            border-bottom-width: 2px;
+            border-bottom-style: solid;
+            /* A cor será definida via JS */
+            border-top: 1px solid transparent;
+            border-right: 1px solid transparent;
         }
         .finding-item:hover { background: #333; transform: translateX(5px); }
         .finding-item.active { background: #383838; box-shadow: 0 0 15px rgba(255, 255, 255, 0.05); }
@@ -76,12 +82,12 @@
         .btn:hover { filter: brightness(1.1); }
         .btn.secondary { background: #444; }
 
-        /* --- CSS DA ASSINATURA --- */
+        /* --- ESTILOS DA ASSINATURA (NOVO) --- */
         #signature-container {
             padding: 15px;
-            background-color: #181818;
+            background-color: #181818; /* Levemente mais escuro para destaque */
             border-top: 1px solid #333;
-            display: none; /* Oculto por padrão, JS ativa se houver assinatura */
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -90,13 +96,14 @@
         }
 
         #signature-img {
-            max-width: 180px; 
+            max-width: 180px; /* Tamanho controlado */
             max-height: 80px;
             width: auto;
             height: auto;
             display: block;
             margin-bottom: 5px;
-            filter: brightness(0) invert(1); /* Inverte cor para branco */
+            /* Filtro IMPORTANTE: Inverte a cor (preto vira branco) para aparecer no fundo escuro */
+            filter: brightness(0) invert(1);
             opacity: 0.9;
         }
 
@@ -109,15 +116,27 @@
             font-weight: 600;
         }
 
-        /* Mobile */
+        /* --- AJUSTES ESPECÍFICOS PARA CELULAR --- */
         @media (max-width: 768px) {
             body { flex-direction: column; }
+            
+            /* Invertemos a lógica: Imagem menor, Texto maior */
             #viewer-area { height: 35%; } 
-            #sidebar { width: 100%; height: 65%; border-left: none; border-top: 2px solid var(--accent); }
+            
+            #sidebar { 
+                width: 100%; 
+                height: 65%; /* Tópicos sobem bastante */
+                border-left: none; 
+                border-top: 2px solid var(--accent); 
+            }
+            
             .instruction-box { margin: 10px; padding: 8px; font-size: 12px; }
             #findings-list { padding: 10px; }
+            
+            /* Remove o botão resetar no celular */
             #btn-reset-zoom { display: none; }
-            /* Mobile Signature */
+
+            /* Ajuste assinatura mobile */
             #signature-container { padding: 10px; flex-direction: row; justify-content: space-between; }
             #signature-img { max-height: 40px; margin-bottom: 0; }
             .signature-label { margin-top: 0; }
@@ -136,12 +155,14 @@
             <button id="btn-reset-zoom" class="btn secondary">⟲ Resetar Visualização</button>
         </div>
 
-        <!-- CONTAINER DA ASSINATURA -->
+        <!-- ÁREA DA ASSINATURA -->
         <div id="signature-container">
-            <img id="signature-img" src="" alt="Assinatura Digital">
-            <span class="signature-label">Radiologista Responsável</span>
+            <!-- O src busca o arquivo na mesma pasta do GitHub Pages -->
+            <img id="signature-img" src="assinatura.png" alt="Dr. Paulo de Tarso Silva de Macedo">
+            <span class="signature-label">Radiologista Responsável, DDS, PhD</span>
         </div>
     </div>
+
 <script>
     let DATA = null;
     try {
@@ -151,14 +172,10 @@
             DATA = JSON.parse(jsonString);
             document.getElementById('findings-list').innerHTML = DATA.findingsHtml;
             
-            // --- LÓGICA DA ASSINATURA ---
-            // Verifica se o JSON tem o campo 'signature'
-            if (DATA.signature) {
-                const sigContainer = document.getElementById('signature-container');
-                const sigImg = document.getElementById('signature-img');
-                
-                sigImg.src = DATA.signature;
-                sigContainer.style.display = 'flex'; // Torna visível
+            // Verifica se o App mandou a assinatura via Base64, se sim, usa ela.
+            // Se não, o HTML já usa 'assinatura.png' por padrão.
+            if(DATA.signature) {
+                document.getElementById('signature-img').src = DATA.signature;
             }
 
         } else { document.getElementById('findings-list').innerHTML = "<p style='text-align:center; color:red;'>Erro: Nenhum dado encontrado.</p>"; }
@@ -181,10 +198,13 @@
             fitImageToScreen(); 
             setupEvents();
             
+            // --- APLICAÇÃO DAS BORDAS COLORIDAS (ESQUERDA E INFERIOR) ---
             document.querySelectorAll('#findings-list p').forEach(p => {
                 p.classList.add('finding-item');
+                // Pega a cor do dataset (vinda do app)
                 const color = p.dataset.highlightColor;
                 if(color) {
+                    // Força a cor nas bordas
                     p.style.borderLeftColor = color;
                     p.style.borderBottomColor = color;
                 }
