@@ -2,33 +2,146 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Viewport otimizado para evitar cortes e garantir escala correta em mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Laudo Interativo</title>
     <style>
-        :root { --bg-color: #121212; --panel-bg: #1e1e1e; --text-color: #e0e0e0; --accent: #3498db; --highlight: #f1c40f; }
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); height: 100vh; overflow: hidden; display: flex; flex-direction: row; }
+        :root { 
+            --bg-color: #121212; 
+            --panel-bg: #1e1e1e; 
+            --text-color: #e0e0e0; 
+            --accent: #3498db; 
+            --highlight: #f1c40f; 
+        }
         
-        #viewer-area { flex: 1; position: relative; overflow: hidden; background-color: #000; touch-action: none; display: flex; align-items: center; justify-content: center; }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            
+            /* CORREÇÃO DO CORTE NO CELULAR */
+            height: 100vh; /* Fallback */
+            height: 100dvh; /* Altura dinâmica real (desconta a barra do navegador) */
+            
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: row; 
+        }
+        
+        /* Área da Imagem */
+        #viewer-area { 
+            flex: 1; 
+            position: relative; 
+            overflow: hidden; 
+            background-color: #000; 
+            touch-action: none; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        
         canvas { display: block; width: 100%; height: 100%; }
         
-        #sidebar { width: 350px; background-color: var(--panel-bg); border-left: 1px solid #333; display: flex; flex-direction: column; z-index: 100; box-shadow: -2px 0 10px rgba(0,0,0,0.5); }
-        #header { padding: 15px; background: #252525; border-bottom: 1px solid #333; text-align: center; }
+        /* Sidebar */
+        #sidebar { 
+            width: 350px; 
+            background-color: var(--panel-bg); 
+            border-left: 1px solid #333; 
+            display: flex; 
+            flex-direction: column; 
+            z-index: 100; 
+            box-shadow: -2px 0 10px rgba(0,0,0,0.5); 
+        }
+        
+        #header { 
+            padding: 15px; 
+            background: #252525; 
+            border-bottom: 1px solid #333; 
+            text-align: center; 
+            flex-shrink: 0; /* Impede que o cabeçalho encolha */
+        }
         #header h2 { margin: 0; color: var(--accent); font-size: 18px; }
         
-        #findings-list { flex: 1; overflow-y: auto; padding: 15px; }
-        .finding-item { background: #2a2a2a; margin-bottom: 10px; padding: 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; font-size: 14px; line-height: 1.4; color: #fff; }
+        /* NOVA CAIXA DE INSTRUÇÃO MODERNA */
+        .instruction-box {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(52, 152, 219, 0.02));
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 15px 5px 15px;
+            font-size: 13px;
+            color: #cfcfcf;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            line-height: 1.4;
+            flex-shrink: 0;
+        }
+
+        #findings-list { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 15px; 
+            /* Scroll suave */
+            scrollbar-width: thin;
+            scrollbar-color: #444 #222;
+        }
+        
+        /* Item da Lista */
+        .finding-item { 
+            background: #2a2a2a; 
+            margin-bottom: 10px; 
+            padding: 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            border-left: 4px solid transparent; 
+            font-size: 14px; 
+            line-height: 1.4; 
+        }
         .finding-item:hover { background: #333; transform: translateX(5px); }
         .finding-item.active { background: #383838; border-color: var(--highlight); box-shadow: 0 0 15px rgba(255, 255, 255, 0.05); }
         
-        #controls { padding: 15px; border-top: 1px solid #333; display: flex; gap: 10px; flex-direction: column; }
+        #controls { 
+            padding: 15px; 
+            border-top: 1px solid #333; 
+            display: flex; 
+            gap: 10px; 
+            flex-direction: column; 
+            background-color: var(--panel-bg); /* Garante fundo sólido */
+            flex-shrink: 0;
+            padding-bottom: max(15px, env(safe-area-inset-bottom)); /* Respeita a barra home do iPhone */
+        }
+        
         .btn { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; width: 100%; transition: 0.2s; }
         .btn:hover { filter: brightness(1.1); }
         .btn.secondary { background: #444; }
 
+        /* Ajustes Específicos para Mobile */
         @media (max-width: 768px) {
-            body { flex-direction: column; }
-            #sidebar { width: 100%; height: 40%; border-left: none; border-top: 2px solid var(--accent); }
-            #viewer-area { height: 60%; }
+            body { 
+                flex-direction: column; 
+            }
+            #sidebar { 
+                width: 100%; 
+                height: 45%; /* Divide a tela quase ao meio */
+                border-left: none; 
+                border-top: 2px solid var(--accent); 
+            }
+            #viewer-area { 
+                height: 55%; 
+            }
+            /* Ajuste fino na instrução para mobile */
+            .instruction-box {
+                margin: 10px;
+                padding: 8px;
+                font-size: 12px;
+            }
+            #findings-list {
+                padding: 10px;
+            }
         }
     </style>
 </head>
@@ -42,9 +155,15 @@
         <div id="header">
             <h2>Achados Radiográficos</h2>
         </div>
+        
+        <!-- NOVA CAIXA DE INSTRUÇÃO -->
+        <div class="instruction-box">
+            Clique individualmente nos achados para visualizar detalhadamente na imagem radiográfica.
+        </div>
+
         <div id="findings-list">
             <!-- O conteúdo será injetado via Javascript -->
-            <p style="text-align:center; color: #777;">Carregando achados...</p>
+            <p style="text-align:center; color: #777; margin-top: 20px;">Carregando achados...</p>
         </div>
         <div id="controls">
             <button id="btn-toggle-all" class="btn">👁️ Ver Todos na Imagem</button>
@@ -57,14 +176,11 @@
     let DATA = null;
 
     try {
-        // Pega o que está depois do # na URL
         const hash = window.location.hash.substring(1);
         if (hash) {
-            // Decodifica Base64 -> String JSON -> Objeto
             const jsonString = decodeURIComponent(escape(atob(hash)));
             DATA = JSON.parse(jsonString);
             
-            // Injeta o HTML dos achados na Sidebar
             document.getElementById('findings-list').innerHTML = DATA.findingsHtml;
         } else {
             document.getElementById('findings-list').innerHTML = "<p style='text-align:center; color:red;'>Erro: Nenhum dado encontrado no link.</p>";
@@ -98,12 +214,15 @@
             fitImageToScreen(); 
             setupEvents();
             
-            // Adiciona classe de estilo aos itens injetados
             document.querySelectorAll('#findings-list p').forEach(p => p.classList.add('finding-item'));
         };
         img.src = DATA.image;
 
-        window.addEventListener('resize', () => { resizeCanvas(); fitImageToScreen(); });
+        // Resize inteligente
+        window.addEventListener('resize', () => { 
+            resizeCanvas(); 
+            if(!activeAnnotationId) fitImageToScreen(); // Só reseta se não estiver focado em algo
+        });
 
         function resizeCanvas() {
             canvas.width = viewer.offsetWidth;
@@ -165,7 +284,6 @@
             
             let targetScale = Math.min(scaleX, scaleY) * paddingFactor;
 
-            // Limites de segurança do zoom
             const minScaleAllowed = Math.min(canvas.width / imgW, canvas.height / imgH);
             const maxScaleAllowed = 5.0; 
             
