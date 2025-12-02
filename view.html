@@ -77,11 +77,44 @@
             padding: 15px; border-top: 1px solid #333; 
             display: flex; gap: 10px; flex-direction: column; 
             background-color: var(--panel-bg); flex-shrink: 0; 
-            padding-bottom: max(15px, env(safe-area-inset-bottom)); 
         }
         .btn { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; width: 100%; transition: 0.2s; }
         .btn:hover { filter: brightness(1.1); }
         .btn.secondary { background: #444; }
+
+        /* --- ESTILOS DA ASSINATURA (NOVO) --- */
+        #signature-container {
+            padding: 15px;
+            background-color: #181818; /* Levemente mais escuro para destaque */
+            border-top: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+
+        #signature-img {
+            max-width: 180px; /* Tamanho controlado */
+            max-height: 80px;
+            width: auto;
+            height: auto;
+            display: block;
+            margin-bottom: 5px;
+            /* Filtro IMPORTANTE: Inverte a cor (preto vira branco) para aparecer no fundo escuro */
+            filter: brightness(0) invert(1);
+            opacity: 0.9;
+        }
+
+        .signature-label {
+            font-size: 11px;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+            font-weight: 600;
+        }
 
         /* --- AJUSTES ESPECÍFICOS PARA CELULAR --- */
         @media (max-width: 768px) {
@@ -102,6 +135,11 @@
             
             /* Remove o botão resetar no celular */
             #btn-reset-zoom { display: none; }
+
+            /* Ajuste assinatura mobile */
+            #signature-container { padding: 10px; flex-direction: row; justify-content: space-between; }
+            #signature-img { max-height: 40px; margin-bottom: 0; }
+            .signature-label { margin-top: 0; }
         }
     </style>
 </head>
@@ -111,11 +149,20 @@
         <div id="header"><h2>Achados Radiográficos</h2></div>
         <div class="instruction-box">Clique individualmente nos achados para visualizar detalhadamente na imagem radiográfica.</div>
         <div id="findings-list"><p style="text-align:center; color: #777; margin-top: 20px;">Carregando achados...</p></div>
+        
         <div id="controls">
             <button id="btn-toggle-all" class="btn">👁️ Ver Todos na Imagem</button>
             <button id="btn-reset-zoom" class="btn secondary">⟲ Resetar Visualização</button>
         </div>
+
+        <!-- ÁREA DA ASSINATURA -->
+        <div id="signature-container">
+            <!-- O src busca o arquivo na mesma pasta do GitHub Pages -->
+            <img id="signature-img" src="assinatura.png" alt="Assinatura Digital">
+            <span class="signature-label">Radiologista Responsável</span>
+        </div>
     </div>
+
 <script>
     let DATA = null;
     try {
@@ -124,6 +171,13 @@
             const jsonString = decodeURIComponent(escape(atob(hash)));
             DATA = JSON.parse(jsonString);
             document.getElementById('findings-list').innerHTML = DATA.findingsHtml;
+            
+            // Verifica se o App mandou a assinatura via Base64, se sim, usa ela.
+            // Se não, o HTML já usa 'assinatura.png' por padrão.
+            if(DATA.signature) {
+                document.getElementById('signature-img').src = DATA.signature;
+            }
+
         } else { document.getElementById('findings-list').innerHTML = "<p style='text-align:center; color:red;'>Erro: Nenhum dado encontrado.</p>"; }
     } catch (e) { console.error(e); document.getElementById('findings-list').innerHTML = "<p style='text-align:center; color:red;'>Erro ao processar o laudo.</p>"; }
 
