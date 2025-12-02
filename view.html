@@ -2,255 +2,269 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Viewport otimizado -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Laudo Interativo</title>
     <style>
-        :root { --bg-color: #121212; --panel-bg: #1e1e1e; --text-color: #e0e0e0; --accent: #3498db; --highlight: #f1c40f; }
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); height: 100vh; overflow: hidden; display: flex; flex-direction: row; }
-        
-        #viewer-area { flex: 1; position: relative; overflow: hidden; background-color: #000; touch-action: none; display: flex; align-items: center; justify-content: center; }
-        canvas { display: block; width: 100%; height: 100%; }
-        
-        #sidebar { 
-            width: 350px; 
-            background-color: var(--panel-bg); 
-            border-left: 1px solid #333; 
-            display: flex; 
-            flex-direction: column; 
-            z-index: 100; 
-            box-shadow: -2px 0 10px rgba(0,0,0,0.5); 
+        :root { 
+            --bg-color: #121212; 
+            --panel-bg: #1e1e1e; 
+            --text-color: #e0e0e0; 
+            --accent: #3498db; 
+            --highlight: #f1c40f; 
         }
         
-        #header { padding: 15px; background: #252525; border-bottom: 1px solid #333; text-align: center; flex-shrink: 0; }
+        body { 
+            margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; 
+            background-color: var(--bg-color); color: var(--text-color); 
+            height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: row; 
+        }
+        
+        /* Área da Imagem */
+        #viewer-area { 
+            flex: 1; position: relative; overflow: hidden; 
+            background-color: #000; touch-action: none; 
+            display: flex; align-items: center; justify-content: center; 
+        }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        /* Sidebar */
+        #sidebar { 
+            width: 350px; background-color: var(--panel-bg); 
+            border-left: 1px solid #333; display: flex; flex-direction: column; 
+            z-index: 100; box-shadow: -2px 0 10px rgba(0,0,0,0.5); 
+        }
+        
+        #header { 
+            padding: 15px; background: #252525; border-bottom: 1px solid #333; 
+            text-align: center; flex-shrink: 0; 
+        }
         #header h2 { margin: 0; color: var(--accent); font-size: 18px; }
         
-        #findings-list { flex: 1; overflow-y: auto; padding: 15px; }
+        /* Caixa de Instrução */
+        .instruction-box {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(52, 152, 219, 0.02));
+            border: 1px solid rgba(52, 152, 219, 0.3); border-left: 4px solid var(--accent);
+            border-radius: 8px; padding: 12px; margin: 15px 15px 5px 15px;
+            font-size: 13px; color: #cfcfcf; text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); line-height: 1.4; flex-shrink: 0;
+        }
+
+        #findings-list { 
+            flex: 1; overflow-y: auto; padding: 15px; 
+            scrollbar-width: thin; scrollbar-color: #444 #222; 
+        }
         
-        .finding-item { background: #2a2a2a; margin-bottom: 10px; padding: 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; font-size: 14px; line-height: 1.4; }
+        /* Item da Lista - Estilos base das bordas */
+        .finding-item { 
+            background: #2a2a2a; margin-bottom: 10px; padding: 12px; 
+            border-radius: 6px; cursor: pointer; transition: 0.2s; 
+            font-size: 14px; line-height: 1.4;
+            
+            /* Configuração das bordas coloridas */
+            border-left-width: 5px; 
+            border-left-style: solid;
+            border-bottom-width: 2px;
+            border-bottom-style: solid;
+            /* A cor será definida via JS */
+            border-top: 1px solid transparent;
+            border-right: 1px solid transparent;
+        }
         .finding-item:hover { background: #333; transform: translateX(5px); }
-        .finding-item.active { background: #383838; border-color: var(--highlight); box-shadow: 0 0 15px rgba(255, 255, 255, 0.05); }
+        .finding-item.active { background: #383838; box-shadow: 0 0 15px rgba(255, 255, 255, 0.05); }
         
-        #controls { padding: 15px; border-top: 1px solid #333; display: flex; gap: 10px; flex-direction: column; flex-shrink: 0; }
+        #controls { 
+            padding: 15px; border-top: 1px solid #333; 
+            display: flex; gap: 10px; flex-direction: column; 
+            background-color: var(--panel-bg); flex-shrink: 0; 
+            padding-bottom: max(15px, env(safe-area-inset-bottom)); 
+        }
         .btn { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; width: 100%; transition: 0.2s; }
         .btn:hover { filter: brightness(1.1); }
         .btn.secondary { background: #444; }
 
-        /* Estilos da Assinatura */
-        #signature-container {
-            padding: 20px 15px;
-            background-color: #181818;
-            border-top: 1px solid #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        #signature-img {
-            max-width: 180px; 
-            max-height: 80px;
-            width: auto;
-            height: auto;
-            display: block;
-            margin-bottom: 5px;
-            /* Filtro para garantir que a assinatura fique branca/visível no fundo escuro se for preta */
-            /* Se sua assinatura já for branca ou colorida, remova a linha abaixo */
-            filter: brightness(0) invert(1); 
-        }
-
-        .signature-label {
-            font-size: 11px;
-            color: #777;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 5px;
-        }
-
+        /* --- AJUSTES ESPECÍFICOS PARA CELULAR --- */
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            #sidebar { width: 100%; height: 45%; border-left: none; border-top: 2px solid var(--accent); }
-            #viewer-area { height: 55%; }
-            #signature-container { padding: 10px; flex-direction: row; justify-content: space-between; align-items: center; }
-            #signature-img { max-height: 40px; }
+            
+            /* Invertemos a lógica: Imagem menor, Texto maior */
+            #viewer-area { height: 35%; } 
+            
+            #sidebar { 
+                width: 100%; 
+                height: 65%; /* Tópicos sobem bastante */
+                border-left: none; 
+                border-top: 2px solid var(--accent); 
+            }
+            
+            .instruction-box { margin: 10px; padding: 8px; font-size: 12px; }
+            #findings-list { padding: 10px; }
+            
+            /* Remove o botão resetar no celular */
+            #btn-reset-zoom { display: none; }
         }
     </style>
 </head>
 <body>
-
-    <div id="viewer-area">
-        <canvas id="canvas-report"></canvas>
-    </div>
-
+    <div id="viewer-area"><canvas id="canvas-report"></canvas></div>
     <div id="sidebar">
-        <div id="header">
-            <h2>Achados Radiográficos</h2>
-        </div>
-        
-        <div id="findings-list">
-            ${data.findingsHtml} 
-        </div>
-        
+        <div id="header"><h2>Achados Radiográficos</h2></div>
+        <div class="instruction-box">Clique individualmente nos achados para visualizar detalhadamente na imagem radiográfica.</div>
+        <div id="findings-list"><p style="text-align:center; color: #777; margin-top: 20px;">Carregando achados...</p></div>
         <div id="controls">
             <button id="btn-toggle-all" class="btn">👁️ Ver Todos na Imagem</button>
             <button id="btn-reset-zoom" class="btn secondary">⟲ Resetar Visualização</button>
         </div>
-
-        <div id="signature-container" style="display: ${signatureDisplay};">
-            <!-- AQUI ESTÁ O SEGREDO: Injetamos o Base64 diretamente no src -->
-            <img id="signature-img" src="${signatureSrc}" alt="Assinatura Digital">
-            <span class="signature-label">Radiologista Responsável</span>
-        </div>
     </div>
-
 <script>
-    const DATA = ${jsonData};
-    // ... (o restante do script permanece igual, pois não mudamos a lógica do visualizador)
-    const viewer = document.getElementById('viewer-area');
-    const canvas = document.getElementById('canvas-report');
-    const ctx = canvas.getContext('2d');
-    const findingsList = document.getElementById('findings-list');
-    
-    let img = new Image();
-    let scale = 1, panX = 0, panY = 0;
-    let isDragging = false, startX, startY;
-    let showAll = false;
-    let activeAnnotationId = null;
-    let hoveredAnnotationId = null;
-    let drawingScaleFactor = 1;
+    let DATA = null;
+    try {
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            const jsonString = decodeURIComponent(escape(atob(hash)));
+            DATA = JSON.parse(jsonString);
+            document.getElementById('findings-list').innerHTML = DATA.findingsHtml;
+        } else { document.getElementById('findings-list').innerHTML = "<p style='text-align:center; color:red;'>Erro: Nenhum dado encontrado.</p>"; }
+    } catch (e) { console.error(e); document.getElementById('findings-list').innerHTML = "<p style='text-align:center; color:red;'>Erro ao processar o laudo.</p>"; }
 
-    img.onload = () => {
-        resizeCanvas();
-        drawingScaleFactor = Math.max(img.naturalWidth / 1500, 1);
-        fitImageToScreen(); 
-        setupEvents();
-        document.querySelectorAll('#findings-list p').forEach(p => {
-            p.classList.add('finding-item');
-        });
-    };
-    img.src = DATA.image;
+    if (DATA) {
+        const viewer = document.getElementById('viewer-area');
+        const canvas = document.getElementById('canvas-report');
+        const ctx = canvas.getContext('2d');
+        const findingsList = document.getElementById('findings-list');
+        let img = new Image();
+        let scale = 1, panX = 0, panY = 0;
+        let isDragging = false, startX, startY;
+        let showAll = false, activeAnnotationId = null, hoveredAnnotationId = null;
+        let drawingScaleFactor = 1;
 
-    window.addEventListener('resize', () => { resizeCanvas(); fitImageToScreen(); });
-    function resizeCanvas() { canvas.width = viewer.offsetWidth; canvas.height = viewer.offsetHeight; render(); }
+        img.onload = () => {
+            resizeCanvas();
+            drawingScaleFactor = Math.max(img.naturalWidth / 1500, 1);
+            fitImageToScreen(); 
+            setupEvents();
+            
+            // --- APLICAÇÃO DAS BORDAS COLORIDAS (ESQUERDA E INFERIOR) ---
+            document.querySelectorAll('#findings-list p').forEach(p => {
+                p.classList.add('finding-item');
+                // Pega a cor do dataset (vinda do app)
+                const color = p.dataset.highlightColor;
+                if(color) {
+                    // Força a cor nas bordas
+                    p.style.borderLeftColor = color;
+                    p.style.borderBottomColor = color;
+                }
+            });
+        };
+        img.src = DATA.image;
 
-    function render() {
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.setTransform(scale, 0, 0, scale, panX, panY);
-        ctx.drawImage(img, 0, 0);
-        if (showAll) { DATA.annotations.forEach(anno => drawAnnotation(anno, false)); } 
-        else { const targetId = hoveredAnnotationId || activeAnnotationId; if (targetId) { const anno = DATA.annotations.find(a => a.id === targetId); if (anno) drawAnnotation(anno, true); } }
-    }
+        window.addEventListener('resize', () => { resizeCanvas(); if(!activeAnnotationId) fitImageToScreen(); });
+        function resizeCanvas() { canvas.width = viewer.offsetWidth; canvas.height = viewer.offsetHeight; render(); }
 
-    function fitImageToScreen() {
-        const scaleX = canvas.width / img.naturalWidth;
-        const scaleY = canvas.height / img.naturalHeight;
-        scale = Math.min(scaleX, scaleY);
-        panX = (canvas.width - (img.naturalWidth * scale)) / 2;
-        panY = (canvas.height - (img.naturalHeight * scale)) / 2;
-        render();
-    }
-
-    function centerOnAnnotation(anno) {
-        let targetX, targetY;
-        if(anno.points) { targetX = anno.points[0].x; targetY = anno.points[0].y; }
-        else if(anno.start) { targetX = anno.start.x; targetY = anno.start.y; }
-        else { targetX = anno.x; targetY = anno.y; }
-        const imgX = targetX * img.naturalWidth;
-        const imgY = targetY * img.naturalHeight;
-        const targetZoom = Math.min(scale * 4, 3);
-        panX = (canvas.width / 2) - (imgX * targetZoom);
-        panY = (canvas.height / 2) - (imgY * targetZoom);
-        scale = targetZoom;
-        render();
-    }
-
-    function drawAnnotation(anno, isActive) {
-        const findingEl = document.querySelector(\`p[data-annotation-id="\${anno.id}"]\`);
-        const color = findingEl ? findingEl.dataset.highlightColor : '#00FFFF';
-        ctx.save();
-        ctx.strokeStyle = color; ctx.fillStyle = color;
-        const baseWidth = (anno.thickness || 3) * drawingScaleFactor;
-        ctx.lineWidth = isActive ? baseWidth * 1.5 : baseWidth;
-        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-        ctx.shadowColor = 'black'; ctx.shadowBlur = 5 * drawingScaleFactor;
-
-        if (anno.points && anno.fillColor) { 
-            ctx.beginPath(); const start = convertCoord(anno.points[0]); ctx.moveTo(start.x, start.y);
-            for(let i=1; i<anno.points.length; i++) { const p = convertCoord(anno.points[i]); ctx.lineTo(p.x, p.y); }
-            ctx.closePath(); ctx.stroke(); ctx.globalAlpha = 0.2; ctx.fill(); ctx.globalAlpha = 1.0;
+        function render() {
+            ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.setTransform(scale, 0, 0, scale, panX, panY); ctx.drawImage(img, 0, 0);
+            if (showAll) { DATA.annotations.forEach(anno => drawAnnotation(anno, false)); } 
+            else {
+                const targetId = hoveredAnnotationId || activeAnnotationId;
+                if (targetId) { const anno = DATA.annotations.find(a => a.id === targetId); if (anno) drawAnnotation(anno, true); }
+            }
         }
-        else if (anno.start && anno.end) { 
-            const p1 = convertCoord(anno.start); const p2 = convertCoord(anno.end);
-            ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-            const fontSize = 18 * drawingScaleFactor; ctx.font = \`bold \${fontSize}px Arial\`; ctx.fillStyle = color;
-            ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-            const midX = (p1.x + p2.x) / 2; const midY = (p1.y + p2.y) / 2;
-            ctx.shadowBlur = 0; ctx.lineWidth = 4; ctx.strokeStyle = 'black';
-            ctx.strokeText(anno.text, midX, midY - 10); ctx.fillText(anno.text, midX, midY - 10);
-        }
-        else if (anno.type && anno.size) { 
-            const center = convertCoord({x: anno.x, y: anno.y}); const size = (anno.size * img.naturalWidth);
-            ctx.translate(center.x, center.y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
-            ctx.beginPath(); ctx.moveTo(-size/2, 0); ctx.lineTo(size/2, 0); ctx.lineTo(size/2 - size*0.3, -size*0.2);
-            ctx.moveTo(size/2, 0); ctx.lineTo(size/2 - size*0.3, size*0.2); ctx.stroke();
-        }
-        else if (anno.text) { 
-             const p = convertCoord({x: anno.x, y: anno.y}); const fontSize = (parseInt(anno.font)||20) * drawingScaleFactor;
-             ctx.font = \`\${fontSize}px Arial\`; ctx.fillStyle = color;
-             ctx.strokeStyle = 'black'; ctx.lineWidth = 3;
-             ctx.strokeText(anno.text, p.x, p.y); ctx.fillText(anno.text, p.x, p.y);
-        }
-        else if (anno.points) { 
-            ctx.beginPath(); const start = convertCoord(anno.points[0]); ctx.moveTo(start.x, start.y);
-            for(let i=1; i<anno.points.length; i++) { const p = convertCoord(anno.points[i]); ctx.lineTo(p.x, p.y); }
-            ctx.stroke();
-        }
-        ctx.restore();
-    }
 
-    function convertCoord(p) { return { x: p.x * img.naturalWidth, y: p.y * img.naturalHeight }; }
+        function centerOnAnnotation(anno) {
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            const addPoint = (relX, relY) => { minX = Math.min(minX, relX); maxX = Math.max(maxX, relX); minY = Math.min(minY, relY); maxY = Math.max(maxY, relY); };
+            if (anno.points) { anno.points.forEach(p => addPoint(p.x, p.y)); } 
+            else if (anno.start && anno.end) { addPoint(anno.start.x, anno.start.y); addPoint(anno.end.x, anno.end.y); } 
+            else { const px = (anno.x!==undefined)?anno.x:0.5, py = (anno.y!==undefined)?anno.y:0.5, margin = 0.05; addPoint(px-margin, py-margin); addPoint(px+margin, py+margin); }
+            
+            const imgW = img.naturalWidth, imgH = img.naturalHeight;
+            const annoWidth = (maxX - minX) * imgW, annoHeight = (maxY - minY) * imgH;
+            const centerX = ((minX + maxX) / 2) * imgW, centerY = ((minY + maxY) / 2) * imgH;
+            
+            const paddingFactor = 0.6;
+            const scaleX = canvas.width / annoWidth, scaleY = canvas.height / annoHeight;
+            let targetScale = Math.min(scaleX, scaleY) * paddingFactor;
+            
+            const minScaleAllowed = Math.min(canvas.width / imgW, canvas.height / imgH);
+            const maxScaleAllowed = 5.0;
+            targetScale = Math.max(targetScale, minScaleAllowed);
+            targetScale = Math.min(targetScale, maxScaleAllowed);
 
-    function setupEvents() {
-        viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; viewer.style.cursor = 'grabbing'; });
-        window.addEventListener('mousemove', e => { if(isDragging) { panX = e.clientX - startX; panY = e.clientY - startY; render(); } });
-        window.addEventListener('mouseup', () => { isDragging = false; viewer.style.cursor = 'default'; });
-        viewer.addEventListener('wheel', e => {
-            e.preventDefault(); const zoomIntensity = 0.1; const delta = e.deltaY > 0 ? (1 - zoomIntensity) : (1 + zoomIntensity);
-            const rect = canvas.getBoundingClientRect(); const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
-            const newScale = scale * delta;
-            panX = mouseX - (mouseX - panX) * delta; panY = mouseY - (mouseY - panY) * delta; scale = newScale; render();
-        });
-        findingsList.addEventListener('mouseover', e => { const item = e.target.closest('p[data-annotation-id]'); if(item) { hoveredAnnotationId = item.dataset.annotationId; render(); } });
-        findingsList.addEventListener('mouseout', e => { hoveredAnnotationId = null; render(); });
-        findingsList.addEventListener('click', e => {
-            const item = e.target.closest('p[data-annotation-id]');
-            document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
-            if(item) {
-                const id = item.dataset.annotationId;
-                if (activeAnnotationId === id) { activeAnnotationId = null; showAll = false; fitImageToScreen(); } 
-                else { activeAnnotationId = id; showAll = false; item.classList.add('active'); const anno = DATA.annotations.find(a => a.id === id); if(anno) centerOnAnnotation(anno); }
-            } else { activeAnnotationId = null; showAll = false; fitImageToScreen(); }
+            scale = targetScale;
+            panX = (canvas.width / 2) - (centerX * scale);
+            panY = (canvas.height / 2) - (centerY * scale);
             render();
-        });
-        document.getElementById('btn-toggle-all').addEventListener('click', () => { showAll = !showAll; activeAnnotationId = null; document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active')); fitImageToScreen(); });
-        document.getElementById('btn-reset-zoom').addEventListener('click', () => { activeAnnotationId = null; fitImageToScreen(); });
-        
-        let initialPinchDist = 0; let initialScale = 1;
-        viewer.addEventListener('touchstart', e => {
-            if (e.touches.length === 2) { initialPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); initialScale = scale; } 
-            else if (e.touches.length === 1) { isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY; }
-        }, {passive: false});
-        viewer.addEventListener('touchmove', e => {
-            e.preventDefault();
-            if (e.touches.length === 2) {
-                const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                const delta = dist / initialPinchDist; const centerX = viewer.offsetWidth / 2; const centerY = viewer.offsetHeight / 2;
-                const newScale = initialScale * delta;
-                panX = centerX - (centerX - panX) * (newScale / scale); panY = centerY - (centerY - panY) * (newScale / scale); scale = newScale; render();
-            } else if (isDragging && e.touches.length === 1) { panX = e.touches[0].clientX - startX; panY = e.touches[0].clientY - startY; render(); }
-        }, {passive: false});
-        viewer.addEventListener('touchend', () => isDragging = false);
+        }
+
+        function fitImageToScreen() {
+            const scaleX = canvas.width / img.naturalWidth;
+            const scaleY = canvas.height / img.naturalHeight;
+            scale = Math.min(scaleX, scaleY);
+            panX = (canvas.width - (img.naturalWidth * scale)) / 2;
+            panY = (canvas.height - (img.naturalHeight * scale)) / 2;
+            render();
+        }
+
+        function drawAnnotation(anno, isActive) {
+            const findingEl = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
+            const color = findingEl ? findingEl.dataset.highlightColor : '#00FFFF';
+            ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color;
+            const baseWidth = (anno.thickness || 3) * drawingScaleFactor;
+            ctx.lineWidth = isActive ? baseWidth * 1.5 : baseWidth;
+            ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.shadowColor = 'black'; ctx.shadowBlur = 5 * drawingScaleFactor;
+
+            if (anno.points && anno.fillColor) { 
+                ctx.beginPath(); const s = convertCoord(anno.points[0]); ctx.moveTo(s.x, s.y);
+                for(let i=1; i<anno.points.length; i++) { const p = convertCoord(anno.points[i]); ctx.lineTo(p.x, p.y); }
+                ctx.closePath(); ctx.stroke(); ctx.globalAlpha = 0.2; ctx.fill(); ctx.globalAlpha = 1.0;
+            } else if (anno.start && anno.end) { 
+                const p1 = convertCoord(anno.start), p2 = convertCoord(anno.end);
+                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                const fontSize = 18 * drawingScaleFactor; ctx.font = `bold ${fontSize}px Arial`; ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+                const mx = (p1.x + p2.x)/2, my = (p1.y + p2.y)/2; ctx.shadowBlur = 0; ctx.lineWidth = 4; ctx.strokeStyle = 'black';
+                ctx.strokeText(anno.text, mx, my - 10); ctx.fillText(anno.text, mx, my - 10);
+            } else if (anno.type && anno.size) { 
+                const c = convertCoord({x: anno.x, y: anno.y}); const sz = (anno.size * img.naturalWidth);
+                ctx.translate(c.x, c.y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
+                ctx.beginPath(); ctx.moveTo(-sz/2, 0); ctx.lineTo(sz/2, 0); ctx.lineTo(sz/2 - sz*0.3, -sz*0.2); ctx.moveTo(sz/2, 0); ctx.lineTo(sz/2 - sz*0.3, sz*0.2); ctx.stroke();
+            } else if (anno.text) { 
+                 const p = convertCoord({x: anno.x, y: anno.y}); const fs = (parseInt(anno.font)||20) * drawingScaleFactor;
+                 ctx.font = `${fs}px Arial`; ctx.fillStyle = color; ctx.strokeStyle = 'black'; ctx.lineWidth = 3; ctx.strokeText(anno.text, p.x, p.y); ctx.fillText(anno.text, p.x, p.y);
+            } else if (anno.points) { 
+                ctx.beginPath(); const s = convertCoord(anno.points[0]); ctx.moveTo(s.x, s.y); for(let i=1; i<anno.points.length; i++) { const p = convertCoord(anno.points[i]); ctx.lineTo(p.x, p.y); } ctx.stroke();
+            }
+            ctx.restore();
+        }
+        function convertCoord(p) { return { x: p.x * img.naturalWidth, y: p.y * img.naturalHeight }; }
+
+        function setupEvents() {
+            viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; viewer.style.cursor = 'grabbing'; });
+            window.addEventListener('mousemove', e => { if(isDragging) { panX = e.clientX - startX; panY = e.clientY - startY; render(); } });
+            window.addEventListener('mouseup', () => { isDragging = false; viewer.style.cursor = 'default'; });
+            viewer.addEventListener('wheel', e => { e.preventDefault(); const d = e.deltaY > 0 ? 0.9 : 1.1; const rect = canvas.getBoundingClientRect(); const mx = e.clientX - rect.left, my = e.clientY - rect.top; const ns = scale * d; panX = mx - (mx - panX) * d; panY = my - (my - panY) * d; scale = ns; render(); });
+
+            findingsList.addEventListener('mouseover', e => { const item = e.target.closest('p[data-annotation-id]'); if(item) { hoveredAnnotationId = item.dataset.annotationId; render(); } });
+            findingsList.addEventListener('mouseout', e => { hoveredAnnotationId = null; render(); });
+            findingsList.addEventListener('click', e => {
+                const item = e.target.closest('p[data-annotation-id]');
+                document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
+                if(item) {
+                    const id = item.dataset.annotationId;
+                    if (activeAnnotationId === id) { activeAnnotationId = null; showAll = false; fitImageToScreen(); } 
+                    else { activeAnnotationId = id; showAll = false; item.classList.add('active'); const anno = DATA.annotations.find(a => a.id === id); if(anno) centerOnAnnotation(anno); }
+                } else { activeAnnotationId = null; showAll = false; fitImageToScreen(); }
+                render();
+            });
+
+            document.getElementById('btn-toggle-all').addEventListener('click', () => { showAll = !showAll; activeAnnotationId = null; document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active')); fitImageToScreen(); render(); });
+            document.getElementById('btn-reset-zoom').addEventListener('click', () => { activeAnnotationId = null; fitImageToScreen(); });
+            
+            let initDist = 0, initScale = 1;
+            viewer.addEventListener('touchstart', e => { if (e.touches.length === 2) { initDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); initScale = scale; } else if (e.touches.length === 1) { isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY; } }, {passive: false});
+            viewer.addEventListener('touchmove', e => { e.preventDefault(); if (e.touches.length === 2) { const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); const delta = dist / initDist; const cx = viewer.offsetWidth / 2, cy = viewer.offsetHeight / 2; const ns = initScale * delta; panX = cx - (cx - panX) * (ns / scale); panY = cy - (cy - panY) * (ns / scale); scale = ns; render(); } else if (isDragging && e.touches.length === 1) { panX = e.touches[0].clientX - startX; panY = e.touches[0].clientY - startY; render(); } }, {passive: false});
+            viewer.addEventListener('touchend', () => isDragging = false);
+        }
     }
 </script>
 </body>
