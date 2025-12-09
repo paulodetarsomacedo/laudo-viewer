@@ -194,7 +194,7 @@
 
         img.onload = () => {
             resizeCanvas();
-            drawingScaleFactor = Math.max(img.naturalWidth / 1500, 1);
+            drawingScaleFactor = Math.max(img.naturalWidth / 900, 1.5);
             fitImageToScreen(); 
             setupEvents();
             
@@ -261,35 +261,104 @@
         }
 
         function drawAnnotation(anno, isActive) {
-            const findingEl = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
-            const color = findingEl ? findingEl.dataset.highlightColor : '#00FFFF';
-            ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color;
-            const baseWidth = (anno.thickness || 3) * drawingScaleFactor;
-            ctx.lineWidth = isActive ? baseWidth * 1.5 : baseWidth;
-            ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.shadowColor = 'black'; ctx.shadowBlur = 5 * drawingScaleFactor;
+    const findingEl = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
+    const color = findingEl ? findingEl.dataset.highlightColor : '#00FFFF';
+    
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
 
-            if (anno.points && anno.fillColor) { 
-                ctx.beginPath(); const s = convertCoord(anno.points[0]); ctx.moveTo(s.x, s.y);
-                for(let i=1; i<anno.points.length; i++) { const p = convertCoord(anno.points[i]); ctx.lineTo(p.x, p.y); }
-                ctx.closePath(); ctx.stroke(); ctx.globalAlpha = 0.2; ctx.fill(); ctx.globalAlpha = 1.0;
-            } else if (anno.start && anno.end) { 
-                const p1 = convertCoord(anno.start), p2 = convertCoord(anno.end);
-                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-                const fontSize = 18 * drawingScaleFactor; ctx.font = `bold ${fontSize}px Arial`; ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-                const mx = (p1.x + p2.x)/2, my = (p1.y + p2.y)/2; ctx.shadowBlur = 0; ctx.lineWidth = 4; ctx.strokeStyle = 'black';
-                ctx.strokeText(anno.text, mx, my - 10); ctx.fillText(anno.text, mx, my - 10);
-            } else if (anno.type && anno.size) { 
-                const c = convertCoord({x: anno.x, y: anno.y}); const sz = (anno.size * img.naturalWidth);
-                ctx.translate(c.x, c.y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
-                ctx.beginPath(); ctx.moveTo(-sz/2, 0); ctx.lineTo(sz/2, 0); ctx.lineTo(sz/2 - sz*0.3, -sz*0.2); ctx.moveTo(sz/2, 0); ctx.lineTo(sz/2 - sz*0.3, sz*0.2); ctx.stroke();
-            } else if (anno.text) { 
-                 const p = convertCoord({x: anno.x, y: anno.y}); const fs = (parseInt(anno.font)||20) * drawingScaleFactor;
-                 ctx.font = `${fs}px Arial`; ctx.fillStyle = color; ctx.strokeStyle = 'black'; ctx.lineWidth = 3; ctx.strokeText(anno.text, p.x, p.y); ctx.fillText(anno.text, p.x, p.y);
-            } else if (anno.points) { 
-                ctx.beginPath(); const s = convertCoord(anno.points[0]); ctx.moveTo(s.x, s.y); for(let i=1; i<anno.points.length; i++) { const p = convertCoord(anno.points[i]); ctx.lineTo(p.x, p.y); } ctx.stroke();
-            }
-            ctx.restore();
+    // 1. AJUSTE DE ESPESSURA: Base aumentada de 3 para 5
+    // Se estiver ativo (mouse em cima), aumenta ainda mais (x1.8)
+    const baseThickness = (anno.thickness || 5); 
+    const currentWidth = baseThickness * drawingScaleFactor;
+    ctx.lineWidth = isActive ? currentWidth * 1.8 : currentWidth;
+
+    // 2. AJUSTE DE VISIBILIDADE (EFEITO NEON)
+    // Usar a própria cor na sombra cria um efeito de brilho/neon que destaca no raio-x
+    ctx.lineJoin = 'round'; 
+    ctx.lineCap = 'round';
+    ctx.shadowColor = color; // Antes era 'black', agora brilha na cor do traço
+    ctx.shadowBlur = 10 * drawingScaleFactor; // Aumenta o brilho
+    
+    // Reduz um pouco a sombra se for texto pequeno para não borrar
+    if (anno.text && !anno.start) ctx.shadowBlur = 4; 
+
+    if (anno.points && anno.fillColor) { 
+        // Polígono
+        ctx.beginPath(); 
+        const s = convertCoord(anno.points[0]); 
+        ctx.moveTo(s.x, s.y);
+        for(let i=1; i<anno.points.length; i++) { 
+            const p = convertCoord(anno.points[i]); 
+            ctx.lineTo(p.x, p.y); 
         }
+        ctx.closePath(); 
+        ctx.stroke(); 
+        ctx.globalAlpha = 0.35; // Aumentei um pouco a opacidade do preenchimento
+        ctx.fill(); 
+        ctx.globalAlpha = 1.0;
+    } else if (anno.start && anno.end) { 
+        // Medida (Régua)
+        const p1 = convertCoord(anno.start), p2 = convertCoord(anno.end);
+        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+        
+        // Texto da Medida - Aumentado e com fundo para leitura
+        const fontSize = 24 * drawingScaleFactor; // Fonte maior (era 18)
+        ctx.font = `bold ${fontSize}px Arial`; 
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        
+        const mx = (p1.x + p2.x)/2, my = (p1.y + p2.y)/2; 
+        
+        // Desenha um contorno preto no texto para garantir leitura em fundo branco (osso)
+        ctx.shadowBlur = 0; 
+        ctx.lineWidth = 4 * drawingScaleFactor; 
+        ctx.strokeStyle = 'black';
+        ctx.strokeText(anno.text, mx, my - (10 * drawingScaleFactor));
+        
+        ctx.fillStyle = color;
+        ctx.fillText(anno.text, mx, my - (10 * drawingScaleFactor));
+
+    } else if (anno.type && anno.size) { 
+        // Seta
+        const c = convertCoord({x: anno.x, y: anno.y}); 
+        const sz = (anno.size * img.naturalWidth);
+        ctx.translate(c.x, c.y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
+        
+        ctx.beginPath(); 
+        ctx.moveTo(-sz/2, 0); ctx.lineTo(sz/2, 0); 
+        ctx.lineTo(sz/2 - sz*0.3, -sz*0.2); 
+        ctx.moveTo(sz/2, 0); 
+        ctx.lineTo(sz/2 - sz*0.3, sz*0.2); 
+        ctx.stroke();
+
+    } else if (anno.text) { 
+        // Texto Livre
+         const p = convertCoord({x: anno.x, y: anno.y}); 
+         const fs = (parseInt(anno.font)||26) * drawingScaleFactor; // Fonte maior (era 20)
+         ctx.font = `bold ${fs}px Arial`; 
+         
+         ctx.shadowBlur = 0;
+         ctx.strokeStyle = 'black'; 
+         ctx.lineWidth = 5 * drawingScaleFactor;
+         ctx.strokeText(anno.text, p.x, p.y); 
+         
+         ctx.fillStyle = color;
+         ctx.fillText(anno.text, p.x, p.y);
+
+    } else if (anno.points) { 
+        // Desenho Livre (Lápis)
+        ctx.beginPath(); 
+        const s = convertCoord(anno.points[0]); 
+        ctx.moveTo(s.x, s.y); 
+        for(let i=1; i<anno.points.length; i++) { 
+            const p = convertCoord(anno.points[i]); 
+            ctx.lineTo(p.x, p.y); 
+        } 
+        ctx.stroke();
+    }
+    ctx.restore();
+}
         function convertCoord(p) { return { x: p.x * img.naturalWidth, y: p.y * img.naturalHeight }; }
 
         function setupEvents() {
