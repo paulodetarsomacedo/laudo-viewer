@@ -2,392 +2,343 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport otimizado -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Laudo Interativo</title>
     <style>
-        :root { 
-            --bg-color: #121212; 
-            --panel-bg: #1e1e1e; 
-            --text-color: #e0e0e0; 
-            --accent: #3498db; 
-            --highlight: #f1c40f; 
-        }
-        
-        body { 
-            margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; 
-            background-color: var(--bg-color); color: var(--text-color); 
-            height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: row; 
-        }
-        
-        /* Área da Imagem */
-        #viewer-area { 
-            flex: 1; position: relative; overflow: hidden; 
-            background-color: #000; touch-action: none; 
-            display: flex; align-items: center; justify-content: center; 
-        }
-        canvas { display: block; width: 100%; height: 100%; }
-        
-        /* Sidebar */
+        :root { --bg-color: #000; --panel-bg: #1a1a1a; --text-color: #eee; --accent: #007bff; }
+        body { margin: 0; padding: 0; background: var(--bg-color); color: var(--text-color); font-family: sans-serif; height: 100vh; display: flex; overflow: hidden; }
+
+        /* Viewer (Imagem) */
+        #viewer-area { flex: 1; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; background: #000; }
+        canvas { display: block; }
+
+        /* Sidebar (Lista) */
         #sidebar { 
-            width: 350px; background-color: var(--panel-bg); 
-            border-left: 1px solid #333; display: flex; flex-direction: column; 
-            z-index: 100; box-shadow: -2px 0 10px rgba(0,0,0,0.5); 
+            width: 320px; background: var(--panel-bg); display: flex; flex-direction: column; 
+            border-left: 1px solid #333; z-index: 10; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
         }
-        
-        #header { 
-            padding: 15px; background: #252525; border-bottom: 1px solid #333; 
-            text-align: center; flex-shrink: 0; 
-        }
+
+        #header { padding: 15px; background: #222; text-align: center; border-bottom: 1px solid #333; }
         #header h2 { margin: 0; color: var(--accent); font-size: 18px; }
-        
-        /* Caixa de Instrução */
-        .instruction-box {
-            background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(52, 152, 219, 0.02));
-            border: 1px solid rgba(52, 152, 219, 0.3); border-left: 4px solid var(--accent);
-            border-radius: 8px; padding: 12px; margin: 15px 15px 5px 15px;
-            font-size: 13px; color: #cfcfcf; text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); line-height: 1.4; flex-shrink: 0;
-        }
 
-        #findings-list { 
-            flex: 1; overflow-y: auto; padding: 15px; 
-            scrollbar-width: thin; scrollbar-color: #444 #222; 
-        }
+        #findings-list { flex: 1; overflow-y: auto; padding: 15px; }
         
-        /* Item da Lista - Estilos base das bordas */
         .finding-item { 
-            background: #2a2a2a; margin-bottom: 10px; padding: 12px; 
-            border-radius: 6px; cursor: pointer; transition: 0.2s; 
-            font-size: 14px; line-height: 1.4;
-            
-            /* Configuração das bordas coloridas */
-            border-left-width: 5px; 
-            border-left-style: solid;
-            border-bottom-width: 2px;
-            border-bottom-style: solid;
-            /* A cor será definida via JS */
-            border-top: 1px solid transparent;
-            border-right: 1px solid transparent;
+            background: #2a2a2a; margin-bottom: 12px; padding: 12px; border-radius: 8px; 
+            cursor: pointer; border-left: 5px solid transparent; transition: all 0.2s;
+            font-size: 14px; line-height: 1.4; color: #ccc;
         }
-        .finding-item:hover { background: #333; transform: translateX(5px); }
-        .finding-item.active { background: #383838; box-shadow: 0 0 15px rgba(255, 255, 255, 0.05); }
-        
-        #controls { 
-            padding: 15px; border-top: 1px solid #333; 
-            display: flex; gap: 10px; flex-direction: column; 
-            background-color: var(--panel-bg); flex-shrink: 0; 
-        }
-        .btn { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; width: 100%; transition: 0.2s; }
-        .btn:hover { filter: brightness(1.1); }
-        .btn.secondary { background: #444; }
+        .finding-item:hover { background: #333; color: #fff; }
+        .finding-item.active { background: #333; color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
 
-        /* --- ESTILOS DA ASSINATURA (NOVO) --- */
-        #signature-container {
-            padding: 15px;
-            background-color: #181818; /* Levemente mais escuro para destaque */
-            border-top: 1px solid #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            padding-bottom: max(20px, env(safe-area-inset-bottom));
-        }
+        #signature-area { padding: 20px; text-align: center; border-top: 1px solid #333; background: #222; }
+        #signature-img { max-width: 150px; filter: invert(1); opacity: 0.9; } /* Inverte cor para fundo escuro */
 
-        #signature-img {
-            max-width: 180px; /* Tamanho controlado */
-            max-height: 80px;
-            width: auto;
-            height: auto;
-            display: block;
-            margin-bottom: 5px;
-            /* Filtro IMPORTANTE: Inverte a cor (preto vira branco) para aparecer no fundo escuro */
-            filter: brightness(0) invert(1);
-            opacity: 0.9;
-        }
-
-        .signature-label {
-            font-size: 11px;
-            color: #777;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 5px;
-            font-weight: 600;
-        }
-
-        /* --- AJUSTES ESPECÍFICOS PARA CELULAR --- */
+        /* --- LAYOUT MOBILE (CARROSSEL INFERIOR) --- */
         @media (max-width: 768px) {
             body { flex-direction: column; }
             
-            /* Invertemos a lógica: Imagem menor, Texto maior */
-            #viewer-area { height: 35%; } 
+            #viewer-area { height: 60%; width: 100%; order: 1; }
             
             #sidebar { 
-                width: 100%; 
-                height: 65%; /* Tópicos sobem bastante */
-                border-left: none; 
-                border-top: 2px solid var(--accent); 
+                height: 40%; width: 100%; order: 2; border-left: none; border-top: 1px solid #333;
+                display: flex; flex-direction: column;
             }
-            
-            .instruction-box { margin: 10px; padding: 8px; font-size: 12px; }
-            #findings-list { padding: 10px; }
-            
-            /* Remove o botão resetar no celular */
-            #btn-reset-zoom { display: none; }
 
-            /* Ajuste assinatura mobile */
-            #signature-container { padding: 10px; flex-direction: row; justify-content: space-between; }
-            #signature-img { max-height: 40px; margin-bottom: 0; }
-            .signature-label { margin-top: 0; }
+            #header, #signature-area { display: none; } /* Oculta header e assinatura no mobile para dar espaço */
+
+            #findings-list { 
+                display: flex; flex-direction: row; /* Horizontal */
+                overflow-x: auto; overflow-y: hidden; /* Scroll lateral */
+                padding: 10px; gap: 10px; white-space: normal;
+                align-items: center;
+            }
+
+            .finding-item {
+                flex: 0 0 85%; /* Item ocupa 85% da largura da tela */
+                width: 85%; 
+                margin-bottom: 0; height: auto;
+                display: flex; align-items: center;
+                font-size: 13px;
+                border-bottom: 4px solid transparent; /* Borda colorida embaixo no mobile */
+                border-left: none;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="viewer-area"><canvas id="canvas-report"></canvas></div>
-    <div id="sidebar">
-        <div id="header"><h2>Achados Radiográficos</h2></div>
-        <div class="instruction-box">Clique individualmente nos achados para visualizar detalhadamente na imagem radiográfica.</div>
-        <div id="findings-list"><p style="text-align:center; color: #777; margin-top: 20px;">Carregando achados...</p></div>
-        
-        <div id="controls">
-            <button id="btn-toggle-all" class="btn">👁️ Ver Todos na Imagem</button>
-            <button id="btn-reset-zoom" class="btn secondary">⟲ Resetar Visualização</button>
-        </div>
 
-        <!-- ÁREA DA ASSINATURA -->
-        <div id="signature-container">
-            <!-- O src busca o arquivo na mesma pasta do GitHub Pages -->
-            <img id="signature-img" src="assinatura.png" alt="Dr. Paulo de Tarso Silva de Macedo">
-            <span class="signature-label">Radiologista Responsável, DDS, PhD</span>
-        </div>
+<div id="viewer-area">
+    <canvas id="canvas"></canvas>
+</div>
+
+<div id="sidebar">
+    <div id="header"><h2>Achados Radiográficos</h2></div>
+    <div id="findings-list">Carregando...</div>
+    <div id="signature-area">
+        <img id="signature-img" src="" alt="Assinatura" style="display:none;">
     </div>
+</div>
 
 <script>
     let DATA = null;
     try {
         const hash = window.location.hash.substring(1);
         if (hash) {
-            const jsonString = decodeURIComponent(escape(atob(hash)));
-            DATA = JSON.parse(jsonString);
-            document.getElementById('findings-list').innerHTML = DATA.findingsHtml;
-            
-            // Verifica se o App mandou a assinatura via Base64, se sim, usa ela.
-            // Se não, o HTML já usa 'assinatura.png' por padrão.
-            if(DATA.signature) {
-                document.getElementById('signature-img').src = DATA.signature;
-            }
+            const json = decodeURIComponent(escape(atob(hash)));
+            DATA = JSON.parse(json);
+        }
+    } catch(e) { console.error(e); }
 
-        } else { document.getElementById('findings-list').innerHTML = "<p style='text-align:center; color:red;'>Erro: Nenhum dado encontrado.</p>"; }
-    } catch (e) { console.error(e); document.getElementById('findings-list').innerHTML = "<p style='text-align:center; color:red;'>Erro ao processar o laudo.</p>"; }
+    if (!DATA) {
+        document.getElementById('findings-list').innerHTML = "<p style='text-align:center; color:red; padding:20px;'>Erro ao carregar dados.</p>";
+    } else {
+        // 1. Renderiza HTML da Lista
+        const listEl = document.getElementById('findings-list');
+        listEl.innerHTML = DATA.findingsHtml || "<p style='padding:10px;'>Nenhum achado interativo.</p>";
 
-    if (DATA) {
+        // 2. Renderiza Assinatura (se houver Base64)
+        if (DATA.signature) {
+            const sigImg = document.getElementById('signature-img');
+            sigImg.src = DATA.signature;
+            sigImg.style.display = 'inline-block';
+        }
+
+        // 3. Aplica cores às bordas dos itens da lista
+        const items = listEl.querySelectorAll('p[data-highlight-color]');
+        items.forEach(p => {
+            p.classList.add('finding-item');
+            const color = p.dataset.highlightColor;
+            // No Desktop borda na esquerda, no Mobile borda embaixo (via CSS media query + inline style)
+            p.style.borderLeftColor = color; 
+            p.style.borderBottomColor = color;
+        });
+
+        // --- LÓGICA DO CANVAS ---
         const viewer = document.getElementById('viewer-area');
-        const canvas = document.getElementById('canvas-report');
+        const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const findingsList = document.getElementById('findings-list');
+        
         let img = new Image();
         let scale = 1, panX = 0, panY = 0;
         let isDragging = false, startX, startY;
-        let showAll = false, activeAnnotationId = null, hoveredAnnotationId = null;
-        let drawingScaleFactor = 1;
+        let activeAnnotationId = null; // ID do item ativo (destacado)
+        
+        // Fator de escala para desenhos ficarem proporcionais
+        // Baseado em uma largura de referência de 1000px.
+        // Se a imagem for 2000px, traços serão 2x mais grossos.
+        let drawingScale = 1; 
 
         img.onload = () => {
-            resizeCanvas();
-            drawingScaleFactor = Math.max(img.naturalWidth / 900, 1.5);
-            fitImageToScreen(); 
-            setupEvents();
-            
-            // --- APLICAÇÃO DAS BORDAS COLORIDAS (ESQUERDA E INFERIOR) ---
-            document.querySelectorAll('#findings-list p').forEach(p => {
-                p.classList.add('finding-item');
-                // Pega a cor do dataset (vinda do app)
-                const color = p.dataset.highlightColor;
-                if(color) {
-                    // Força a cor nas bordas
-                    p.style.borderLeftColor = color;
-                    p.style.borderBottomColor = color;
-                }
-            });
+            resize();
+            // Define o fator de escala baseado na resolução real da imagem
+            drawingScale = img.naturalWidth / 1000; 
+            fitImage();
+            render();
         };
         img.src = DATA.image;
 
-        window.addEventListener('resize', () => { resizeCanvas(); if(!activeAnnotationId) fitImageToScreen(); });
-        function resizeCanvas() { canvas.width = viewer.offsetWidth; canvas.height = viewer.offsetHeight; render(); }
+        window.addEventListener('resize', () => { resize(); fitImage(); render(); });
 
+        function resize() {
+            canvas.width = viewer.clientWidth;
+            canvas.height = viewer.clientHeight;
+        }
+
+        function fitImage() {
+            const rW = canvas.width / img.naturalWidth;
+            const rH = canvas.height / img.naturalHeight;
+            scale = Math.min(rW, rH);
+            panX = (canvas.width - img.naturalWidth * scale) / 2;
+            panY = (canvas.height - img.naturalHeight * scale) / 2;
+        }
+
+        // --- RENDERIZAÇÃO ---
         function render() {
-            ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.setTransform(scale, 0, 0, scale, panX, panY); ctx.drawImage(img, 0, 0);
-            if (showAll) { DATA.annotations.forEach(anno => drawAnnotation(anno, false)); } 
-            else {
-                const targetId = hoveredAnnotationId || activeAnnotationId;
-                if (targetId) { const anno = DATA.annotations.find(a => a.id === targetId); if (anno) drawAnnotation(anno, true); }
+            // Limpa
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Aplica Pan/Zoom
+            ctx.setTransform(scale, 0, 0, scale, panX, panY);
+            ctx.drawImage(img, 0, 0);
+
+            // Desenha Anotação Ativa
+            if (activeAnnotationId) {
+                const anno = DATA.annotations.find(a => a.id === activeAnnotationId);
+                if (anno) drawAnnotation(anno);
             }
         }
 
-        function centerOnAnnotation(anno) {
-            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            const addPoint = (relX, relY) => { minX = Math.min(minX, relX); maxX = Math.max(maxX, relX); minY = Math.min(minY, relY); maxY = Math.max(maxY, relY); };
-            if (anno.points) { anno.points.forEach(p => addPoint(p.x, p.y)); } 
-            else if (anno.start && anno.end) { addPoint(anno.start.x, anno.start.y); addPoint(anno.end.x, anno.end.y); } 
-            else { const px = (anno.x!==undefined)?anno.x:0.5, py = (anno.y!==undefined)?anno.y:0.5, margin = 0.05; addPoint(px-margin, py-margin); addPoint(px+margin, py+margin); }
-            
-            const imgW = img.naturalWidth, imgH = img.naturalHeight;
-            const annoWidth = (maxX - minX) * imgW, annoHeight = (maxY - minY) * imgH;
-            const centerX = ((minX + maxX) / 2) * imgW, centerY = ((minY + maxY) / 2) * imgH;
-            
-            const paddingFactor = 0.6;
-            const scaleX = canvas.width / annoWidth, scaleY = canvas.height / annoHeight;
-            let targetScale = Math.min(scaleX, scaleY) * paddingFactor;
-            
-            const minScaleAllowed = Math.min(canvas.width / imgW, canvas.height / imgH);
-            const maxScaleAllowed = 5.0;
-            targetScale = Math.max(targetScale, minScaleAllowed);
-            targetScale = Math.min(targetScale, maxScaleAllowed);
+        function drawAnnotation(anno) {
+            // Recupera a cor original enviada pelo script.js
+            // Tenta pegar do elemento HTML (prioridade) ou do objeto anno
+            const el = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
+            const color = el ? el.dataset.highlightColor : (anno.color || '#00FFFF');
 
-            scale = targetScale;
-            panX = (canvas.width / 2) - (centerX * scale);
-            panY = (canvas.height / 2) - (centerY * scale);
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+
+            // Efeito Neon
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 15 * drawingScale; 
+
+            // Espessura Proporcional
+            const baseThickness = anno.thickness || 3;
+            ctx.lineWidth = baseThickness * drawingScale * 1.5; // 1.5x para destaque
+
+            // Lógica de desenho baseada no tipo
+            if (anno.points && anno.fillColor) { // Polígono
+                ctx.beginPath();
+                anno.points.forEach((p, i) => {
+                    const x = p.x * img.naturalWidth;
+                    const y = p.y * img.naturalHeight;
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                });
+                ctx.closePath();
+                ctx.stroke();
+                ctx.globalAlpha = 0.3; ctx.fill(); 
+            } else if (anno.start && anno.end) { // Medida
+                const x1 = anno.start.x * img.naturalWidth, y1 = anno.start.y * img.naturalHeight;
+                const x2 = anno.end.x * img.naturalWidth, y2 = anno.end.y * img.naturalHeight;
+                ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+                
+                // Texto Proporcional
+                const fontSize = (24 * drawingScale);
+                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+                ctx.shadowBlur = 0; // Texto nítido
+                ctx.lineWidth = 4 * drawingScale; ctx.strokeStyle = 'black'; // Contorno preto
+                const mx = (x1+x2)/2, my = (y1+y2)/2;
+                ctx.strokeText(anno.text, mx, my - 10);
+                ctx.fillText(anno.text, mx, my - 10);
+
+            } else if (anno.type && anno.size) { // Seta
+                const x = anno.x * img.naturalWidth, y = anno.y * img.naturalHeight;
+                const size = anno.size * img.naturalWidth;
+                ctx.translate(x, y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
+                ctx.beginPath(); 
+                ctx.moveTo(-size/2, 0); ctx.lineTo(size/2, 0); 
+                ctx.lineTo(size/2 - size*0.3, -size*0.2); 
+                ctx.moveTo(size/2, 0); ctx.lineTo(size/2 - size*0.3, size*0.2); 
+                ctx.stroke();
+
+            } else if (anno.text) { // Texto
+                const x = anno.x * img.naturalWidth, y = anno.y * img.naturalHeight;
+                const fs = (parseInt(anno.font)||24) * drawingScale;
+                ctx.font = `bold ${fs}px Arial`;
+                ctx.shadowBlur = 0; ctx.lineWidth = 4 * drawingScale; ctx.strokeStyle = 'black';
+                ctx.strokeText(anno.text, x, y);
+                ctx.fillText(anno.text, x, y);
+
+            } else if (anno.points) { // Desenho Livre
+                ctx.beginPath();
+                anno.points.forEach((p, i) => {
+                    const x = p.x * img.naturalWidth, y = p.y * img.naturalHeight;
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        // --- INTERAÇÃO (CLIQUE NA LISTA) ---
+        // Lógica de Toggle: Clica -> Ativa, Clica de novo -> Desativa
+        listEl.addEventListener('click', (e) => {
+            const item = e.target.closest('.finding-item');
+            if (!item) return;
+
+            // Remove classe 'active' de todos
+            document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
+
+            const id = item.dataset.annotationId;
+            
+            if (activeAnnotationId === id) {
+                // Se clicou no que já estava ativo: DESATIVA
+                activeAnnotationId = null;
+                // Volta ao zoom padrão
+                fitImage();
+            } else {
+                // Se clicou em um novo: ATIVA
+                activeAnnotationId = id;
+                item.classList.add('active');
+                
+                // Centraliza e dá Zoom na anotação
+                const anno = DATA.annotations.find(a => a.id === id);
+                if (anno) zoomToAnnotation(anno);
+            }
             render();
-        }
+        });
 
-        function fitImageToScreen() {
-            const scaleX = canvas.width / img.naturalWidth;
-            const scaleY = canvas.height / img.naturalHeight;
-            scale = Math.min(scaleX, scaleY);
-            panX = (canvas.width - (img.naturalWidth * scale)) / 2;
-            panY = (canvas.height - (img.naturalHeight * scale)) / 2;
-            render();
-        }
+        function zoomToAnnotation(anno) {
+            // Calcula o centro da anotação
+            let cx = 0.5, cy = 0.5;
+            if (anno.start) { cx = (anno.start.x + anno.end.x)/2; cy = (anno.start.y + anno.end.y)/2; }
+            else if (anno.points) { cx = anno.points[0].x; cy = anno.points[0].y; }
+            else { cx = anno.x; cy = anno.y; }
 
-        function drawAnnotation(anno, isActive) {
-    const findingEl = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
-    const color = findingEl ? findingEl.dataset.highlightColor : '#00FFFF';
-    
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
+            // Converte para pixels reais
+            const imgX = cx * img.naturalWidth;
+            const imgY = cy * img.naturalHeight;
 
-    // 1. AJUSTE DE ESPESSURA: Base aumentada de 3 para 5
-    // Se estiver ativo (mouse em cima), aumenta ainda mais (x1.8)
-    const baseThickness = (anno.thickness || 5); 
-    const currentWidth = baseThickness * drawingScaleFactor;
-    ctx.lineWidth = isActive ? currentWidth * 1.8 : currentWidth;
-
-    // 2. AJUSTE DE VISIBILIDADE (EFEITO NEON)
-    // Usar a própria cor na sombra cria um efeito de brilho/neon que destaca no raio-x
-    ctx.lineJoin = 'round'; 
-    ctx.lineCap = 'round';
-    ctx.shadowColor = color; // Antes era 'black', agora brilha na cor do traço
-    ctx.shadowBlur = 10 * drawingScaleFactor; // Aumenta o brilho
-    
-    // Reduz um pouco a sombra se for texto pequeno para não borrar
-    if (anno.text && !anno.start) ctx.shadowBlur = 4; 
-
-    if (anno.points && anno.fillColor) { 
-        // Polígono
-        ctx.beginPath(); 
-        const s = convertCoord(anno.points[0]); 
-        ctx.moveTo(s.x, s.y);
-        for(let i=1; i<anno.points.length; i++) { 
-            const p = convertCoord(anno.points[i]); 
-            ctx.lineTo(p.x, p.y); 
-        }
-        ctx.closePath(); 
-        ctx.stroke(); 
-        ctx.globalAlpha = 0.35; // Aumentei um pouco a opacidade do preenchimento
-        ctx.fill(); 
-        ctx.globalAlpha = 1.0;
-    } else if (anno.start && anno.end) { 
-        // Medida (Régua)
-        const p1 = convertCoord(anno.start), p2 = convertCoord(anno.end);
-        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-        
-        // Texto da Medida - Aumentado e com fundo para leitura
-        const fontSize = 24 * drawingScaleFactor; // Fonte maior (era 18)
-        ctx.font = `bold ${fontSize}px Arial`; 
-        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-        
-        const mx = (p1.x + p2.x)/2, my = (p1.y + p2.y)/2; 
-        
-        // Desenha um contorno preto no texto para garantir leitura em fundo branco (osso)
-        ctx.shadowBlur = 0; 
-        ctx.lineWidth = 4 * drawingScaleFactor; 
-        ctx.strokeStyle = 'black';
-        ctx.strokeText(anno.text, mx, my - (10 * drawingScaleFactor));
-        
-        ctx.fillStyle = color;
-        ctx.fillText(anno.text, mx, my - (10 * drawingScaleFactor));
-
-    } else if (anno.type && anno.size) { 
-        // Seta
-        const c = convertCoord({x: anno.x, y: anno.y}); 
-        const sz = (anno.size * img.naturalWidth);
-        ctx.translate(c.x, c.y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
-        
-        ctx.beginPath(); 
-        ctx.moveTo(-sz/2, 0); ctx.lineTo(sz/2, 0); 
-        ctx.lineTo(sz/2 - sz*0.3, -sz*0.2); 
-        ctx.moveTo(sz/2, 0); 
-        ctx.lineTo(sz/2 - sz*0.3, sz*0.2); 
-        ctx.stroke();
-
-    } else if (anno.text) { 
-        // Texto Livre
-         const p = convertCoord({x: anno.x, y: anno.y}); 
-         const fs = (parseInt(anno.font)||26) * drawingScaleFactor; // Fonte maior (era 20)
-         ctx.font = `bold ${fs}px Arial`; 
-         
-         ctx.shadowBlur = 0;
-         ctx.strokeStyle = 'black'; 
-         ctx.lineWidth = 5 * drawingScaleFactor;
-         ctx.strokeText(anno.text, p.x, p.y); 
-         
-         ctx.fillStyle = color;
-         ctx.fillText(anno.text, p.x, p.y);
-
-    } else if (anno.points) { 
-        // Desenho Livre (Lápis)
-        ctx.beginPath(); 
-        const s = convertCoord(anno.points[0]); 
-        ctx.moveTo(s.x, s.y); 
-        for(let i=1; i<anno.points.length; i++) { 
-            const p = convertCoord(anno.points[i]); 
-            ctx.lineTo(p.x, p.y); 
-        } 
-        ctx.stroke();
-    }
-    ctx.restore();
-}
-        function convertCoord(p) { return { x: p.x * img.naturalWidth, y: p.y * img.naturalHeight }; }
-
-        function setupEvents() {
-            viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; viewer.style.cursor = 'grabbing'; });
-            window.addEventListener('mousemove', e => { if(isDragging) { panX = e.clientX - startX; panY = e.clientY - startY; render(); } });
-            window.addEventListener('mouseup', () => { isDragging = false; viewer.style.cursor = 'default'; });
-            viewer.addEventListener('wheel', e => { e.preventDefault(); const d = e.deltaY > 0 ? 0.9 : 1.1; const rect = canvas.getBoundingClientRect(); const mx = e.clientX - rect.left, my = e.clientY - rect.top; const ns = scale * d; panX = mx - (mx - panX) * d; panY = my - (my - panY) * d; scale = ns; render(); });
-
-            findingsList.addEventListener('mouseover', e => { const item = e.target.closest('p[data-annotation-id]'); if(item) { hoveredAnnotationId = item.dataset.annotationId; render(); } });
-            findingsList.addEventListener('mouseout', e => { hoveredAnnotationId = null; render(); });
-            findingsList.addEventListener('click', e => {
-                const item = e.target.closest('p[data-annotation-id]');
-                document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
-                if(item) {
-                    const id = item.dataset.annotationId;
-                    if (activeAnnotationId === id) { activeAnnotationId = null; showAll = false; fitImageToScreen(); } 
-                    else { activeAnnotationId = id; showAll = false; item.classList.add('active'); const anno = DATA.annotations.find(a => a.id === id); if(anno) centerOnAnnotation(anno); }
-                } else { activeAnnotationId = null; showAll = false; fitImageToScreen(); }
-                render();
-            });
-
-            document.getElementById('btn-toggle-all').addEventListener('click', () => { showAll = !showAll; activeAnnotationId = null; document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active')); fitImageToScreen(); render(); });
-            document.getElementById('btn-reset-zoom').addEventListener('click', () => { activeAnnotationId = null; fitImageToScreen(); });
+            // Define um zoom (ex: 2.5x)
+            scale = Math.min(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight) * 2.5;
             
-            let initDist = 0, initScale = 1;
-            viewer.addEventListener('touchstart', e => { if (e.touches.length === 2) { initDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); initScale = scale; } else if (e.touches.length === 1) { isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY; } }, {passive: false});
-            viewer.addEventListener('touchmove', e => { e.preventDefault(); if (e.touches.length === 2) { const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); const delta = dist / initDist; const cx = viewer.offsetWidth / 2, cy = viewer.offsetHeight / 2; const ns = initScale * delta; panX = cx - (cx - panX) * (ns / scale); panY = cy - (cy - panY) * (ns / scale); scale = ns; render(); } else if (isDragging && e.touches.length === 1) { panX = e.touches[0].clientX - startX; panY = e.touches[0].clientY - startY; render(); } }, {passive: false});
-            viewer.addEventListener('touchend', () => isDragging = false);
+            // Centraliza
+            panX = (canvas.width / 2) - (imgX * scale);
+            panY = (canvas.height / 2) - (imgY * scale);
         }
+
+        // --- INTERAÇÃO (PAN/ZOOM MOUSE) ---
+        viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; });
+        window.addEventListener('mousemove', e => { if(isDragging) { panX = e.clientX - startX; panY = e.clientY - startY; render(); } });
+        window.addEventListener('mouseup', () => isDragging = false);
+        viewer.addEventListener('wheel', e => {
+            e.preventDefault();
+            const d = e.deltaY > 0 ? 0.9 : 1.1;
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            const ns = scale * d;
+            panX = mx - (mx - panX) * d;
+            panY = my - (my - panY) * d;
+            scale = ns;
+            render();
+        });
+        
+        // Touch (Mobile)
+        let initDist = 0, initScale = 1;
+        viewer.addEventListener('touchstart', e => { 
+            if (e.touches.length === 2) { 
+                initDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); 
+                initScale = scale; 
+            } else if (e.touches.length === 1) { 
+                isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY; 
+            } 
+        }, {passive: false});
+
+        viewer.addEventListener('touchmove', e => { 
+            e.preventDefault(); 
+            if (e.touches.length === 2) { 
+                const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); 
+                const delta = dist / initDist; 
+                const cx = viewer.offsetWidth / 2, cy = viewer.offsetHeight / 2; 
+                const ns = initScale * delta; 
+                panX = cx - (cx - panX) * (ns / scale); 
+                panY = cy - (cy - panY) * (ns / scale); 
+                scale = ns; 
+                render(); 
+            } else if (isDragging && e.touches.length === 1) { 
+                panX = e.touches[0].clientX - startX; 
+                panY = e.touches[0].clientY - startY; 
+                render(); 
+            } 
+        }, {passive: false});
+        viewer.addEventListener('touchend', () => isDragging = false);
     }
 </script>
 </body>
