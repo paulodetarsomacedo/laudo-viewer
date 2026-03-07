@@ -46,38 +46,72 @@
             max-width: 160px; height: auto; 
             filter: brightness(0) invert(1); opacity: 0.9; /* Garante visibilidade no fundo escuro */
         }
+@media (max-width: 768px) {
+    body { flex-direction: column; }
+    
+    /* Área da imagem com título sobreposto */
+    #viewer-area { height: 50%; width: 100%; order: 1; }
+    
+    /* Sidebar agora contem o resto */
+    #sidebar { 
+        height: 50%; width: 100%; order: 2; 
+        border-left: none; border-top: 2px solid var(--accent);
+        display: flex; flex-direction: column;
+    }
 
-        @media (max-width: 768px) {
-            body { flex-direction: column; }
-            #viewer-area { height: 55%; width: 100%; order: 1; }
-            
-            #sidebar { 
-                height: 45%; width: 100%; order: 2; border-left: none; border-top: 2px solid var(--accent);
-                display: flex; flex-direction: column;
-            }
+    #header, .instruction-box { display: block; padding: 5px; font-size: 11px; }
+    #controls { display: none; } /* Oculta botões no mobile para dar espaço */
 
-            #header, .instruction-box { display: block; padding: 8px; font-size: 12px; }
-            
-            #findings-list { 
-                display: flex; flex-direction: row; overflow-x: auto; 
-                padding: 10px; gap: 10px; align-items: center; 
-            }
-            .finding-item {
-                flex: 0 0 85%; width: 85%; margin: 0; 
-                border-left: none; border-bottom: 4px solid transparent;
-                background: #252525; font-size: 13px;
-            }
+    /* CARROSSEL EM 2 LINHAS */
+    #findings-list { 
+        display: grid;
+        grid-template-rows: repeat(2, 1fr); /* 2 Linhas fixas */
+        grid-auto-flow: column; /* Flui para a direita */
+        overflow-x: auto; 
+        gap: 8px; padding: 10px;
+        align-content: start;
+        flex: 1; /* Ocupa espaço disponível */
+    }
 
-            #controls { display: none; } 
-            
-            #signature-area { padding: 8px; }
-            #signature-img { max-width: 120px; }
-        }
+    .finding-item {
+        width: 280px; /* Largura fixa para criar o carrossel */
+        white-space: normal; /* Permite quebra de texto dentro do card */
+        margin: 0;
+        font-size: 12px;
+        height: 100%; /* Preenche a linha */
+        display: flex; align-items: center;
+    }
+
+    /* Assinatura fixa no rodapé do mobile */
+    #signature-area { 
+        padding: 5px; order: 10; /* Força ficar no final */
+        background: #111; 
+    }
+    #signature-img { max-width: 100px; }
+}
+
+
+        #viewer-title {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    z-index: 50; /* Garante que fique acima do canvas */
+    pointer-events: none; /* Deixa o clique passar para o zoom */
+}
     </style>
 </head>
 <body>
 
 <div id="viewer-area">
+    <div id="viewer-title">LAUDO INTERATIVO</div> <!-- ADICIONE ISSO -->
     <canvas id="canvas"></canvas>
 </div>
 
@@ -203,16 +237,71 @@
             if (isActive && labelText) drawLabel(ctx, labelText, labelPos.x, labelPos.y - (30 * drawingScale), color);
         }
 
-        function drawLabel(ctx, text, x, y, color) {
-            ctx.save();
-            const fontSize = 24 * drawingScale; ctx.font = `600 ${fontSize}px "Segoe UI", Arial`;
-            const padding = 10 * drawingScale; const textWidth = ctx.measureText(text).width;
-            const boxW = textWidth + padding*2; const boxH = fontSize + padding*2;
-            ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.beginPath(); ctx.roundRect(x, y-boxH, boxW, boxH, 8); ctx.fill();
-            ctx.lineWidth = 2 * drawingScale; ctx.strokeStyle = color; ctx.stroke();
-            ctx.fillStyle = "#fff"; ctx.textBaseline = "middle"; ctx.fillText(text, x+padding, y-boxH+(boxH/2)+2);
-            ctx.restore();
+       function wrapText(ctx, text, maxWidth) {
+    const words = text.split(' ');
+    let lines = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = ctx.measureText(currentLine + " " + word).width;
+        if (width < maxWidth) {
+            currentLine += " " + word;
+        } else {
+            lines.push(currentLine);
+            currentLine = word;
         }
+    }
+    lines.push(currentLine);
+    return lines;
+}
+
+// Substitua a função drawLabel antiga por esta:
+function drawLabel(ctx, text, x, y, color) {
+    ctx.save();
+    const fontSize = 18 * drawingScale; // Fonte um pouco menor para caber melhor
+    const lineHeight = fontSize * 1.2;
+    ctx.font = `600 ${fontSize}px "Segoe UI", Arial`;
+    
+    // Configurações da caixa
+    const maxWidth = 300 * drawingScale; // Largura máxima do balão
+    const padding = 15 * drawingScale;
+    
+    // Quebra o texto
+    const lines = wrapText(ctx, text, maxWidth);
+    
+    // Calcula dimensões
+    let maxLineWidth = 0;
+    lines.forEach(line => maxLineWidth = Math.max(maxLineWidth, ctx.measureText(line).width));
+    const boxW = maxLineWidth + (padding * 2);
+    const boxH = (lines.length * lineHeight) + (padding * 2);
+
+    // Ajusta Posição: Desenha ABAIXO e à DIREITA do ponto
+    // Se sair da tela na direita, joga para a esquerda (lógica simples)
+    let finalX = x + 10; 
+    let finalY = y + 20; // 20px abaixo do ponto
+
+    // Fundo
+    ctx.fillStyle = "rgba(0,0,0,0.85)";
+    ctx.beginPath(); 
+    ctx.roundRect(finalX, finalY, boxW, boxH, 10); 
+    ctx.fill();
+    
+    // Borda lateral esquerda (Estilo bonito)
+    ctx.beginPath();
+    ctx.roundRect(finalX, finalY, 6 * drawingScale, boxH, {topLeft: 10, bottomLeft: 10});
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    // Texto
+    ctx.fillStyle = "#fff"; 
+    ctx.textBaseline = "top";
+    lines.forEach((line, i) => {
+        ctx.fillText(line, finalX + padding + (5*drawingScale), finalY + padding + (i * lineHeight));
+    });
+
+    ctx.restore();
+}
 
         listEl.addEventListener('click', (e) => {
             const item = e.target.closest('.finding-item');
