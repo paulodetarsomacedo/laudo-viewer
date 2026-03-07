@@ -8,129 +8,162 @@
         :root { --bg-color: #000; --panel-bg: #151515; --text-color: #eee; --accent: #007bff; }
         body { margin: 0; padding: 0; background: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; overflow: hidden; }
 
+        /* --- ÁREA DA IMAGEM --- */
         #viewer-area { flex: 1; position: relative; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; }
         canvas { display: block; }
 
+        /* Título Flutuante */
+        #viewer-title {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7); color: rgba(255, 255, 255, 0.95);
+            padding: 8px 20px; border-radius: 30px; font-size: 14px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px; z-index: 50; pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(5px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* CARD FLUTUANTE DE TEXTO (A novidade) */
+        #finding-card {
+            position: absolute; display: none; z-index: 60;
+            background: rgba(20, 20, 20, 0.95); color: #fff;
+            backdrop-filter: blur(10px);
+            padding: 15px 40px 15px 20px; /* Padding extra na direita pro botão X */
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border-left: 5px solid var(--accent);
+            font-size: 15px; line-height: 1.5;
+            max-width: 350px; min-width: 200px;
+            /* Animação */
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Posicionamento Desktop: Canto Inferior Esquerdo */
+        @media (min-width: 769px) {
+            #finding-card { bottom: 30px; left: 30px; }
+        }
+
+        /* Botão Fechar do Card */
+        .close-card {
+            position: absolute; top: 8px; right: 10px;
+            background: none; border: none; color: #aaa;
+            font-size: 18px; cursor: pointer; padding: 0; line-height: 1;
+        }
+        .close-card:hover { color: #fff; }
+
+        /* --- SIDEBAR LATERAL --- */
         #sidebar { 
-            width: 350px; background: var(--panel-bg); display: flex; flex-direction: column; 
+            width: 360px; background: var(--panel-bg); display: flex; flex-direction: column; 
             border-left: 1px solid #333; z-index: 20; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
         }
 
-        #header { padding: 12px; background: #1f1f1f; text-align: center; border-bottom: 1px solid #333; flex-shrink: 0; }
+        #header { padding: 15px; background: #1f1f1f; text-align: center; border-bottom: 1px solid #333; flex-shrink: 0; }
         #header h2 { margin: 0; color: var(--accent); font-size: 18px; }
 
         .instruction-box {
-            background: #252525; color: #aaa; font-size: 12px; padding: 10px;
+            background: #252525; color: #aaa; font-size: 12px; padding: 10px 20px;
             text-align: center; border-bottom: 1px solid #333; flex-shrink: 0;
         }
 
         #findings-list { flex: 1; overflow-y: auto; padding: 15px; }
         
         .finding-item { 
-            background: #2a2a2a; margin-bottom: 10px; padding: 12px; border-radius: 6px; 
+            background: #2a2a2a; margin-bottom: 10px; padding: 12px; border-radius: 8px; 
             cursor: pointer; border-left: 5px solid transparent; transition: all 0.2s;
             font-size: 14px; line-height: 1.4; color: #ccc;
         }
-        .finding-item:hover { background: #333; color: #fff; transform: translateX(2px); }
-        .finding-item.active { background: #383838; color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.1); }
+        .finding-item:hover { background: #333; color: #fff; transform: translateX(3px); }
+        .finding-item.active { background: #383838; color: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.1); border-color: #fff !important; }
 
         #controls { padding: 15px; border-top: 1px solid #333; background: #1f1f1f; display: flex; gap: 10px; flex-direction: column; flex-shrink: 0; }
         .btn { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        
-        /* Área da Assinatura Fixa */
+        .btn.secondary { background: #444; }
+
         #signature-area { 
-            padding: 15px; text-align: center; border-top: 1px solid #333; 
+            padding: 20px; text-align: center; border-top: 1px solid #333; 
             background: #151515; flex-shrink: 0; display: flex; justify-content: center;
         }
-        #signature-img { 
-            max-width: 160px; height: auto; 
-            filter: brightness(0) invert(1); opacity: 0.9; /* Garante visibilidade no fundo escuro */
+        #signature-img { max-width: 150px; height: auto; filter: brightness(0) invert(1); opacity: 0.85; }
+
+        /* --- LAYOUT MOBILE --- */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            
+            #viewer-area { height: 50%; width: 100%; order: 1; }
+            
+            #sidebar { 
+                height: 50%; width: 100%; order: 2; 
+                border-left: none; border-top: 2px solid var(--accent);
+                display: flex; flex-direction: column;
+            }
+
+            #header, .instruction-box { display: block; padding: 8px; font-size: 12px; }
+            #controls { display: none; }
+
+            /* Grid de Achados (2 Colunas/Linhas + Scroll) */
+            #findings-list { 
+                display: grid;
+                grid-template-rows: repeat(2, 1fr); /* 2 linhas */
+                grid-auto-flow: column; /* Expande para direita */
+                overflow-x: auto; 
+                gap: 8px; padding: 10px;
+                align-content: start;
+                flex: 1; 
+            }
+
+            .finding-item {
+                width: 280px; 
+                white-space: normal;
+                margin: 0; font-size: 12px;
+                height: 100%; display: flex; align-items: center;
+                border-left: none; border-bottom: 4px solid transparent; 
+                background: #252525;
+            }
+
+            #signature-area { padding: 8px; order: 10; background: #111; }
+            #signature-img { max-width: 100px; }
+
+            /* Card Flutuante no Mobile (Topo) */
+            #finding-card {
+                top: 60px; left: 50%; transform: translateX(-50%); 
+                width: 90%; max-width: 90%; bottom: auto;
+            }
         }
-@media (max-width: 768px) {
-    body { flex-direction: column; }
-    
-    /* Área da imagem com título sobreposto */
-    #viewer-area { height: 50%; width: 100%; order: 1; }
-    
-    /* Sidebar agora contem o resto */
-    #sidebar { 
-        height: 50%; width: 100%; order: 2; 
-        border-left: none; border-top: 2px solid var(--accent);
-        display: flex; flex-direction: column;
-    }
-
-    #header, .instruction-box { display: block; padding: 5px; font-size: 11px; }
-    #controls { display: none; } /* Oculta botões no mobile para dar espaço */
-
-    /* CARROSSEL EM 2 LINHAS */
-    #findings-list { 
-        display: grid;
-        grid-template-rows: repeat(2, 1fr); /* 2 Linhas fixas */
-        grid-auto-flow: column; /* Flui para a direita */
-        overflow-x: auto; 
-        gap: 8px; padding: 10px;
-        align-content: start;
-        flex: 1; /* Ocupa espaço disponível */
-    }
-
-    .finding-item {
-        width: 280px; /* Largura fixa para criar o carrossel */
-        white-space: normal; /* Permite quebra de texto dentro do card */
-        margin: 0;
-        font-size: 12px;
-        height: 100%; /* Preenche a linha */
-        display: flex; align-items: center;
-    }
-
-    /* Assinatura fixa no rodapé do mobile */
-    #signature-area { 
-        padding: 5px; order: 10; /* Força ficar no final */
-        background: #111; 
-    }
-    #signature-img { max-width: 100px; }
-}
-
-
-        #viewer-title {
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.6);
-    color: rgba(255, 255, 255, 0.8);
-    padding: 5px 15px;
-    border-radius: 20px;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    z-index: 50; /* Garante que fique acima do canvas */
-    pointer-events: none; /* Deixa o clique passar para o zoom */
-}
     </style>
 </head>
 <body>
 
 <div id="viewer-area">
-    <div id="viewer-title">LAUDO INTERATIVO</div> <!-- ADICIONE ISSO -->
+    <div id="viewer-title">LAUDO INTERATIVO</div>
+    
+    <!-- Novo Card Flutuante HTML -->
+    <div id="finding-card">
+        <button class="close-card" onclick="closeCard()">×</button>
+        <div id="card-content">Texto do achado aqui...</div>
+    </div>
+
     <canvas id="canvas"></canvas>
 </div>
 
 <div id="sidebar">
     <div id="header"><h2>Achados Radiográficos</h2></div>
-    <div class="instruction-box">Clique nos achados abaixo para destacar na imagem.</div>
+    <div class="instruction-box">Clique nos achados para destacar na imagem.</div>
+    
     <div id="findings-list">Carregando...</div>
+    
     <div id="controls">
         <button id="btn-toggle-all" class="btn">👁️ Ver Todos</button>
         <button id="btn-reset-zoom" class="btn secondary" onclick="location.reload()">⟲ Resetar</button>
     </div>
+
     <div id="signature-area">
-        <!-- O src será preenchido via JS, ou fallback para assinatura.png -->
         <img id="signature-img" src="assinatura.png" alt="Assinatura" onerror="this.style.display='none'">
     </div>
 </div>
 
 <script>
     let DATA = null;
+    
+    // 1. Load Data
     try {
         const hash = window.location.hash.substring(1);
         if (hash) {
@@ -145,11 +178,7 @@
         const listEl = document.getElementById('findings-list');
         listEl.innerHTML = DATA.findingsHtml || "<p style='padding:10px;'>Nenhum achado interativo.</p>";
 
-        // LÓGICA DA ASSINATURA CORRIGIDA
-        // Se vier no JSON, usa. Se não, usa o padrão do HTML (assinatura.png)
-        if (DATA.signature) {
-            document.getElementById('signature-img').src = DATA.signature;
-        }
+        if (DATA.signature) document.getElementById('signature-img').src = DATA.signature;
 
         const items = listEl.querySelectorAll('p[data-highlight-color]');
         items.forEach(p => {
@@ -159,6 +188,7 @@
             else p.style.borderBottomColor = color;
         });
 
+        // 2. Canvas Setup
         const viewer = document.getElementById('viewer-area');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
@@ -179,7 +209,11 @@
 
         window.addEventListener('resize', () => { resize(); fitImage(); render(); });
 
-        function resize() { canvas.width = viewer.clientWidth; canvas.height = viewer.clientHeight; }
+        function resize() {
+            canvas.width = viewer.clientWidth;
+            canvas.height = viewer.clientHeight;
+        }
+
         function fitImage() {
             const rW = canvas.width / img.naturalWidth;
             const rH = canvas.height / img.naturalHeight;
@@ -189,127 +223,130 @@
         }
 
         function render() {
-            ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.setTransform(scale, 0, 0, scale, panX, panY); ctx.drawImage(img, 0, 0);
-            if (showAll) { DATA.annotations.forEach(anno => drawAnnotation(anno, false)); } 
-            else if (activeAnnotationId) { const anno = DATA.annotations.find(a => a.id === activeAnnotationId); if (anno) drawAnnotation(anno, true); }
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.setTransform(scale, 0, 0, scale, panX, panY);
+            ctx.drawImage(img, 0, 0);
+
+            if (showAll) {
+                DATA.annotations.forEach(anno => drawAnnotation(anno, false));
+            } else if (activeAnnotationId) {
+                const anno = DATA.annotations.find(a => a.id === activeAnnotationId);
+                if (anno) drawAnnotation(anno, true);
+            }
         }
 
+        // --- LÓGICA DO CARD FLUTUANTE ---
+        function updateFindingCard(text, color) {
+            const card = document.getElementById('finding-card');
+            const content = document.getElementById('card-content');
+            
+            // Se o texto for vazio, esconde
+            if (!text || text.length < 2) {
+                card.style.display = 'none';
+                return;
+            }
+
+            content.innerText = text;
+            card.style.borderLeftColor = color;
+            card.style.display = 'block';
+        }
+
+        window.closeCard = function() {
+            document.getElementById('finding-card').style.display = 'none';
+        }
+
+        // --- DESENHO NO CANVAS ---
         function drawAnnotation(anno, isActive) {
             const el = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
             const color = el ? el.dataset.highlightColor : (anno.color || '#00FFFF');
-            const labelText = el ? el.innerText.replace(/\n/g, ' ').substring(0, 40) : 'Achado';
+            
+            // Texto para o card (limpo)
+            const cardText = el ? el.innerText.replace(/\n/g, ' ').trim() : '';
+
+            // Se for ativo, mostra o card HTML
+            if (isActive) {
+                updateFindingCard(cardText, color);
+            }
 
             ctx.save();
             ctx.strokeStyle = color; ctx.fillStyle = color;
             ctx.lineJoin = 'round'; ctx.lineCap = 'round';
             ctx.shadowColor = 'black'; ctx.shadowBlur = 5 * drawingScale;
+            
             const baseWidth = (anno.thickness || 4) * drawingScale;
             ctx.lineWidth = isActive ? baseWidth * 1.5 : baseWidth;
 
-            let labelPos = { x: 0, y: 0 };
-
+            // Desenha apenas as linhas (texto agora é HTML)
             if (anno.points && anno.fillColor) { 
                 ctx.beginPath();
-                anno.points.forEach((p, i) => { const x=p.x*img.naturalWidth, y=p.y*img.naturalHeight; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); if(i===0) labelPos={x,y}; });
-                ctx.closePath(); ctx.stroke(); ctx.globalAlpha = 0.25; ctx.fill(); ctx.globalAlpha = 1;
+                anno.points.forEach((p, i) => {
+                    const x = p.x * img.naturalWidth, y = p.y * img.naturalHeight;
+                    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+                });
+                ctx.closePath();
+                ctx.stroke();
+                ctx.globalAlpha = 0.25; ctx.fill(); ctx.globalAlpha = 1;
+
             } else if (anno.start && anno.end) { 
-                const p1={x:anno.start.x*img.naturalWidth, y:anno.start.y*img.naturalHeight};
-                const p2={x:anno.end.x*img.naturalWidth, y:anno.end.y*img.naturalHeight};
-                ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke(); labelPos=p1;
-                const fs = 20*drawingScale; ctx.font = `bold ${fs}px Arial`; ctx.textAlign='center'; 
-                ctx.shadowBlur=0; ctx.lineWidth=3; ctx.strokeStyle='black';
-                const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2; ctx.strokeText(anno.text,mx,my-10); ctx.fillText(anno.text,mx,my-10);
+                const p1 = {x: anno.start.x*img.naturalWidth, y: anno.start.y*img.naturalHeight};
+                const p2 = {x: anno.end.x*img.naturalWidth, y: anno.end.y*img.naturalHeight};
+                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                // Medida
+                const fs = 20*drawingScale; ctx.font = `bold ${fs}px Arial`; ctx.textAlign = 'center'; 
+                ctx.shadowBlur = 0; ctx.lineWidth = 3; ctx.strokeStyle = 'black';
+                const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2;
+                ctx.strokeText(anno.text, mx, my-10); ctx.fillText(anno.text, mx, my-10);
+
             } else if (anno.type && anno.size) { 
-                const x=anno.x*img.naturalWidth, y=anno.y*img.naturalHeight; labelPos={x,y};
-                const s=anno.size*img.naturalWidth; ctx.translate(x,y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
-                ctx.beginPath(); ctx.moveTo(-s/2,0); ctx.lineTo(s/2,0); ctx.lineTo(s/2-s*0.3, -s*0.2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-s*0.3, s*0.2); ctx.stroke();
+                const x = anno.x*img.naturalWidth, y = anno.y*img.naturalHeight;
+                const s = anno.size*img.naturalWidth;
+                ctx.translate(x,y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
+                ctx.beginPath(); ctx.moveTo(-s/2,0); ctx.lineTo(s/2,0);
+                ctx.lineTo(s/2-s*0.3, -s*0.2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-s*0.3, s*0.2);
+                ctx.stroke();
+
             } else if (anno.text) { 
-                const x=anno.x*img.naturalWidth, y=anno.y*img.naturalHeight; labelPos={x,y};
-                const fs=(parseInt(anno.font)||24)*drawingScale; ctx.font=`bold ${fs}px Arial`;
-                ctx.shadowBlur=0; ctx.lineWidth=4*drawingScale; ctx.strokeStyle='black';
-                ctx.strokeText(anno.text,x,y); ctx.fillText(anno.text,x,y);
+                const x = anno.x*img.naturalWidth, y = anno.y*img.naturalHeight;
+                const fs = (parseInt(anno.font)||24) * drawingScale;
+                ctx.font = `bold ${fs}px Arial`; ctx.shadowBlur = 0; 
+                ctx.lineWidth = 4 * drawingScale; ctx.strokeStyle = 'black';
+                ctx.strokeText(anno.text, x, y); ctx.fillText(anno.text, x, y);
+
             } else if (anno.points) { 
-                ctx.beginPath(); anno.points.forEach((p,i)=>{ const x=p.x*img.naturalWidth, y=p.y*img.naturalHeight; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); if(i===0) labelPos={x,y}; }); ctx.stroke();
+                ctx.beginPath();
+                anno.points.forEach((p, i) => {
+                    const x = p.x*img.naturalWidth, y = p.y*img.naturalHeight;
+                    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+                });
+                ctx.stroke();
             }
+
             ctx.restore();
-
-            if (isActive && labelText) drawLabel(ctx, labelText, labelPos.x, labelPos.y - (30 * drawingScale), color);
         }
 
-       function wrapText(ctx, text, maxWidth) {
-    const words = text.split(' ');
-    let lines = [];
-    let currentLine = words[0];
-
-    for (let i = 1; i < words.length; i++) {
-        const word = words[i];
-        const width = ctx.measureText(currentLine + " " + word).width;
-        if (width < maxWidth) {
-            currentLine += " " + word;
-        } else {
-            lines.push(currentLine);
-            currentLine = word;
-        }
-    }
-    lines.push(currentLine);
-    return lines;
-}
-
-// Substitua a função drawLabel antiga por esta:
-function drawLabel(ctx, text, x, y, color) {
-    ctx.save();
-    const fontSize = 18 * drawingScale; // Fonte um pouco menor para caber melhor
-    const lineHeight = fontSize * 1.2;
-    ctx.font = `600 ${fontSize}px "Segoe UI", Arial`;
-    
-    // Configurações da caixa
-    const maxWidth = 300 * drawingScale; // Largura máxima do balão
-    const padding = 15 * drawingScale;
-    
-    // Quebra o texto
-    const lines = wrapText(ctx, text, maxWidth);
-    
-    // Calcula dimensões
-    let maxLineWidth = 0;
-    lines.forEach(line => maxLineWidth = Math.max(maxLineWidth, ctx.measureText(line).width));
-    const boxW = maxLineWidth + (padding * 2);
-    const boxH = (lines.length * lineHeight) + (padding * 2);
-
-    // Ajusta Posição: Desenha ABAIXO e à DIREITA do ponto
-    // Se sair da tela na direita, joga para a esquerda (lógica simples)
-    let finalX = x + 10; 
-    let finalY = y + 20; // 20px abaixo do ponto
-
-    // Fundo
-    ctx.fillStyle = "rgba(0,0,0,0.85)";
-    ctx.beginPath(); 
-    ctx.roundRect(finalX, finalY, boxW, boxH, 10); 
-    ctx.fill();
-    
-    // Borda lateral esquerda (Estilo bonito)
-    ctx.beginPath();
-    ctx.roundRect(finalX, finalY, 6 * drawingScale, boxH, {topLeft: 10, bottomLeft: 10});
-    ctx.fillStyle = color;
-    ctx.fill();
-
-    // Texto
-    ctx.fillStyle = "#fff"; 
-    ctx.textBaseline = "top";
-    lines.forEach((line, i) => {
-        ctx.fillText(line, finalX + padding + (5*drawingScale), finalY + padding + (i * lineHeight));
-    });
-
-    ctx.restore();
-}
-
+        // --- INTERAÇÃO ---
         listEl.addEventListener('click', (e) => {
             const item = e.target.closest('.finding-item');
             if (!item) return;
+
             document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
             const id = item.dataset.annotationId;
-            if (activeAnnotationId === id) { activeAnnotationId = null; fitImage(); } 
-            else { activeAnnotationId = id; showAll = false; item.classList.add('active'); const anno = DATA.annotations.find(a => a.id === id); if (anno) zoomNatural(anno); }
+
+            if (activeAnnotationId === id) { 
+                // Toggle OFF
+                activeAnnotationId = null; 
+                closeCard(); // Fecha o card
+                fitImage(); 
+            } else { 
+                // Toggle ON
+                activeAnnotationId = id; 
+                showAll = false; 
+                item.classList.add('active'); 
+                const anno = DATA.annotations.find(a => a.id === id); 
+                if (anno) zoomNatural(anno); 
+            }
             render();
         });
 
@@ -317,18 +354,35 @@ function drawLabel(ctx, text, x, y, color) {
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
             const pts = anno.points || [anno.start, anno.end].filter(Boolean) || [{x:anno.x, y:anno.y}];
             if(pts.length === 1 && !pts[0].x) pts[0] = {x: anno.x, y: anno.y};
-            pts.forEach(p => { if(p) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); } });
-            if (maxX - minX < 0.05) { minX -= 0.1; maxX += 0.1; } if (maxY - minY < 0.05) { minY -= 0.1; maxY += 0.1; }
-            const regW = (maxX - minX) * img.naturalWidth; const regH = (maxY - minY) * img.naturalHeight;
+
+            pts.forEach(p => {
+                if(p) {
+                    minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+                    minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+                }
+            });
+
+            if (maxX - minX < 0.05) { minX -= 0.1; maxX += 0.1; }
+            if (maxY - minY < 0.05) { minY -= 0.1; maxY += 0.1; }
+
+            const regW = (maxX - minX) * img.naturalWidth;
+            const regH = (maxY - minY) * img.naturalHeight;
             const padX = canvas.width * 0.3; const padY = canvas.height * 0.3;
+
             let tScale = Math.min((canvas.width-padX)/regW, (canvas.height-padY)/regH);
-            tScale = Math.min(tScale, 3.0); tScale = Math.max(tScale, Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight));
-            const cX = (minX*img.naturalWidth + regW/2); const cY = (minY*img.naturalHeight + regH/2);
-            scale = tScale; panX = (canvas.width/2) - (cX * scale); panY = (canvas.height/2) - (cY * scale);
+            tScale = Math.min(tScale, 3.0); 
+            tScale = Math.max(tScale, Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight));
+
+            const cX = (minX*img.naturalWidth + regW/2);
+            const cY = (minY*img.naturalHeight + regH/2);
+
+            scale = tScale;
+            panX = (canvas.width/2) - (cX * scale);
+            panY = (canvas.height/2) - (cY * scale);
         }
 
         document.getElementById('btn-toggle-all').addEventListener('click', () => {
-            showAll = !showAll; activeAnnotationId = null;
+            showAll = !showAll; activeAnnotationId = null; closeCard();
             document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
             fitImage(); render();
         });
@@ -336,7 +390,16 @@ function drawLabel(ctx, text, x, y, color) {
         viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; });
         window.addEventListener('mousemove', e => { if(isDragging) { panX = e.clientX - startX; panY = e.clientY - startY; render(); } });
         window.addEventListener('mouseup', () => isDragging = false);
-        viewer.addEventListener('wheel', e => { e.preventDefault(); const d = e.deltaY > 0 ? 0.9 : 1.1; const mx = e.clientX - canvas.getBoundingClientRect().left; const my = e.clientY - canvas.getBoundingClientRect().top; const ns = scale * d; panX = mx - (mx - panX) * d; panY = my - (my - panY) * d; scale = ns; render(); });
+        viewer.addEventListener('wheel', e => { 
+            e.preventDefault(); 
+            const d = e.deltaY > 0 ? 0.9 : 1.1; 
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left; const my = e.clientY - rect.top; 
+            const ns = scale * d; 
+            panX = mx - (mx - panX) * d; panY = my - (my - panY) * d; 
+            scale = ns; render(); 
+        });
+        
         let idist = 0, iscale = 1;
         viewer.addEventListener('touchstart', e => { if(e.touches.length===2){ idist = Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); iscale = scale; } else if(e.touches.length===1) { isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY; } }, {passive:false});
         viewer.addEventListener('touchmove', e => { e.preventDefault(); if(e.touches.length===2){ const dist = Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); const delta = dist/idist; const cx=viewer.offsetWidth/2, cy=viewer.offsetHeight/2; const ns=iscale*delta; panX=cx-(cx-panX)*(ns/scale); panY=cy-(cy-panY)*(ns/scale); scale=ns; render(); } else if(isDragging && e.touches.length===1) { panX=e.touches[0].clientX-startX; panY=e.touches[0].clientY-startY; render(); } }, {passive:false});
