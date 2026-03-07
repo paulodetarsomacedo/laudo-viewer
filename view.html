@@ -5,11 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Laudo Interativo</title>
     <style>
+        /* Reset básico para evitar problemas de tamanho */
+        * { box-sizing: border-box; }
+
         :root { --bg-color: #000; --panel-bg: #151515; --text-color: #eee; --accent: #007bff; }
-        body { margin: 0; padding: 0; background: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; overflow: hidden; }
+        
+        body { 
+            margin: 0; padding: 0; 
+            background: var(--bg-color); color: var(--text-color); 
+            font-family: 'Segoe UI', sans-serif; 
+            height: 100vh; height: 100dvh; /* Garante altura total em mobiles modernos */
+            display: flex; overflow: hidden; 
+        }
 
         /* --- ÁREA DA IMAGEM --- */
-        #viewer-area { flex: 1; position: relative; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; }
+        #viewer-area { 
+            flex: 1; position: relative; overflow: hidden; 
+            background: #000; display: flex; align-items: center; justify-content: center; 
+        }
         canvas { display: block; }
 
         /* Título Flutuante */
@@ -22,35 +35,31 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        /* CARD FLUTUANTE DE TEXTO (A novidade) */
+        /* CARD FLUTUANTE DE TEXTO */
         #finding-card {
             position: absolute; display: none; z-index: 60;
             background: rgba(20, 20, 20, 0.95); color: #fff;
             backdrop-filter: blur(10px);
-            padding: 15px 40px 15px 20px; /* Padding extra na direita pro botão X */
+            padding: 15px 40px 15px 20px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             border-left: 5px solid var(--accent);
             font-size: 15px; line-height: 1.5;
             max-width: 350px; min-width: 200px;
-            /* Animação */
             transition: opacity 0.3s ease;
         }
         
-        /* Posicionamento Desktop: Canto Inferior Esquerdo */
         @media (min-width: 769px) {
             #finding-card { bottom: 30px; left: 30px; }
         }
 
-        /* Botão Fechar do Card */
         .close-card {
             position: absolute; top: 8px; right: 10px;
             background: none; border: none; color: #aaa;
             font-size: 18px; cursor: pointer; padding: 0; line-height: 1;
         }
-        .close-card:hover { color: #fff; }
 
-        /* --- SIDEBAR LATERAL --- */
+        /* --- SIDEBAR LATERAL (DESKTOP) --- */
         #sidebar { 
             width: 360px; background: var(--panel-bg); display: flex; flex-direction: column; 
             border-left: 1px solid #333; z-index: 20; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
@@ -88,41 +97,51 @@
         @media (max-width: 768px) {
             body { flex-direction: column; }
             
-            #viewer-area { height: 50%; width: 100%; order: 1; }
+            /* 1. Área da Imagem (Topo) */
+            #viewer-area { 
+                height: 45%; width: 100%; order: 1; 
+                border-bottom: 2px solid var(--accent);
+            }
             
+            /* 2. Sidebar (Baixo) ocupa o resto */
             #sidebar { 
-                height: 50%; width: 100%; order: 2; 
-                border-left: none; border-top: 2px solid var(--accent);
+                height: 55%; width: 100%; order: 2; 
+                border-left: none;
                 display: flex; flex-direction: column;
             }
 
-            #header, .instruction-box { display: block; padding: 8px; font-size: 12px; }
-            #controls { display: none; }
+            /* Elementos Visíveis */
+            #header, .instruction-box { display: block; padding: 8px; font-size: 12px; flex-shrink: 0; }
+            #controls { display: none; } /* Oculta botões */
 
-            /* Grid de Achados (2 Colunas/Linhas + Scroll) */
+            /* 3. Lista de Achados (VERTICAL COM SCROLL) */
             #findings-list { 
-                display: grid;
-                grid-template-rows: repeat(2, 1fr); /* 2 linhas */
-                grid-auto-flow: column; /* Expande para direita */
-                overflow-x: auto; 
-                gap: 8px; padding: 10px;
-                align-content: start;
-                flex: 1; 
+                display: block; /* Lista normal */
+                overflow-y: auto; /* Scroll vertical */
+                overflow-x: hidden;
+                padding: 10px;
+                flex: 1; /* Ocupa todo o espaço disponível no meio */
             }
 
             .finding-item {
-                width: 280px; 
-                white-space: normal;
-                margin: 0; font-size: 12px;
-                height: 100%; display: flex; align-items: center;
-                border-left: none; border-bottom: 4px solid transparent; 
-                background: #252525;
+                width: 100%; margin-bottom: 8px;
+                font-size: 13px; 
+                /* Mantém a borda na esquerda para consistência visual */
+                border-left-width: 5px !important;
+                border-bottom: none !important;
             }
 
-            #signature-area { padding: 8px; order: 10; background: #111; }
-            #signature-img { max-width: 100px; }
+            /* 4. Assinatura (FIXA NO RODAPÉ) */
+            #signature-area { 
+                display: flex; justify-content: center; align-items: center;
+                padding: 10px; 
+                background: #111; 
+                flex-shrink: 0; /* Impede que suma se a lista for grande */
+                min-height: 60px;
+            }
+            #signature-img { max-width: 120px; max-height: 50px; }
 
-            /* Card Flutuante no Mobile (Topo) */
+            /* Ajuste do Card Flutuante no Mobile */
             #finding-card {
                 top: 60px; left: 50%; transform: translateX(-50%); 
                 width: 90%; max-width: 90%; bottom: auto;
@@ -135,7 +154,7 @@
 <div id="viewer-area">
     <div id="viewer-title">LAUDO INTERATIVO</div>
     
-    <!-- Novo Card Flutuante HTML -->
+    <!-- Card Flutuante HTML -->
     <div id="finding-card">
         <button class="close-card" onclick="closeCard()">×</button>
         <div id="card-content">Texto do achado aqui...</div>
@@ -184,8 +203,8 @@
         items.forEach(p => {
             p.classList.add('finding-item');
             const color = p.dataset.highlightColor;
-            if(window.innerWidth > 768) p.style.borderLeftColor = color; 
-            else p.style.borderBottomColor = color;
+            // No mobile voltei para borda na esquerda (padrão) pois é uma lista vertical agora
+            p.style.borderLeftColor = color; 
         });
 
         // 2. Canvas Setup
@@ -242,7 +261,6 @@
             const card = document.getElementById('finding-card');
             const content = document.getElementById('card-content');
             
-            // Se o texto for vazio, esconde
             if (!text || text.length < 2) {
                 card.style.display = 'none';
                 return;
@@ -293,7 +311,8 @@
                 const p1 = {x: anno.start.x*img.naturalWidth, y: anno.start.y*img.naturalHeight};
                 const p2 = {x: anno.end.x*img.naturalWidth, y: anno.end.y*img.naturalHeight};
                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-                // Medida
+                
+                // Medida (texto pequeno no canvas ainda é útil)
                 const fs = 20*drawingScale; ctx.font = `bold ${fs}px Arial`; ctx.textAlign = 'center'; 
                 ctx.shadowBlur = 0; ctx.lineWidth = 3; ctx.strokeStyle = 'black';
                 const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2;
@@ -335,12 +354,10 @@
             const id = item.dataset.annotationId;
 
             if (activeAnnotationId === id) { 
-                // Toggle OFF
                 activeAnnotationId = null; 
-                closeCard(); // Fecha o card
+                closeCard(); 
                 fitImage(); 
             } else { 
-                // Toggle ON
                 activeAnnotationId = id; 
                 showAll = false; 
                 item.classList.add('active'); 
@@ -387,6 +404,7 @@
             fitImage(); render();
         });
 
+        // Mouse Pan/Zoom
         viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; });
         window.addEventListener('mousemove', e => { if(isDragging) { panX = e.clientX - startX; panY = e.clientY - startY; render(); } });
         window.addEventListener('mouseup', () => isDragging = false);
@@ -400,9 +418,27 @@
             scale = ns; render(); 
         });
         
+        // Touch Pan/Zoom
         let idist = 0, iscale = 1;
-        viewer.addEventListener('touchstart', e => { if(e.touches.length===2){ idist = Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); iscale = scale; } else if(e.touches.length===1) { isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY; } }, {passive:false});
-        viewer.addEventListener('touchmove', e => { e.preventDefault(); if(e.touches.length===2){ const dist = Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); const delta = dist/idist; const cx=viewer.offsetWidth/2, cy=viewer.offsetHeight/2; const ns=iscale*delta; panX=cx-(cx-panX)*(ns/scale); panY=cy-(cy-panY)*(ns/scale); scale=ns; render(); } else if(isDragging && e.touches.length===1) { panX=e.touches[0].clientX-startX; panY=e.touches[0].clientY-startY; render(); } }, {passive:false});
+        viewer.addEventListener('touchstart', e => { 
+            if(e.touches.length===2){ idist = Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); iscale = scale; } 
+            else if(e.touches.length===1) { isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY; } 
+        }, {passive:false});
+        
+        viewer.addEventListener('touchmove', e => { 
+            e.preventDefault(); 
+            if(e.touches.length===2){ 
+                const dist = Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); 
+                const delta = dist/idist; 
+                const cx=viewer.offsetWidth/2, cy=viewer.offsetHeight/2; 
+                const ns=iscale*delta; 
+                panX=cx-(cx-panX)*(ns/scale); panY=cy-(cy-panY)*(ns/scale); scale=ns; 
+                render(); 
+            } else if(isDragging && e.touches.length===1) { 
+                panX=e.touches[0].clientX-startX; panY=e.touches[0].clientY-startY; render(); 
+            } 
+        }, {passive:false});
+        
         viewer.addEventListener('touchend', () => isDragging = false);
     }
 </script>
