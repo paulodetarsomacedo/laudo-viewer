@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Laudo Interativo</title>
     <style>
-        :root { --bg-color: #000; --panel-bg: #1a1a1a; --text-color: #eee; --accent: #007bff; }
+        :root { --bg-color: #000; --panel-bg: #151515; --text-color: #eee; --accent: #007bff; }
         body { margin: 0; padding: 0; background: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; overflow: hidden; }
 
         /* Viewer */
@@ -14,51 +14,71 @@
 
         /* Sidebar */
         #sidebar { 
-            width: 340px; background: var(--panel-bg); display: flex; flex-direction: column; 
+            width: 350px; background: var(--panel-bg); display: flex; flex-direction: column; 
             border-left: 1px solid #333; z-index: 20; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
         }
 
-        #header { padding: 15px; background: #222; text-align: center; border-bottom: 1px solid #333; }
+        #header { padding: 12px; background: #1f1f1f; text-align: center; border-bottom: 1px solid #333; flex-shrink: 0; }
         #header h2 { margin: 0; color: var(--accent); font-size: 18px; }
+
+        /* Caixa de Instrução - RESTAURADA */
+        .instruction-box {
+            background: #252525; color: #aaa; font-size: 12px; padding: 10px;
+            text-align: center; border-bottom: 1px solid #333; flex-shrink: 0;
+        }
 
         #findings-list { flex: 1; overflow-y: auto; padding: 15px; }
         
         .finding-item { 
-            background: #2a2a2a; margin-bottom: 12px; padding: 12px; border-radius: 8px; 
+            background: #2a2a2a; margin-bottom: 10px; padding: 12px; border-radius: 6px; 
             cursor: pointer; border-left: 5px solid transparent; transition: all 0.2s;
             font-size: 14px; line-height: 1.4; color: #ccc;
         }
         .finding-item:hover { background: #333; color: #fff; transform: translateX(2px); }
         .finding-item.active { background: #383838; color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.1); }
 
-        #controls { padding: 15px; border-top: 1px solid #333; background: #222; display: flex; gap: 10px; flex-direction: column; }
+        #controls { padding: 15px; border-top: 1px solid #333; background: #1f1f1f; display: flex; gap: 10px; flex-direction: column; flex-shrink: 0; }
         .btn { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         .btn:hover { filter: brightness(1.1); }
         .btn.secondary { background: #444; }
 
-        #signature-area { padding: 15px; text-align: center; border-top: 1px solid #333; background: #1a1a1a; }
-        #signature-img { max-width: 140px; filter: invert(1); opacity: 0.8; }
+        #signature-area { padding: 10px; text-align: center; border-top: 1px solid #333; background: #151515; flex-shrink: 0; }
+        #signature-img { max-width: 130px; filter: invert(1); opacity: 0.8; }
 
-        /* --- MOBILE --- */
+        /* --- MOBILE LAYOUT --- */
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            #viewer-area { height: 60%; width: 100%; order: 1; }
-            #sidebar { 
-                height: 40%; width: 100%; order: 2; border-left: none; border-top: 2px solid var(--accent);
-            }
-            #header, #signature-area { display: none; }
+            /* Imagem ocupa 55% da tela */
+            #viewer-area { height: 55%; width: 100%; order: 1; }
             
+            /* Sidebar ocupa 45% */
+            #sidebar { 
+                height: 45%; width: 100%; order: 2; border-left: none; border-top: 2px solid var(--accent);
+                display: flex; flex-direction: column;
+            }
+
+            /* MOSTRAR TUDO NO MOBILE */
+            #header { padding: 8px; font-size: 14px; display: block; }
+            .instruction-box { padding: 5px; font-size: 11px; display: block; }
+
+            /* Carrossel Horizontal */
             #findings-list { 
                 display: flex; flex-direction: row; overflow-x: auto; 
                 padding: 10px; gap: 10px; align-items: center; 
+                height: auto; /* Deixa o flex controlar a altura */
             }
             .finding-item {
                 flex: 0 0 85%; width: 85%; margin: 0; 
                 border-left: none; border-bottom: 4px solid transparent;
-                background: #222;
+                background: #252525; font-size: 13px;
             }
-            #controls { display: flex; flex-direction: row; padding: 5px; }
-            .btn { flex: 1; font-size: 12px; padding: 8px; }
+
+            /* Assinatura menor no rodapé */
+            #signature-area { padding: 5px; display: block; }
+            #signature-img { max-width: 100px; }
+            
+            /* Esconde botões no mobile para economizar espaço se necessário, ou deixe flex */
+            #controls { display: none; } 
         }
     </style>
 </head>
@@ -70,11 +90,13 @@
 
 <div id="sidebar">
     <div id="header"><h2>Achados Radiográficos</h2></div>
+    <div class="instruction-box">Clique nos achados abaixo para destacar na imagem.</div>
+    
     <div id="findings-list">Carregando...</div>
     
     <div id="controls">
-        <button id="btn-toggle-all" class="btn">👁️ Ver Todos na Imagem</button>
-        <button id="btn-reset-zoom" class="btn secondary">⟲ Resetar Zoom</button>
+        <button id="btn-toggle-all" class="btn">👁️ Ver Todos</button>
+        <button id="btn-reset-zoom" class="btn secondary">⟲ Resetar</button>
     </div>
 
     <div id="signature-area">
@@ -106,17 +128,16 @@
             sigImg.style.display = 'inline-block';
         }
 
-        // Aplica cores às bordas
+        // Cores
         const items = listEl.querySelectorAll('p[data-highlight-color]');
         items.forEach(p => {
             p.classList.add('finding-item');
             const color = p.dataset.highlightColor;
-            // Desktop: Esquerda | Mobile: Baixo
             if(window.innerWidth > 768) p.style.borderLeftColor = color; 
             else p.style.borderBottomColor = color;
         });
 
-        // --- CANVAS LOGIC ---
+        // --- CANVAS ---
         const viewer = document.getElementById('viewer-area');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
@@ -126,12 +147,10 @@
         let isDragging = false, startX, startY;
         let activeAnnotationId = null; 
         let showAll = false;
-        
         let drawingScale = 1; 
 
         img.onload = () => {
             resize();
-            // Calcula escala de desenho baseada na imagem real
             drawingScale = img.naturalWidth / 1200; 
             fitImage();
             render();
@@ -149,7 +168,6 @@
             const rW = canvas.width / img.naturalWidth;
             const rH = canvas.height / img.naturalHeight;
             scale = Math.min(rW, rH); 
-            // Centraliza
             panX = (canvas.width - img.naturalWidth * scale) / 2;
             panY = (canvas.height - img.naturalHeight * scale) / 2;
         }
@@ -158,11 +176,9 @@
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Desenha Imagem
             ctx.setTransform(scale, 0, 0, scale, panX, panY);
             ctx.drawImage(img, 0, 0);
 
-            // Desenha Anotações
             if (showAll) {
                 DATA.annotations.forEach(anno => drawAnnotation(anno, false));
             } else if (activeAnnotationId) {
@@ -172,26 +188,21 @@
         }
 
         function drawAnnotation(anno, isActive) {
-            // Busca a cor e o texto do achado correspondente na lista
             const el = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
             const color = el ? el.dataset.highlightColor : (anno.color || '#00FFFF');
-            // Limpa o texto do HTML para exibir na imagem (remove tags)
-            const labelText = el ? el.innerText.replace(/\n/g, ' ').substring(0, 50) + (el.innerText.length>50?'...':'') : 'Achado';
+            const labelText = el ? el.innerText.replace(/\n/g, ' ').substring(0, 40) : 'Achado';
 
             ctx.save();
             ctx.strokeStyle = color;
             ctx.fillStyle = color;
             ctx.lineJoin = 'round';
             ctx.lineCap = 'round';
-
-            // Sombra para contraste
             ctx.shadowColor = 'black';
             ctx.shadowBlur = 5 * drawingScale;
 
             const baseWidth = (anno.thickness || 4) * drawingScale;
             ctx.lineWidth = isActive ? baseWidth * 1.5 : baseWidth;
 
-            // Variável para armazenar a posição onde desenhar o texto
             let labelPos = { x: 0, y: 0 };
 
             if (anno.points && anno.fillColor) { // Polígono
@@ -203,19 +214,21 @@
                 });
                 ctx.closePath();
                 ctx.stroke();
-                ctx.globalAlpha = 0.2; ctx.fill(); ctx.globalAlpha = 1;
+                ctx.globalAlpha = 0.25; ctx.fill(); ctx.globalAlpha = 1;
+
             } else if (anno.start && anno.end) { // Medida
                 const p1 = {x: anno.start.x*img.naturalWidth, y: anno.start.y*img.naturalHeight};
                 const p2 = {x: anno.end.x*img.naturalWidth, y: anno.end.y*img.naturalHeight};
                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
                 labelPos = p1;
-                // Desenha valor da medida
-                ctx.font = `bold ${20*drawingScale}px Arial`;
-                ctx.fillStyle = color;
+                
+                const fs = 20*drawingScale;
+                ctx.font = `bold ${fs}px Arial`; ctx.textAlign = 'center'; 
                 ctx.shadowBlur = 0; ctx.lineWidth = 3; ctx.strokeStyle = 'black';
                 const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2;
                 ctx.strokeText(anno.text, mx, my-10);
                 ctx.fillText(anno.text, mx, my-10);
+
             } else if (anno.type && anno.size) { // Seta
                 const x = anno.x*img.naturalWidth, y = anno.y*img.naturalHeight;
                 labelPos = {x, y};
@@ -224,6 +237,16 @@
                 ctx.beginPath(); ctx.moveTo(-s/2,0); ctx.lineTo(s/2,0);
                 ctx.lineTo(s/2-s*0.3, -s*0.2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-s*0.3, s*0.2);
                 ctx.stroke();
+
+            } else if (anno.text) { // Texto
+                const x = anno.x*img.naturalWidth, y = anno.y*img.naturalHeight;
+                labelPos = {x, y};
+                const fs = (parseInt(anno.font)||24) * drawingScale;
+                ctx.font = `bold ${fs}px Arial`;
+                ctx.shadowBlur = 0; ctx.lineWidth = 4 * drawingScale; ctx.strokeStyle = 'black';
+                ctx.strokeText(anno.text, x, y);
+                ctx.fillText(anno.text, x, y);
+
             } else if (anno.points) { // Lápis
                 ctx.beginPath();
                 anno.points.forEach((p, i) => {
@@ -236,77 +259,56 @@
 
             ctx.restore();
 
-            // --- DESENHAR LABEL DE TEXTO (A novidade) ---
+            // Label Flutuante
             if (isActive && labelText) {
                 drawLabel(ctx, labelText, labelPos.x, labelPos.y - (30 * drawingScale), color);
             }
         }
 
-        // Função para desenhar a caixa de texto bonita na imagem
         function drawLabel(ctx, text, x, y, color) {
             ctx.save();
             const fontSize = 24 * drawingScale;
-            ctx.font = `600 ${fontSize}px "Segoe UI", Arial, sans-serif`;
+            ctx.font = `600 ${fontSize}px "Segoe UI", Arial`;
             const padding = 10 * drawingScale;
             const textWidth = ctx.measureText(text).width;
-            const boxWidth = textWidth + (padding * 2);
-            const boxHeight = fontSize + (padding * 2);
+            const boxW = textWidth + padding*2;
+            const boxH = fontSize + padding*2;
 
-            // Fundo semi-transparente escuro
-            ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-            ctx.beginPath();
-            ctx.roundRect(x, y - boxHeight, boxWidth, boxHeight, 8);
-            ctx.fill();
-            
-            // Borda colorida (da cor do achado)
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2 * drawingScale;
-            ctx.stroke();
+            ctx.fillStyle = "rgba(0,0,0,0.85)";
+            ctx.beginPath(); ctx.roundRect(x, y-boxH, boxW, boxH, 8); ctx.fill();
+            ctx.lineWidth = 2 * drawingScale; ctx.strokeStyle = color; ctx.stroke();
 
-            // Texto Branco
-            ctx.fillStyle = "#ffffff";
-            ctx.textBaseline = "middle";
-            ctx.fillText(text, x + padding, y - boxHeight + (boxHeight/2) + 2);
+            ctx.fillStyle = "#fff"; ctx.textBaseline = "middle";
+            ctx.fillText(text, x+padding, y-boxH+(boxH/2)+2);
             ctx.restore();
         }
 
-        // --- CONTROLES E INTERAÇÃO ---
-        
-        // 1. Toggle na Lista
+        // --- EVENTOS ---
         listEl.addEventListener('click', (e) => {
             const item = e.target.closest('.finding-item');
             if (!item) return;
 
-            // Remove active de todos
             document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
-
             const id = item.dataset.annotationId;
+
             if (activeAnnotationId === id) {
-                // Desligar se clicar novamente
                 activeAnnotationId = null;
-                fitImage(); // Zoom natural (reset)
+                fitImage(); // Toggle OFF
             } else {
-                // Ligar novo
                 activeAnnotationId = id;
-                showAll = false; // Foca apenas neste
+                showAll = false;
                 item.classList.add('active');
-                
-                // Zoom Natural
                 const anno = DATA.annotations.find(a => a.id === id);
-                if (anno) zoomNaturalTo(anno);
+                if (anno) zoomNatural(anno); // Toggle ON
             }
             render();
         });
 
-        // 2. Zoom Natural (Com margem/padding)
-        function zoomNaturalTo(anno) {
+        function zoomNatural(anno) {
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
             const pts = anno.points || [anno.start, anno.end].filter(Boolean) || [{x:anno.x, y:anno.y}];
             
-            // Se for ponto único (texto, seta), cria um box fictício ao redor
-            if(pts.length === 1 && !pts[0].x) { // Fallback para objeto {x,y} puro
-                 pts[0] = {x: anno.x, y: anno.y};
-            }
+            if(pts.length === 1 && !pts[0].x) pts[0] = {x: anno.x, y: anno.y};
 
             pts.forEach(p => {
                 if(p) {
@@ -315,76 +317,46 @@
                 }
             });
 
-            // Se for muito pequeno (ponto), expande a área de interesse
             if (maxX - minX < 0.05) { minX -= 0.1; maxX += 0.1; }
             if (maxY - minY < 0.05) { minY -= 0.1; maxY += 0.1; }
 
-            // Converte para pixels
-            const regionX = minX * img.naturalWidth;
-            const regionY = minY * img.naturalHeight;
-            const regionW = (maxX - minX) * img.naturalWidth;
-            const regionH = (maxY - minY) * img.naturalHeight;
+            const regW = (maxX - minX) * img.naturalWidth;
+            const regH = (maxY - minY) * img.naturalHeight;
+            const padX = canvas.width * 0.3; 
+            const padY = canvas.height * 0.3;
 
-            // Calcula zoom para caber essa região com PADDING
-            // Padding de 30% da tela para dar contexto (Zoom "Natural")
-            const paddingX = canvas.width * 0.3; 
-            const paddingY = canvas.height * 0.3;
-            
-            const availableW = canvas.width - paddingX;
-            const availableH = canvas.height - paddingY;
+            let tScale = Math.min((canvas.width-padX)/regW, (canvas.height-padY)/regH);
+            tScale = Math.min(tScale, 3.0); 
+            tScale = Math.max(tScale, Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight));
 
-            let targetScale = Math.min(availableW / regionW, availableH / regionH);
-            
-            // Limita o zoom máximo para não ficar "feio" (pixelado)
-            targetScale = Math.min(targetScale, 2.5); // Max 2.5x (era livre antes)
-            targetScale = Math.max(targetScale, Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight)); // Nunca menor que fit
+            const cX = (minX*img.naturalWidth + regW/2);
+            const cY = (minY*img.naturalHeight + regH/2);
 
-            // Centraliza
-            const centerX = regionX + regionW / 2;
-            const centerY = regionY + regionH / 2;
-
-            scale = targetScale;
-            panX = (canvas.width / 2) - (centerX * scale);
-            panY = (canvas.height / 2) - (centerY * scale);
+            scale = tScale;
+            panX = (canvas.width/2) - (cX * scale);
+            panY = (canvas.height/2) - (cY * scale);
         }
 
-        // 3. Botões
         document.getElementById('btn-toggle-all').addEventListener('click', () => {
             showAll = !showAll;
             activeAnnotationId = null;
             document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
-            fitImage();
-            render();
+            fitImage(); render();
         });
 
         document.getElementById('btn-reset-zoom').addEventListener('click', () => {
-            activeAnnotationId = null;
-            showAll = false;
-            document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
-            fitImage();
-            render();
+            activeAnnotationId = null; fitImage(); render();
         });
 
-        // 4. Mouse/Touch Pan & Zoom
-        viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; viewer.style.cursor = 'grabbing'; });
+        // Mouse/Touch Logic
+        viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; });
         window.addEventListener('mousemove', e => { if(isDragging) { panX = e.clientX - startX; panY = e.clientY - startY; render(); } });
-        window.addEventListener('mouseup', () => { isDragging = false; viewer.style.cursor = 'default'; });
-        viewer.addEventListener('wheel', e => {
-            e.preventDefault();
-            const d = e.deltaY > 0 ? 0.9 : 1.1;
-            const rect = canvas.getBoundingClientRect();
-            const mx = e.clientX - rect.left;
-            const my = e.clientY - rect.top;
-            const ns = scale * d;
-            panX = mx - (mx - panX) * d;
-            panY = my - (my - panY) * d;
-            scale = ns;
-            render();
-        });
+        window.addEventListener('mouseup', () => isDragging = false);
+        viewer.addEventListener('wheel', e => { e.preventDefault(); const d = e.deltaY > 0 ? 0.9 : 1.1; const rect = canvas.getBoundingClientRect(); const mx = e.clientX - rect.left; const my = e.clientY - rect.top; const ns = scale * d; panX = mx - (mx - panX) * d; panY = my - (my - panY) * d; scale = ns; render(); });
         
-        let initDist = 0, initScale = 1;
-        viewer.addEventListener('touchstart', e => { if (e.touches.length === 2) { initDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); initScale = scale; } else if (e.touches.length === 1) { isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY; } }, {passive: false});
-        viewer.addEventListener('touchmove', e => { e.preventDefault(); if (e.touches.length === 2) { const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); const delta = dist / initDist; const cx = viewer.offsetWidth / 2, cy = viewer.offsetHeight / 2; const ns = initScale * delta; panX = cx - (cx - panX) * (ns / scale); panY = cy - (cy - panY) * (ns / scale); scale = ns; render(); } else if (isDragging && e.touches.length === 1) { panX = e.touches[0].clientX - startX; panY = e.touches[0].clientY - startY; render(); } }, {passive: false});
+        let idist = 0, iscale = 1;
+        viewer.addEventListener('touchstart', e => { if(e.touches.length===2){ idist = Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); iscale = scale; } else if(e.touches.length===1) { isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY; } }, {passive:false});
+        viewer.addEventListener('touchmove', e => { e.preventDefault(); if(e.touches.length===2){ const dist = Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); const delta = dist/idist; const cx=viewer.offsetWidth/2, cy=viewer.offsetHeight/2; const ns=iscale*delta; panX=cx-(cx-panX)*(ns/scale); panY=cy-(cy-panY)*(ns/scale); scale=ns; render(); } else if(isDragging && e.touches.length===1) { panX=e.touches[0].clientX-startX; panY=e.touches[0].clientY-startY; render(); } }, {passive:false});
         viewer.addEventListener('touchend', () => isDragging = false);
     }
 </script>
