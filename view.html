@@ -6,16 +6,16 @@
     <title>Laudo Interativo</title>
     <style>
         :root { --bg-color: #000; --panel-bg: #1a1a1a; --text-color: #eee; --accent: #007bff; }
-        body { margin: 0; padding: 0; background: var(--bg-color); color: var(--text-color); font-family: sans-serif; height: 100vh; display: flex; overflow: hidden; }
+        body { margin: 0; padding: 0; background: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; overflow: hidden; }
 
-        /* Viewer (Imagem) */
-        #viewer-area { flex: 1; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; background: #000; }
+        /* Viewer */
+        #viewer-area { flex: 1; position: relative; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; }
         canvas { display: block; }
 
-        /* Sidebar (Lista) */
+        /* Sidebar */
         #sidebar { 
-            width: 320px; background: var(--panel-bg); display: flex; flex-direction: column; 
-            border-left: 1px solid #333; z-index: 10; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+            width: 340px; background: var(--panel-bg); display: flex; flex-direction: column; 
+            border-left: 1px solid #333; z-index: 20; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
         }
 
         #header { padding: 15px; background: #222; text-align: center; border-bottom: 1px solid #333; }
@@ -28,41 +28,37 @@
             cursor: pointer; border-left: 5px solid transparent; transition: all 0.2s;
             font-size: 14px; line-height: 1.4; color: #ccc;
         }
-        .finding-item:hover { background: #333; color: #fff; }
-        .finding-item.active { background: #333; color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .finding-item:hover { background: #333; color: #fff; transform: translateX(2px); }
+        .finding-item.active { background: #383838; color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.1); }
 
-        #signature-area { padding: 20px; text-align: center; border-top: 1px solid #333; background: #222; }
-        #signature-img { max-width: 150px; filter: invert(1); opacity: 0.9; } /* Inverte cor para fundo escuro */
+        #controls { padding: 15px; border-top: 1px solid #333; background: #222; display: flex; gap: 10px; flex-direction: column; }
+        .btn { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn:hover { filter: brightness(1.1); }
+        .btn.secondary { background: #444; }
 
-        /* --- LAYOUT MOBILE (CARROSSEL INFERIOR) --- */
+        #signature-area { padding: 15px; text-align: center; border-top: 1px solid #333; background: #1a1a1a; }
+        #signature-img { max-width: 140px; filter: invert(1); opacity: 0.8; }
+
+        /* --- MOBILE --- */
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            
             #viewer-area { height: 60%; width: 100%; order: 1; }
-            
             #sidebar { 
-                height: 40%; width: 100%; order: 2; border-left: none; border-top: 1px solid #333;
-                display: flex; flex-direction: column;
+                height: 40%; width: 100%; order: 2; border-left: none; border-top: 2px solid var(--accent);
             }
-
-            #header, #signature-area { display: none; } /* Oculta header e assinatura no mobile para dar espaço */
-
+            #header, #signature-area { display: none; }
+            
             #findings-list { 
-                display: flex; flex-direction: row; /* Horizontal */
-                overflow-x: auto; overflow-y: hidden; /* Scroll lateral */
-                padding: 10px; gap: 10px; white-space: normal;
-                align-items: center;
+                display: flex; flex-direction: row; overflow-x: auto; 
+                padding: 10px; gap: 10px; align-items: center; 
             }
-
             .finding-item {
-                flex: 0 0 85%; /* Item ocupa 85% da largura da tela */
-                width: 85%; 
-                margin-bottom: 0; height: auto;
-                display: flex; align-items: center;
-                font-size: 13px;
-                border-bottom: 4px solid transparent; /* Borda colorida embaixo no mobile */
-                border-left: none;
+                flex: 0 0 85%; width: 85%; margin: 0; 
+                border-left: none; border-bottom: 4px solid transparent;
+                background: #222;
             }
+            #controls { display: flex; flex-direction: row; padding: 5px; }
+            .btn { flex: 1; font-size: 12px; padding: 8px; }
         }
     </style>
 </head>
@@ -75,6 +71,12 @@
 <div id="sidebar">
     <div id="header"><h2>Achados Radiográficos</h2></div>
     <div id="findings-list">Carregando...</div>
+    
+    <div id="controls">
+        <button id="btn-toggle-all" class="btn">👁️ Ver Todos na Imagem</button>
+        <button id="btn-reset-zoom" class="btn secondary">⟲ Resetar Zoom</button>
+    </div>
+
     <div id="signature-area">
         <img id="signature-img" src="" alt="Assinatura" style="display:none;">
     </div>
@@ -93,28 +95,28 @@
     if (!DATA) {
         document.getElementById('findings-list').innerHTML = "<p style='text-align:center; color:red; padding:20px;'>Erro ao carregar dados.</p>";
     } else {
-        // 1. Renderiza HTML da Lista
+        // Render Lista
         const listEl = document.getElementById('findings-list');
         listEl.innerHTML = DATA.findingsHtml || "<p style='padding:10px;'>Nenhum achado interativo.</p>";
 
-        // 2. Renderiza Assinatura (se houver Base64)
+        // Render Assinatura
         if (DATA.signature) {
             const sigImg = document.getElementById('signature-img');
             sigImg.src = DATA.signature;
             sigImg.style.display = 'inline-block';
         }
 
-        // 3. Aplica cores às bordas dos itens da lista
+        // Aplica cores às bordas
         const items = listEl.querySelectorAll('p[data-highlight-color]');
         items.forEach(p => {
             p.classList.add('finding-item');
             const color = p.dataset.highlightColor;
-            // No Desktop borda na esquerda, no Mobile borda embaixo (via CSS media query + inline style)
-            p.style.borderLeftColor = color; 
-            p.style.borderBottomColor = color;
+            // Desktop: Esquerda | Mobile: Baixo
+            if(window.innerWidth > 768) p.style.borderLeftColor = color; 
+            else p.style.borderBottomColor = color;
         });
 
-        // --- LÓGICA DO CANVAS ---
+        // --- CANVAS LOGIC ---
         const viewer = document.getElementById('viewer-area');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
@@ -122,17 +124,15 @@
         let img = new Image();
         let scale = 1, panX = 0, panY = 0;
         let isDragging = false, startX, startY;
-        let activeAnnotationId = null; // ID do item ativo (destacado)
+        let activeAnnotationId = null; 
+        let showAll = false;
         
-        // Fator de escala para desenhos ficarem proporcionais
-        // Baseado em uma largura de referência de 1000px.
-        // Se a imagem for 2000px, traços serão 2x mais grossos.
         let drawingScale = 1; 
 
         img.onload = () => {
             resize();
-            // Define o fator de escala baseado na resolução real da imagem
-            drawingScale = img.naturalWidth / 1000; 
+            // Calcula escala de desenho baseada na imagem real
+            drawingScale = img.naturalWidth / 1200; 
             fitImage();
             render();
         };
@@ -148,33 +148,35 @@
         function fitImage() {
             const rW = canvas.width / img.naturalWidth;
             const rH = canvas.height / img.naturalHeight;
-            scale = Math.min(rW, rH);
+            scale = Math.min(rW, rH); 
+            // Centraliza
             panX = (canvas.width - img.naturalWidth * scale) / 2;
             panY = (canvas.height - img.naturalHeight * scale) / 2;
         }
 
-        // --- RENDERIZAÇÃO ---
         function render() {
-            // Limpa
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Aplica Pan/Zoom
+            // Desenha Imagem
             ctx.setTransform(scale, 0, 0, scale, panX, panY);
             ctx.drawImage(img, 0, 0);
 
-            // Desenha Anotação Ativa
-            if (activeAnnotationId) {
+            // Desenha Anotações
+            if (showAll) {
+                DATA.annotations.forEach(anno => drawAnnotation(anno, false));
+            } else if (activeAnnotationId) {
                 const anno = DATA.annotations.find(a => a.id === activeAnnotationId);
-                if (anno) drawAnnotation(anno);
+                if (anno) drawAnnotation(anno, true);
             }
         }
 
-        function drawAnnotation(anno) {
-            // Recupera a cor original enviada pelo script.js
-            // Tenta pegar do elemento HTML (prioridade) ou do objeto anno
+        function drawAnnotation(anno, isActive) {
+            // Busca a cor e o texto do achado correspondente na lista
             const el = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
             const color = el ? el.dataset.highlightColor : (anno.color || '#00FFFF');
+            // Limpa o texto do HTML para exibir na imagem (remove tags)
+            const labelText = el ? el.innerText.replace(/\n/g, ' ').substring(0, 50) + (el.innerText.length>50?'...':'') : 'Achado';
 
             ctx.save();
             ctx.strokeStyle = color;
@@ -182,121 +184,191 @@
             ctx.lineJoin = 'round';
             ctx.lineCap = 'round';
 
-            // Efeito Neon
-            ctx.shadowColor = color;
-            ctx.shadowBlur = 15 * drawingScale; 
+            // Sombra para contraste
+            ctx.shadowColor = 'black';
+            ctx.shadowBlur = 5 * drawingScale;
 
-            // Espessura Proporcional
-            const baseThickness = anno.thickness || 3;
-            ctx.lineWidth = baseThickness * drawingScale * 1.5; // 1.5x para destaque
+            const baseWidth = (anno.thickness || 4) * drawingScale;
+            ctx.lineWidth = isActive ? baseWidth * 1.5 : baseWidth;
 
-            // Lógica de desenho baseada no tipo
+            // Variável para armazenar a posição onde desenhar o texto
+            let labelPos = { x: 0, y: 0 };
+
             if (anno.points && anno.fillColor) { // Polígono
                 ctx.beginPath();
                 anno.points.forEach((p, i) => {
-                    const x = p.x * img.naturalWidth;
-                    const y = p.y * img.naturalHeight;
-                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    const x = p.x * img.naturalWidth, y = p.y * img.naturalHeight;
+                    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+                    if(i===0) labelPos = {x, y};
                 });
                 ctx.closePath();
                 ctx.stroke();
-                ctx.globalAlpha = 0.3; ctx.fill(); 
+                ctx.globalAlpha = 0.2; ctx.fill(); ctx.globalAlpha = 1;
             } else if (anno.start && anno.end) { // Medida
-                const x1 = anno.start.x * img.naturalWidth, y1 = anno.start.y * img.naturalHeight;
-                const x2 = anno.end.x * img.naturalWidth, y2 = anno.end.y * img.naturalHeight;
-                ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-                
-                // Texto Proporcional
-                const fontSize = (24 * drawingScale);
-                ctx.font = `bold ${fontSize}px Arial`;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-                ctx.shadowBlur = 0; // Texto nítido
-                ctx.lineWidth = 4 * drawingScale; ctx.strokeStyle = 'black'; // Contorno preto
-                const mx = (x1+x2)/2, my = (y1+y2)/2;
-                ctx.strokeText(anno.text, mx, my - 10);
-                ctx.fillText(anno.text, mx, my - 10);
-
+                const p1 = {x: anno.start.x*img.naturalWidth, y: anno.start.y*img.naturalHeight};
+                const p2 = {x: anno.end.x*img.naturalWidth, y: anno.end.y*img.naturalHeight};
+                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                labelPos = p1;
+                // Desenha valor da medida
+                ctx.font = `bold ${20*drawingScale}px Arial`;
+                ctx.fillStyle = color;
+                ctx.shadowBlur = 0; ctx.lineWidth = 3; ctx.strokeStyle = 'black';
+                const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2;
+                ctx.strokeText(anno.text, mx, my-10);
+                ctx.fillText(anno.text, mx, my-10);
             } else if (anno.type && anno.size) { // Seta
-                const x = anno.x * img.naturalWidth, y = anno.y * img.naturalHeight;
-                const size = anno.size * img.naturalWidth;
-                ctx.translate(x, y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
-                ctx.beginPath(); 
-                ctx.moveTo(-size/2, 0); ctx.lineTo(size/2, 0); 
-                ctx.lineTo(size/2 - size*0.3, -size*0.2); 
-                ctx.moveTo(size/2, 0); ctx.lineTo(size/2 - size*0.3, size*0.2); 
+                const x = anno.x*img.naturalWidth, y = anno.y*img.naturalHeight;
+                labelPos = {x, y};
+                const s = anno.size*img.naturalWidth;
+                ctx.translate(x,y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
+                ctx.beginPath(); ctx.moveTo(-s/2,0); ctx.lineTo(s/2,0);
+                ctx.lineTo(s/2-s*0.3, -s*0.2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-s*0.3, s*0.2);
                 ctx.stroke();
-
-            } else if (anno.text) { // Texto
-                const x = anno.x * img.naturalWidth, y = anno.y * img.naturalHeight;
-                const fs = (parseInt(anno.font)||24) * drawingScale;
-                ctx.font = `bold ${fs}px Arial`;
-                ctx.shadowBlur = 0; ctx.lineWidth = 4 * drawingScale; ctx.strokeStyle = 'black';
-                ctx.strokeText(anno.text, x, y);
-                ctx.fillText(anno.text, x, y);
-
-            } else if (anno.points) { // Desenho Livre
+            } else if (anno.points) { // Lápis
                 ctx.beginPath();
                 anno.points.forEach((p, i) => {
-                    const x = p.x * img.naturalWidth, y = p.y * img.naturalHeight;
-                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    const x = p.x*img.naturalWidth, y = p.y*img.naturalHeight;
+                    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+                    if(i===0) labelPos = {x, y};
                 });
                 ctx.stroke();
             }
 
             ctx.restore();
+
+            // --- DESENHAR LABEL DE TEXTO (A novidade) ---
+            if (isActive && labelText) {
+                drawLabel(ctx, labelText, labelPos.x, labelPos.y - (30 * drawingScale), color);
+            }
         }
 
-        // --- INTERAÇÃO (CLIQUE NA LISTA) ---
-        // Lógica de Toggle: Clica -> Ativa, Clica de novo -> Desativa
+        // Função para desenhar a caixa de texto bonita na imagem
+        function drawLabel(ctx, text, x, y, color) {
+            ctx.save();
+            const fontSize = 24 * drawingScale;
+            ctx.font = `600 ${fontSize}px "Segoe UI", Arial, sans-serif`;
+            const padding = 10 * drawingScale;
+            const textWidth = ctx.measureText(text).width;
+            const boxWidth = textWidth + (padding * 2);
+            const boxHeight = fontSize + (padding * 2);
+
+            // Fundo semi-transparente escuro
+            ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+            ctx.beginPath();
+            ctx.roundRect(x, y - boxHeight, boxWidth, boxHeight, 8);
+            ctx.fill();
+            
+            // Borda colorida (da cor do achado)
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2 * drawingScale;
+            ctx.stroke();
+
+            // Texto Branco
+            ctx.fillStyle = "#ffffff";
+            ctx.textBaseline = "middle";
+            ctx.fillText(text, x + padding, y - boxHeight + (boxHeight/2) + 2);
+            ctx.restore();
+        }
+
+        // --- CONTROLES E INTERAÇÃO ---
+        
+        // 1. Toggle na Lista
         listEl.addEventListener('click', (e) => {
             const item = e.target.closest('.finding-item');
             if (!item) return;
 
-            // Remove classe 'active' de todos
+            // Remove active de todos
             document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
 
             const id = item.dataset.annotationId;
-            
             if (activeAnnotationId === id) {
-                // Se clicou no que já estava ativo: DESATIVA
+                // Desligar se clicar novamente
                 activeAnnotationId = null;
-                // Volta ao zoom padrão
-                fitImage();
+                fitImage(); // Zoom natural (reset)
             } else {
-                // Se clicou em um novo: ATIVA
+                // Ligar novo
                 activeAnnotationId = id;
+                showAll = false; // Foca apenas neste
                 item.classList.add('active');
                 
-                // Centraliza e dá Zoom na anotação
+                // Zoom Natural
                 const anno = DATA.annotations.find(a => a.id === id);
-                if (anno) zoomToAnnotation(anno);
+                if (anno) zoomNaturalTo(anno);
             }
             render();
         });
 
-        function zoomToAnnotation(anno) {
-            // Calcula o centro da anotação
-            let cx = 0.5, cy = 0.5;
-            if (anno.start) { cx = (anno.start.x + anno.end.x)/2; cy = (anno.start.y + anno.end.y)/2; }
-            else if (anno.points) { cx = anno.points[0].x; cy = anno.points[0].y; }
-            else { cx = anno.x; cy = anno.y; }
-
-            // Converte para pixels reais
-            const imgX = cx * img.naturalWidth;
-            const imgY = cy * img.naturalHeight;
-
-            // Define um zoom (ex: 2.5x)
-            scale = Math.min(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight) * 2.5;
+        // 2. Zoom Natural (Com margem/padding)
+        function zoomNaturalTo(anno) {
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            const pts = anno.points || [anno.start, anno.end].filter(Boolean) || [{x:anno.x, y:anno.y}];
             
+            // Se for ponto único (texto, seta), cria um box fictício ao redor
+            if(pts.length === 1 && !pts[0].x) { // Fallback para objeto {x,y} puro
+                 pts[0] = {x: anno.x, y: anno.y};
+            }
+
+            pts.forEach(p => {
+                if(p) {
+                    minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+                    minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+                }
+            });
+
+            // Se for muito pequeno (ponto), expande a área de interesse
+            if (maxX - minX < 0.05) { minX -= 0.1; maxX += 0.1; }
+            if (maxY - minY < 0.05) { minY -= 0.1; maxY += 0.1; }
+
+            // Converte para pixels
+            const regionX = minX * img.naturalWidth;
+            const regionY = minY * img.naturalHeight;
+            const regionW = (maxX - minX) * img.naturalWidth;
+            const regionH = (maxY - minY) * img.naturalHeight;
+
+            // Calcula zoom para caber essa região com PADDING
+            // Padding de 30% da tela para dar contexto (Zoom "Natural")
+            const paddingX = canvas.width * 0.3; 
+            const paddingY = canvas.height * 0.3;
+            
+            const availableW = canvas.width - paddingX;
+            const availableH = canvas.height - paddingY;
+
+            let targetScale = Math.min(availableW / regionW, availableH / regionH);
+            
+            // Limita o zoom máximo para não ficar "feio" (pixelado)
+            targetScale = Math.min(targetScale, 2.5); // Max 2.5x (era livre antes)
+            targetScale = Math.max(targetScale, Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight)); // Nunca menor que fit
+
             // Centraliza
-            panX = (canvas.width / 2) - (imgX * scale);
-            panY = (canvas.height / 2) - (imgY * scale);
+            const centerX = regionX + regionW / 2;
+            const centerY = regionY + regionH / 2;
+
+            scale = targetScale;
+            panX = (canvas.width / 2) - (centerX * scale);
+            panY = (canvas.height / 2) - (centerY * scale);
         }
 
-        // --- INTERAÇÃO (PAN/ZOOM MOUSE) ---
-        viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; });
+        // 3. Botões
+        document.getElementById('btn-toggle-all').addEventListener('click', () => {
+            showAll = !showAll;
+            activeAnnotationId = null;
+            document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
+            fitImage();
+            render();
+        });
+
+        document.getElementById('btn-reset-zoom').addEventListener('click', () => {
+            activeAnnotationId = null;
+            showAll = false;
+            document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
+            fitImage();
+            render();
+        });
+
+        // 4. Mouse/Touch Pan & Zoom
+        viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; viewer.style.cursor = 'grabbing'; });
         window.addEventListener('mousemove', e => { if(isDragging) { panX = e.clientX - startX; panY = e.clientY - startY; render(); } });
-        window.addEventListener('mouseup', () => isDragging = false);
+        window.addEventListener('mouseup', () => { isDragging = false; viewer.style.cursor = 'default'; });
         viewer.addEventListener('wheel', e => {
             e.preventDefault();
             const d = e.deltaY > 0 ? 0.9 : 1.1;
@@ -310,34 +382,9 @@
             render();
         });
         
-        // Touch (Mobile)
         let initDist = 0, initScale = 1;
-        viewer.addEventListener('touchstart', e => { 
-            if (e.touches.length === 2) { 
-                initDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); 
-                initScale = scale; 
-            } else if (e.touches.length === 1) { 
-                isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY; 
-            } 
-        }, {passive: false});
-
-        viewer.addEventListener('touchmove', e => { 
-            e.preventDefault(); 
-            if (e.touches.length === 2) { 
-                const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); 
-                const delta = dist / initDist; 
-                const cx = viewer.offsetWidth / 2, cy = viewer.offsetHeight / 2; 
-                const ns = initScale * delta; 
-                panX = cx - (cx - panX) * (ns / scale); 
-                panY = cy - (cy - panY) * (ns / scale); 
-                scale = ns; 
-                render(); 
-            } else if (isDragging && e.touches.length === 1) { 
-                panX = e.touches[0].clientX - startX; 
-                panY = e.touches[0].clientY - startY; 
-                render(); 
-            } 
-        }, {passive: false});
+        viewer.addEventListener('touchstart', e => { if (e.touches.length === 2) { initDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); initScale = scale; } else if (e.touches.length === 1) { isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY; } }, {passive: false});
+        viewer.addEventListener('touchmove', e => { e.preventDefault(); if (e.touches.length === 2) { const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); const delta = dist / initDist; const cx = viewer.offsetWidth / 2, cy = viewer.offsetHeight / 2; const ns = initScale * delta; panX = cx - (cx - panX) * (ns / scale); panY = cy - (cy - panY) * (ns / scale); scale = ns; render(); } else if (isDragging && e.touches.length === 1) { panX = e.touches[0].clientX - startX; panY = e.touches[0].clientY - startY; render(); } }, {passive: false});
         viewer.addEventListener('touchend', () => isDragging = false);
     }
 </script>
