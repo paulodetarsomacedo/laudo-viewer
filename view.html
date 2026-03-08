@@ -391,46 +391,62 @@
 
         function zoomNatural(anno) {
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            const pts = anno.points ||[anno.start, anno.end].filter(Boolean) ||[{x:anno.x, y:anno.y}];
-            
-            // Seta usa o tamanho (size) para o bounding box
-            if(pts.length === 1 && !pts[0].x) {
-                let size = anno.size || 0.05;
-                minX = anno.x - size; maxX = anno.x + size;
-                minY = anno.y - size; maxY = anno.y + size;
-            } else {
-                pts.forEach(p => {
-                    if(p) {
-                        minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
-                        minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
-                    }
+
+            // 1. Identifica o tipo de anotação e cria a "Caixa Delimitadora" corretamente
+            if (anno.points) {
+                // Polígonos e Lápis (Vários pontos)
+                anno.points.forEach(p => {
+                    minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+                    minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
                 });
+            } else if (anno.start && anno.end) {
+                // Medidas / Réguas (Dois pontos)
+                minX = Math.min(anno.start.x, anno.end.x);
+                maxX = Math.max(anno.start.x, anno.end.x);
+                minY = Math.min(anno.start.y, anno.end.y);
+                maxY = Math.max(anno.start.y, anno.end.y);
+            } else if (anno.x !== undefined && anno.y !== undefined) {
+                // Setas e Textos (Um único ponto central + Tamanho)
+                // Usamos o 'size' e o 'scale' da seta para criar uma caixa ao redor dela
+                let size = anno.size ? (anno.size * (anno.scale || 1)) : 0.08;
+                minX = anno.x - (size / 2);
+                maxX = anno.x + (size / 2);
+                minY = anno.y - (size / 2);
+                maxY = anno.y + (size / 2);
             }
 
-            // Adiciona respiro para contexto (Zoom "Natural")
+            // 2. Garante um respiro mínimo para o zoom não ficar extremo em objetos pequenos
             if (maxX - minX < 0.1) { minX -= 0.1; maxX += 0.1; }
             if (maxY - minY < 0.1) { minY -= 0.1; maxY += 0.1; }
 
+            // 3. Converte para o tamanho real da imagem
             const regW = (maxX - minX) * img.naturalWidth;
             const regH = (maxY - minY) * img.naturalHeight;
-            const padX = canvas.width * 0.3; const padY = canvas.height * 0.3;
+            
+            // 4. Margem da tela para manter contexto anatômico ao redor do achado
+            const isMobile = window.innerWidth <= 768;
+            const padX = canvas.width * (isMobile ? 0.15 : 0.3); 
+            const padY = canvas.height * (isMobile ? 0.15 : 0.3);
 
-            let tScale = Math.min((canvas.width-padX)/regW, (canvas.height-padY)/regH);
-            tScale = Math.min(tScale, 4.0); // Limite Max
-            tScale = Math.max(tScale, Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight)); // Limite Min
+            // 5. Calcula o Zoom ideal
+            let tScale = Math.min((canvas.width - padX) / regW, (canvas.height - padY) / regH);
+            tScale = Math.min(tScale, 3.5); // Zoom Máximo permitido
+            tScale = Math.max(tScale, Math.min(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight)); // Nunca menor que a tela
 
+            // 6. Calcula o centro exato da anotação
             const cX = ((minX + maxX) / 2) * img.naturalWidth;
             const cY = ((minY + maxY) / 2) * img.naturalHeight;
 
+            // 7. Aplica a câmera
             scale = tScale;
-            panX = (canvas.width/2) - (cX * scale);
+            panX = (canvas.width / 2) - (cX * scale);
             
-            // O TRUQUE DA CÂMERA NO MOBILE: Foca a lesão no topo para não cobrir o Card no rodapé
-            const isMobile = window.innerWidth <= 768;
-            const ratioY = isMobile ? 0.3 : 0.5;
+            // TRUQUE MOBILE: Se for celular, centraliza o foco um pouco mais para cima (35% da tela)
+            // para que a lesão não fique escondida atrás do Card HTML que sobe pela base.
+            const ratioY = isMobile ? 0.35 : 0.5;
             panY = (canvas.height * ratioY) - (cY * scale);
         }
-
+        
         // --- MOUSE, TOUCH & HIT DETECTION NA IMAGEM ---
         viewer.addEventListener('mousedown', e => { 
             isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; 
