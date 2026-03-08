@@ -5,16 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Laudo Interativo</title>
     <style>
-        /* Reset básico para evitar problemas de tamanho */
         * { box-sizing: border-box; }
-
         :root { --bg-color: #000; --panel-bg: #151515; --text-color: #eee; --accent: #007bff; }
         
         body { 
-            margin: 0; padding: 0; 
-            background: var(--bg-color); color: var(--text-color); 
-            font-family: 'Segoe UI', sans-serif; 
-            height: 100vh; height: 100dvh; /* Garante altura total em mobiles modernos */
+            margin: 0; padding: 0; background: var(--bg-color); color: var(--text-color); 
+            font-family: 'Segoe UI', sans-serif; height: 100vh; height: 100dvh; 
             display: flex; overflow: hidden; 
         }
 
@@ -29,14 +25,14 @@
             display: flex; align-items: center; gap: 15px;
         }
         
-        /* Botão "Ver Todos" do Header (Oculto no PC, visível no Mobile) */
         #btn-toggle-all-header { display: none; }
 
         /* --- ÁREA DA IMAGEM --- */
         #viewer-area { 
-            flex: 1; position: relative; overflow: hidden; 
+            flex: 1; position: relative; overflow: hidden; cursor: grab;
             background: #000; display: flex; align-items: center; justify-content: center; 
         }
+        #viewer-area:active { cursor: grabbing; }
         canvas { display: block; }
 
         /* CARD FLUTUANTE DE TEXTO HTML */
@@ -118,7 +114,7 @@
             /* 2. Área da Imagem */
             #viewer-area { height: 45%; width: 100%; order: 1; border-bottom: 2px solid var(--accent); }
             
-            /* 3. Sidebar (Vira o painel inferior) */
+            /* 3. Sidebar */
             #sidebar { height: 50%; width: 100%; order: 2; border-left: none; display: flex; flex-direction: column; }
 
             /* Oculta redundâncias */
@@ -146,14 +142,13 @@
 </head>
 <body>
 
-<!-- NOVO HEADER -->
 <div id="app-header">
     <div id="app-title">LAUDO INTERATIVO</div>
     <button id="btn-toggle-all-header">👁️ Ver Todos</button>
 </div>
 
 <div id="viewer-area">
-    <!-- CARD HTML BONITO (Substitui o texto no canvas) -->
+    <!-- CARD HTML FLUTUANTE (Substitui o texto pintado na imagem) -->
     <div id="finding-card">
         <button class="close-card" onclick="closeCard()">×</button>
         <div id="card-content">Texto do achado aqui...</div>
@@ -163,13 +158,13 @@
 
 <div id="sidebar">
     <div id="sidebar-header"><h2>Achados Radiográficos</h2></div>
-    <div class="instruction-box">Clique nos achados para destacar na imagem.</div>
+    <div class="instruction-box">Clique no desenho ou no texto abaixo para destacar.</div>
     
     <div id="findings-list">Carregando...</div>
     
     <div id="controls">
         <button id="btn-toggle-all" class="btn">👁️ Ver Todos</button>
-        <button id="btn-reset-zoom" class="btn secondary" onclick="location.reload()">⟲ Resetar Imagem</button>
+        <button id="btn-reset-zoom" class="btn secondary">⟲ Resetar Imagem</button>
     </div>
 
     <div id="signature-area">
@@ -210,6 +205,7 @@
         let img = new Image();
         let scale = 1, panX = 0, panY = 0;
         let isDragging = false, startX, startY;
+        let startClickX = 0, startClickY = 0; // Para diferenciar arrasto de clique
         let activeAnnotationId = null; 
         let showAll = false;
         let drawingScale = 1; 
@@ -270,15 +266,19 @@
             document.getElementById('finding-card').style.display = 'none';
         }
 
+        function resetView() {
+            activeAnnotationId = null;
+            showAll = false;
+            closeCard();
+            document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
+            fitImage();
+            render();
+        }
+
         // --- DESENHO NO CANVAS ---
         function drawAnnotation(anno, isActive) {
             const el = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
             const color = el ? el.dataset.highlightColor : (anno.color || '#00FFFF');
-            
-            // Pega o texto puro para jogar no Card HTML
-            const cardText = el ? el.innerText.replace(/\n/g, ' ').trim() : '';
-
-            if (isActive) updateFindingCard(cardText, color);
 
             ctx.save();
             ctx.strokeStyle = color; ctx.fillStyle = color;
@@ -303,13 +303,12 @@
                 const p2 = {x: anno.end.x*img.naturalWidth, y: anno.end.y*img.naturalHeight};
                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
                 
-                // O valor da medida continua sendo desenhado no canvas
                 const fs = 20*drawingScale; ctx.font = `bold ${fs}px Arial`; ctx.textAlign = 'center'; 
                 ctx.shadowBlur = 0; ctx.lineWidth = 3; ctx.strokeStyle = 'black';
                 const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2;
                 ctx.strokeText(anno.text, mx, my-10); ctx.fillText(anno.text, mx, my-10);
 
-            } else if (anno.type && anno.size) { // SETA (CÓDIGO CORRIGIDO COM GEOMETRIA COMPLETA)
+            } else if (anno.type && anno.size) { // SETA (Normal, Outline, Complex)
                 const x = anno.x * img.naturalWidth, y = anno.y * img.naturalHeight;
                 const s = anno.size * img.naturalWidth;
                 
@@ -323,56 +322,28 @@
                 ctx.beginPath();
 
                 if (anno.type === 'normal') {
-                    ctx.moveTo(-s / 2 + headLength, 0);
-                    ctx.lineTo(s / 2, 0);
-                    ctx.lineTo(s / 2 - headLength, -headLength / 2);
-                    ctx.moveTo(s / 2, 0);
+                    ctx.moveTo(-s / 2 + headLength, 0); ctx.lineTo(s / 2, 0);
+                    ctx.lineTo(s / 2 - headLength, -headLength / 2); ctx.moveTo(s / 2, 0);
                     ctx.lineTo(s / 2 - headLength, headLength / 2);
-                    
-                    ctx.fillStyle = color;
-                    ctx.fill();
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = shaftWidth;
-                    ctx.lineCap = 'round';
+                    ctx.fillStyle = color; ctx.fill();
+                    ctx.strokeStyle = color; ctx.lineWidth = shaftWidth; ctx.lineCap = 'round';
                     ctx.stroke();
-
                 } else if (anno.type === 'outline') {
-                    headLength = s * 0.4;
-                    shaftWidth = s * 0.15;
-
-                    ctx.moveTo(-s / 2, -shaftWidth / 2);
-                    ctx.lineTo(-s / 2, shaftWidth / 2);
-                    ctx.lineTo(s / 2 - headLength, shaftWidth / 2);
-                    ctx.lineTo(s / 2 - headLength, headLength / 2);
-                    ctx.lineTo(s / 2, 0);
-                    ctx.lineTo(s / 2 - headLength, -headLength / 2);
-                    ctx.lineTo(s / 2 - headLength, -shaftWidth / 2);
-                    ctx.closePath();
-
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = isActive ? 4 * drawingScale : 2 * drawingScale; 
-                    ctx.lineJoin = 'miter';
-                    ctx.stroke();
-
+                    headLength = s * 0.4; shaftWidth = s * 0.15;
+                    ctx.moveTo(-s / 2, -shaftWidth / 2); ctx.lineTo(-s / 2, shaftWidth / 2);
+                    ctx.lineTo(s / 2 - headLength, shaftWidth / 2); ctx.lineTo(s / 2 - headLength, headLength / 2);
+                    ctx.lineTo(s / 2, 0); ctx.lineTo(s / 2 - headLength, -headLength / 2);
+                    ctx.lineTo(s / 2 - headLength, -shaftWidth / 2); ctx.closePath();
+                    ctx.strokeStyle = color; ctx.lineWidth = isActive ? 4 * drawingScale : 2 * drawingScale; 
+                    ctx.lineJoin = 'miter'; ctx.stroke();
                 } else if (anno.type === 'complex') {
-                    headLength = s * 0.4;
-                    shaftWidth = s * 0.2;
-
-                    ctx.moveTo(-s / 2, -shaftWidth / 2);
-                    ctx.lineTo(-s / 2, shaftWidth / 2);
-                    ctx.lineTo(s / 2 - headLength, shaftWidth / 2);
-                    ctx.lineTo(s / 2 - headLength, headLength / 1.5);
-                    ctx.lineTo(s / 2, 0);
-                    ctx.lineTo(s / 2 - headLength, -headLength / 1.5);
-                    ctx.lineTo(s / 2 - headLength, -shaftWidth / 2);
-                    ctx.closePath();
-
-                    ctx.fillStyle = color;
-                    ctx.fill();
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 1 * drawingScale;
-                    ctx.lineJoin = 'miter';
-                    ctx.stroke();
+                    headLength = s * 0.4; shaftWidth = s * 0.2;
+                    ctx.moveTo(-s / 2, -shaftWidth / 2); ctx.lineTo(-s / 2, shaftWidth / 2);
+                    ctx.lineTo(s / 2 - headLength, shaftWidth / 2); ctx.lineTo(s / 2 - headLength, headLength / 1.5);
+                    ctx.lineTo(s / 2, 0); ctx.lineTo(s / 2 - headLength, -headLength / 1.5);
+                    ctx.lineTo(s / 2 - headLength, -shaftWidth / 2); ctx.closePath();
+                    ctx.fillStyle = color; ctx.fill();
+                    ctx.strokeStyle = color; ctx.lineWidth = 1 * drawingScale; ctx.lineJoin = 'miter'; ctx.stroke();
                 }
 
             } else if (anno.text) { // Texto Livre
@@ -390,11 +361,10 @@
                 });
                 ctx.stroke();
             }
-
             ctx.restore();
         }
 
-        // --- INTERAÇÃO ---
+        // --- INTERAÇÃO E ZOOM ---
         listEl.addEventListener('click', (e) => {
             const item = e.target.closest('.finding-item');
             if (!item) return;
@@ -403,12 +373,18 @@
             const id = item.dataset.annotationId;
 
             if (activeAnnotationId === id) { 
-                activeAnnotationId = null; closeCard(); fitImage(); 
+                resetView();
             } else { 
                 activeAnnotationId = id; showAll = false; 
                 item.classList.add('active'); 
+                
                 const anno = DATA.annotations.find(a => a.id === id); 
-                if (anno) zoomNatural(anno); 
+                if (anno) {
+                    const color = item.dataset.highlightColor || anno.color || '#00FFFF';
+                    const cardText = item.innerText.replace(/\n/g, ' ').trim();
+                    updateFindingCard(cardText, color);
+                    zoomNatural(anno); 
+                }
             }
             render();
         });
@@ -416,63 +392,120 @@
         function zoomNatural(anno) {
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
             const pts = anno.points ||[anno.start, anno.end].filter(Boolean) ||[{x:anno.x, y:anno.y}];
-            if(pts.length === 1 && !pts[0].x) pts[0] = {x: anno.x, y: anno.y};
+            
+            // Seta usa o tamanho (size) para o bounding box
+            if(pts.length === 1 && !pts[0].x) {
+                let size = anno.size || 0.05;
+                minX = anno.x - size; maxX = anno.x + size;
+                minY = anno.y - size; maxY = anno.y + size;
+            } else {
+                pts.forEach(p => {
+                    if(p) {
+                        minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+                        minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+                    }
+                });
+            }
 
-            pts.forEach(p => {
-                if(p) {
-                    minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
-                    minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
-                }
-            });
-
-            if (maxX - minX < 0.05) { minX -= 0.1; maxX += 0.1; }
-            if (maxY - minY < 0.05) { minY -= 0.1; maxY += 0.1; }
+            // Adiciona respiro para contexto (Zoom "Natural")
+            if (maxX - minX < 0.1) { minX -= 0.1; maxX += 0.1; }
+            if (maxY - minY < 0.1) { minY -= 0.1; maxY += 0.1; }
 
             const regW = (maxX - minX) * img.naturalWidth;
             const regH = (maxY - minY) * img.naturalHeight;
             const padX = canvas.width * 0.3; const padY = canvas.height * 0.3;
 
             let tScale = Math.min((canvas.width-padX)/regW, (canvas.height-padY)/regH);
-            tScale = Math.min(tScale, 3.0); 
-            tScale = Math.max(tScale, Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight));
+            tScale = Math.min(tScale, 4.0); // Limite Max
+            tScale = Math.max(tScale, Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight)); // Limite Min
 
-            const cX = (minX*img.naturalWidth + regW/2);
-            const cY = (minY*img.naturalHeight + regH/2);
+            const cX = ((minX + maxX) / 2) * img.naturalWidth;
+            const cY = ((minY + maxY) / 2) * img.naturalHeight;
 
             scale = tScale;
             panX = (canvas.width/2) - (cX * scale);
             
-            // O TRUQUE DA CÂMERA NO MOBILE (Evita que o card cubra a anotação)
+            // O TRUQUE DA CÂMERA NO MOBILE: Foca a lesão no topo para não cobrir o Card no rodapé
             const isMobile = window.innerWidth <= 768;
-            const ratioY = isMobile ? 0.35 : 0.5;
+            const ratioY = isMobile ? 0.3 : 0.5;
             panY = (canvas.height * ratioY) - (cY * scale);
         }
 
-        function toggleAllAction() {
-            showAll = !showAll; activeAnnotationId = null; closeCard();
-            document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
-            fitImage(); render();
-        }
+        // --- MOUSE, TOUCH & HIT DETECTION NA IMAGEM ---
+        viewer.addEventListener('mousedown', e => { 
+            isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; 
+            startClickX = e.clientX; startClickY = e.clientY; 
+        });
+        
+        viewer.addEventListener('mousemove', e => { 
+            if(isDragging) { panX = e.clientX - startX; panY = e.clientY - startY; render(); } 
+        });
+        
+        viewer.addEventListener('mouseup', () => isDragging = false);
 
-        document.getElementById('btn-toggle-all').addEventListener('click', toggleAllAction);
-        document.getElementById('btn-toggle-all-header').addEventListener('click', toggleAllAction);
+        // CLIQUE DIRETO NA IMAGEM
+        viewer.addEventListener('click', e => {
+            // Se moveu o mouse mais de 5px, foi um arrasto (Pan), não um clique
+            if (Math.abs(e.clientX - startClickX) > 5 || Math.abs(e.clientY - startClickY) > 5) return;
+            // Se clicou no botão ou no card flutuante, ignora
+            if (e.target.closest('#finding-card') || e.target.closest('#app-header')) return;
 
-        // Mouse Pan/Zoom
-        viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; });
-        window.addEventListener('mousemove', e => { if(isDragging) { panX = e.clientX - startX; panY = e.clientY - startY; render(); } });
-        window.addEventListener('mouseup', () => isDragging = false);
+            const rect = canvas.getBoundingClientRect();
+            const relX = ((e.clientX - rect.left - panX) / scale) / img.naturalWidth;
+            const relY = ((e.clientY - rect.top - panY) / scale) / img.naturalHeight;
+
+            let clickedAnno = null;
+            let minDist = Infinity;
+            const threshold = 0.05; // 5% de tolerância para o toque
+
+            DATA.annotations.forEach(anno => {
+                let dist = Infinity;
+                if (anno.points) {
+                    anno.points.forEach(p => {
+                        const d = Math.hypot(p.x - relX, p.y - relY);
+                        if (d < dist) dist = d;
+                    });
+                } else if (anno.start && anno.end) {
+                    const mx = (anno.start.x + anno.end.x)/2;
+                    const my = (anno.start.y + anno.end.y)/2;
+                    dist = Math.hypot(mx - relX, my - relY);
+                } else if (anno.x !== undefined) {
+                    dist = Math.hypot(anno.x - relX, anno.y - relY);
+                }
+
+                if (dist < threshold && dist < minDist) {
+                    minDist = dist;
+                    clickedAnno = anno;
+                }
+            });
+
+            if (clickedAnno) {
+                // Se achou uma anotação, simula o clique no botão dela na lista
+                const listItem = document.querySelector(`.finding-item[data-annotation-id="${clickedAnno.id}"]`);
+                if (listItem) {
+                    listItem.click(); 
+                    listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            } else {
+                // Clicou no "vazio", reseta o zoom e esconde o balão
+                resetView();
+            }
+        });
+
         viewer.addEventListener('wheel', e => { 
             e.preventDefault(); const d = e.deltaY > 0 ? 0.9 : 1.1; 
-            const rect = canvas.getBoundingClientRect();
-            const mx = e.clientX - rect.left; const my = e.clientY - rect.top; 
+            const mx = e.clientX - canvas.getBoundingClientRect().left; const my = e.clientY - canvas.getBoundingClientRect().top; 
             const ns = scale * d; panX = mx - (mx - panX) * d; panY = my - (my - panY) * d; scale = ns; render(); 
         });
         
-        // Touch Pan/Zoom
         let idist = 0, iscale = 1;
         viewer.addEventListener('touchstart', e => { 
-            if(e.touches.length===2){ idist = Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); iscale = scale; } 
-            else if(e.touches.length===1) { isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY; } 
+            if(e.touches.length===2){ 
+                idist = Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); iscale = scale; 
+            } else if(e.touches.length===1) { 
+                isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY; 
+                startClickX = e.touches[0].clientX; startClickY = e.touches[0].clientY;
+            } 
         }, {passive:false});
         
         viewer.addEventListener('touchmove', e => { 
@@ -487,6 +520,16 @@
         }, {passive:false});
         
         viewer.addEventListener('touchend', () => isDragging = false);
+
+        // Botões de Ação
+        function toggleAllAction() {
+            showAll = !showAll; activeAnnotationId = null; closeCard();
+            document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
+            fitImage(); render();
+        }
+        document.getElementById('btn-toggle-all').addEventListener('click', toggleAllAction);
+        document.getElementById('btn-toggle-all-header').addEventListener('click', toggleAllAction);
+        document.getElementById('btn-reset-zoom').addEventListener('click', resetView);
     }
 </script>
 </body>
