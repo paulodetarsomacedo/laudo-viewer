@@ -5,26 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Laudo Interativo</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
         * { box-sizing: border-box; }
-        :root { --bg-color: #000; --panel-bg: #151515; --text-color: #eee; --accent: #007bff; }
+        :root { 
+            --bg-color: #080c10; 
+            --panel-bg: #0e1318; 
+            --text-color: #d4dce8; 
+            --accent: #3b82f6;
+            --critical: #ef4444;
+            --warning: #f59e0b;
+            --normal: #22c55e;
+            --critical-bg: rgba(239,68,68,0.08);
+            --warning-bg: rgba(245,158,11,0.08);
+            --normal-bg: rgba(34,197,94,0.08);
+        }
         
         body { 
             margin: 0; padding: 0; background: var(--bg-color); color: var(--text-color); 
-            font-family: 'Segoe UI', sans-serif; height: 100vh; height: 100dvh; 
+            font-family: 'DM Sans', sans-serif; height: 100vh; height: 100dvh; 
             display: flex; overflow: hidden; 
         }
 
-        /* --- HEADER PRINCIPAL --- */
+        /* --- HEADER --- */
         #app-header {
-            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7); color: rgba(255, 255, 255, 0.95);
-            padding: 8px 20px; border-radius: 30px; font-size: 14px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1.5px; z-index: 50; 
-            border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(5px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            display: flex; align-items: center; gap: 15px;
+            position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+            background: rgba(8,12,16,0.85);
+            color: rgba(255,255,255,0.9);
+            padding: 8px 20px; border-radius: 40px; font-size: 11px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 2px; z-index: 50; 
+            border: 1px solid rgba(59,130,246,0.2);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
+            display: flex; align-items: center; gap: 16px;
         }
         #btn-toggle-all-header { display: none; }
+
+        #severity-badges { display: flex; gap: 6px; align-items: center; }
+        .badge {
+            font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+            letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;
+        }
+        .badge-critical { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-warning  { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+        .badge-normal   { background: rgba(34,197,94,0.15);  color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+        .badge-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+        .badge-critical .badge-dot { background: #ef4444; }
+        .badge-warning  .badge-dot { background: #f59e0b; }
+        .badge-normal   .badge-dot { background: #22c55e; }
 
         /* --- ÁREA DA IMAGEM --- */
         #viewer-area { 
@@ -37,53 +65,120 @@
         /* CARD FLUTUANTE */
         #finding-card {
             position: absolute; display: none; z-index: 60;
-            background: rgba(20, 20, 20, 0.95); color: #fff;
-            backdrop-filter: blur(10px);
-            padding: 15px 40px 15px 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-            border-left: 5px solid var(--accent);
-            font-size: 15px; line-height: 1.5;
-            max-width: 400px; min-width: 250px;
-            transition: opacity 0.3s ease;
+            background: rgba(8,12,16,0.96);
+            color: #fff;
+            backdrop-filter: blur(20px);
+            border-radius: 14px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.06);
+            border-left: 4px solid var(--accent);
+            max-width: 420px; min-width: 260px;
+            overflow: hidden;
+        }
+        #finding-card.show {
+            animation: cardIn 0.25s cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(8px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
         }
         @media (min-width: 769px) {
             #finding-card { bottom: 30px; left: 30px; }
         }
+        #card-header {
+            padding: 10px 36px 10px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex; align-items: center; gap: 8px;
+        }
+        #card-severity-icon { font-size: 13px; }
+        #card-severity-label { 
+            font-size: 9px; font-weight: 700; text-transform: uppercase; 
+            letter-spacing: 1.5px; opacity: 0.55;
+        }
+        #card-body { padding: 12px 36px 12px 14px; }
+        #card-content { font-size: 13px; line-height: 1.55; color: #d4dce8; }
+        #card-suggestion {
+            margin-top: 10px; padding: 8px 10px;
+            border-radius: 8px; border: 1px solid rgba(59,130,246,0.2);
+            background: rgba(59,130,246,0.08);
+            font-size: 11px; color: #93bbfc;
+            display: flex; align-items: flex-start; gap: 6px; line-height: 1.4;
+        }
+        #card-suggestion-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
         .close-card {
             position: absolute; top: 8px; right: 10px;
-            background: none; border: none; color: #aaa;
-            font-size: 22px; cursor: pointer; padding: 0; line-height: 1;
+            background: none; border: none; color: rgba(255,255,255,0.3);
+            font-size: 20px; cursor: pointer; padding: 0; line-height: 1; transition: color 0.15s;
         }
         .close-card:hover { color: #fff; }
 
-        /* --- SIDEBAR (DESKTOP) --- */
+        /* --- SIDEBAR --- */
         #sidebar { 
-            width: 360px; background: var(--panel-bg); display: flex; flex-direction: column; 
-            border-left: 1px solid #333; z-index: 20; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+            width: 340px; background: var(--panel-bg); display: flex; flex-direction: column; 
+            border-left: 1px solid rgba(255,255,255,0.06); z-index: 20;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.4);
         }
-        #sidebar-header { padding: 15px; background: #1f1f1f; text-align: center; border-bottom: 1px solid #333; flex-shrink: 0; }
-        #sidebar-header h2 { margin: 0; color: var(--accent); font-size: 18px; }
+        #sidebar-header { 
+            padding: 16px 16px 12px; background: rgba(255,255,255,0.02); 
+            border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; 
+        }
+        #sidebar-header h2 { margin: 0 0 4px; color: #fff; font-size: 14px; font-weight: 600; }
+        #sidebar-subtitle { font-size: 11px; color: rgba(255,255,255,0.3); font-family: 'DM Mono', monospace; }
         .instruction-box {
-            background: #252525; color: #aaa; font-size: 12px; padding: 10px 20px;
-            text-align: center; border-bottom: 1px solid #333; flex-shrink: 0;
+            background: transparent; color: rgba(255,255,255,0.22); font-size: 11px; 
+            padding: 8px 16px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.04); 
+            flex-shrink: 0;
         }
-        #findings-list { flex: 1; overflow-y: auto; padding: 15px; }
+
+        #findings-list { flex: 1; overflow-y: auto; padding: 10px; scroll-behavior: smooth; }
+        #findings-list::-webkit-scrollbar { width: 3px; }
+        #findings-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+        .severity-section { margin-bottom: 8px; }
+        .severity-section-title {
+            font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+            padding: 6px 6px 4px; display: flex; align-items: center; gap: 6px; opacity: 0.5;
+        }
+        .severity-section-title::after {
+            content: ''; flex: 1; height: 1px; background: currentColor; opacity: 0.3;
+        }
+
         .finding-item { 
-            background: #2a2a2a; margin-bottom: 10px; padding: 12px; border-radius: 8px; 
-            cursor: pointer; border-left: 5px solid transparent; transition: all 0.2s;
-            font-size: 14px; line-height: 1.4; color: #ccc;
+            margin-bottom: 4px; padding: 10px 12px; border-radius: 8px; 
+            cursor: pointer; border-left: 3px solid transparent; 
+            transition: all 0.18s ease;
+            font-size: 12.5px; line-height: 1.45; color: #7a8fa8;
         }
-        .finding-item:hover { background: #333; color: #fff; transform: translateX(3px); }
-        .finding-item.active { background: #383838; color: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.1); border-color: #fff !important; }
-        #controls { padding: 15px; border-top: 1px solid #333; background: #1f1f1f; display: flex; gap: 10px; flex-direction: column; flex-shrink: 0; }
-        .btn { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn.secondary { background: #444; }
+        .finding-item:hover { color: #d4dce8; transform: translateX(2px); }
+        .finding-item.active { color: #fff; transform: translateX(2px); }
+
+        .finding-item.sev-critical { background: var(--critical-bg); border-left-color: var(--critical) !important; }
+        .finding-item.sev-critical:hover, .finding-item.sev-critical.active { background: rgba(239,68,68,0.13); box-shadow: 0 0 16px rgba(239,68,68,0.1); }
+        .finding-item.sev-warning  { background: var(--warning-bg);  border-left-color: var(--warning)  !important; }
+        .finding-item.sev-warning:hover,  .finding-item.sev-warning.active  { background: rgba(245,158,11,0.13); box-shadow: 0 0 16px rgba(245,158,11,0.1); }
+        .finding-item.sev-normal   { background: var(--normal-bg);   border-left-color: var(--normal)   !important; }
+        .finding-item.sev-normal:hover,   .finding-item.sev-normal.active   { background: rgba(34,197,94,0.13);  box-shadow: 0 0 16px rgba(34,197,94,0.1); }
+
+        #controls { 
+            padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); 
+            background: rgba(255,255,255,0.01); display: flex; gap: 8px; 
+            flex-direction: column; flex-shrink: 0; 
+        }
+        .btn { 
+            background: rgba(59,130,246,0.12); color: #93bbfc; 
+            border: 1px solid rgba(59,130,246,0.22); 
+            padding: 10px; border-radius: 8px; font-weight: 600; 
+            cursor: pointer; font-size: 12px; letter-spacing: 0.3px;
+            transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+        }
+        .btn:hover { background: rgba(59,130,246,0.22); color: #fff; }
+        .btn.secondary { background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.35); border-color: rgba(255,255,255,0.07); }
+        .btn.secondary:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.65); }
+
         #signature-area { 
-            padding: 20px; text-align: center; border-top: 1px solid #333; 
-            background: #151515; flex-shrink: 0; display: flex; justify-content: center;
+            padding: 14px; text-align: center; border-top: 1px solid rgba(255,255,255,0.06); 
+            background: rgba(255,255,255,0.01); flex-shrink: 0; display: flex; justify-content: center;
         }
-        #signature-img { max-width: 150px; height: auto; filter: brightness(0) invert(1); opacity: 0.85; }
+        #signature-img { max-width: 140px; height: auto; filter: brightness(0) invert(1); opacity: 0.45; }
 
         /* =====================================================================
            MOBILE PORTRAIT
@@ -92,116 +187,46 @@
             body { flex-direction: column; }
             #app-header {
                 position: relative; top: 0; left: 0; transform: none;
-                width: 100%; border-radius: 0; border: none; border-bottom: 1px solid #333;
-                background: #111; justify-content: space-between; padding: 10px 15px;
+                width: 100%; border-radius: 0; border: none; border-bottom: 1px solid rgba(255,255,255,0.06);
+                background: #080c10; justify-content: space-between; padding: 10px 14px;
             }
-            #app-title { font-size: 13px; letter-spacing: 1px; }
+            #app-title { font-size: 10px; }
             #btn-toggle-all-header { 
-                display: block; padding: 8px 12px; font-size: 12px; 
-                background: var(--accent); color: white; border: none; border-radius: 5px; font-weight: bold;
+                display: block; padding: 7px 12px; font-size: 11px; 
+                background: rgba(59,130,246,0.12); color: #93bbfc; 
+                border: 1px solid rgba(59,130,246,0.22); border-radius: 6px; font-weight: 600;
+                font-family: 'DM Sans', sans-serif;
             }
-            #viewer-area { height: 45%; width: 100%; order: 1; border-bottom: 2px solid var(--accent); }
-            #sidebar { height: 50%; width: 100%; order: 2; border-left: none; display: flex; flex-direction: column; }
-            #sidebar-header, #controls { display: none; } 
-            .instruction-box { padding: 8px; font-size: 12px; }
-            #findings-list { display: block; overflow-y: auto; overflow-x: hidden; padding: 10px; flex: 1; }
-            .finding-item { width: 100%; margin-bottom: 8px; font-size: 13px; border-left-width: 5px !important; border-bottom: none !important; }
-            #signature-area { padding: 10px; background: #111; flex-shrink: 0; min-height: 60px; }
-            #signature-img { max-width: 120px; max-height: 50px; }
-            #finding-card {
-                top: auto; bottom: 15px; 
-                left: 50%; transform: translateX(-50%); 
-                width: 90%; max-width: 90%;
-                padding: 12px 35px 12px 15px; font-size: 13px;
-            }
+            #viewer-area { height: 45%; width: 100%; order: 1; border-bottom: 1px solid rgba(59,130,246,0.25); }
+            #sidebar { height: 50%; width: 100%; order: 2; border-left: none; }
+            #sidebar-header, #controls { display: none; }
+            .instruction-box { padding: 7px; font-size: 11px; }
+            #findings-list { padding: 8px; }
+            .finding-item { font-size: 12px; margin-bottom: 5px; }
+            #signature-area { padding: 8px; min-height: 50px; }
+            #signature-img { max-width: 110px; max-height: 44px; }
+            #finding-card { bottom: 12px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 92%; }
         }
 
         /* =====================================================================
-           MOBILE LANDSCAPE — radiografia grande à esquerda, achados à direita
+           MOBILE LANDSCAPE
         ===================================================================== */
         @media (max-width: 900px) and (orientation: landscape) {
-            body { 
-                flex-direction: row;
-                height: 100vh; height: 100dvh;
-            }
-
-            /* Header some — sem espaço vertical */
+            body { flex-direction: row; height: 100vh; height: 100dvh; }
             #app-header { display: none; }
-
-            /* Imagem: 63% da tela */
-            #viewer-area { 
-                flex: 0 0 63%;
-                height: 100%;
-                border-bottom: none;
-                border-right: 2px solid var(--accent);
-            }
-
-            /* Achados: 37% restantes */
-            #sidebar { 
-                flex: 0 0 37%;
-                width: auto;
-                height: 100%;
-                border-left: none;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
-
-            #sidebar-header { 
-                display: block;
-                padding: 7px 12px;
-                flex-shrink: 0;
-            }
-            #sidebar-header h2 { font-size: 13px; margin: 0; }
-
+            #viewer-area { flex: 0 0 63%; height: 100%; border-right: 1px solid rgba(59,130,246,0.25); }
+            #sidebar { flex: 0 0 37%; width: auto; height: 100%; border-left: none; overflow: hidden; }
+            #sidebar-header { display: block; padding: 7px 12px; flex-shrink: 0; }
+            #sidebar-header h2 { font-size: 12px; margin: 0; }
+            #sidebar-subtitle { display: none; }
             .instruction-box { display: none; }
-
-            #findings-list { 
-                flex: 1;
-                overflow-y: auto;
-                overflow-x: hidden;
-                padding: 6px 8px;
-            }
-            .finding-item { 
-                font-size: 12px;
-                padding: 7px 9px;
-                margin-bottom: 5px;
-                border-radius: 5px;
-                line-height: 1.3;
-            }
-
-            #controls { 
-                display: flex;
-                flex-direction: row;
-                gap: 5px;
-                padding: 6px 8px;
-                flex-shrink: 0;
-            }
-            .btn { 
-                padding: 7px 4px;
-                font-size: 11px;
-                flex: 1;
-                border-radius: 5px;
-            }
-
-            #signature-area { 
-                padding: 5px 8px;
-                min-height: 40px;
-                flex-shrink: 0;
-            }
-            #signature-img { max-width: 80px; max-height: 32px; }
-
-            /* Card flutuante fica na base da imagem, lado esquerdo */
-            #finding-card {
-                bottom: 10px;
-                left: 10px;
-                right: auto;
-                transform: none;
-                max-width: 56%;
-                font-size: 12px;
-                padding: 10px 28px 10px 12px;
-                border-radius: 8px;
-            }
+            #findings-list { padding: 5px 6px; }
+            .finding-item { font-size: 11px; padding: 6px 8px; margin-bottom: 3px; border-radius: 5px; line-height: 1.3; }
+            #controls { flex-direction: row; gap: 5px; padding: 6px 8px; }
+            .btn { padding: 7px 4px; font-size: 10px; flex: 1; border-radius: 5px; }
+            #signature-area { padding: 5px 8px; min-height: 38px; }
+            #signature-img { max-width: 75px; max-height: 28px; }
+            #finding-card { bottom: 10px; left: 10px; right: auto; transform: none; max-width: 54%; font-size: 11px; border-radius: 10px; }
         }
     </style>
 </head>
@@ -209,24 +234,38 @@
 
 <div id="app-header">
     <div id="app-title">LAUDO INTERATIVO</div>
-    <button id="btn-toggle-all-header">👁️ Ver Todos</button>
+    <div id="severity-badges"></div>
+    <button id="btn-toggle-all-header">👁 Ver Todos</button>
 </div>
 
 <div id="viewer-area">
     <div id="finding-card">
         <button class="close-card" onclick="closeCard()">×</button>
-        <div id="card-content">Texto do achado aqui...</div>
+        <div id="card-header">
+            <span id="card-severity-icon"></span>
+            <span id="card-severity-label"></span>
+        </div>
+        <div id="card-body">
+            <div id="card-content"></div>
+            <div id="card-suggestion">
+                <span id="card-suggestion-icon">💡</span>
+                <span id="card-suggestion-text"></span>
+            </div>
+        </div>
     </div>
     <canvas id="canvas"></canvas>
 </div>
 
 <div id="sidebar">
-    <div id="sidebar-header"><h2>Achados Radiográficos</h2></div>
-    <div class="instruction-box">Clique no desenho ou no texto abaixo para destacar.</div>
+    <div id="sidebar-header">
+        <h2>Achados Radiográficos</h2>
+        <div id="sidebar-subtitle">Clique para destacar na imagem</div>
+    </div>
+    <div class="instruction-box">Toque no achado ou na marcação para ampliar</div>
     <div id="findings-list">Carregando...</div>
     <div id="controls">
-        <button id="btn-toggle-all" class="btn">👁️ Ver Todos</button>
-        <button id="btn-reset-zoom" class="btn secondary">⟲ Reset</button>
+        <button id="btn-toggle-all" class="btn">👁 Ver Todos os Achados</button>
+        <button id="btn-reset-zoom" class="btn secondary">⟲ Resetar Zoom</button>
     </div>
     <div id="signature-area">
         <img id="signature-img" src="assinatura.png" alt="Assinatura" onerror="this.style.display='none'">
@@ -234,304 +273,320 @@
 </div>
 
 <script>
+    // =========================================================================
+    // SEVERIDADE
+    // =========================================================================
+    const SEVERITY_RULES = [
+        { level: 'critical', color: '#ef4444', icon: '🔴', label: 'Requer Atenção',
+          keywords: ['rarefação','reabsorção','cárie profunda','cárie extensa','envolvimento pulpar',
+                     'lesão cariosa extensa','periápice','periapical','rarefação óssea',
+                     'abscesso','necrose','remanescente radicular','fratura','perfuração','lesão'] },
+        { level: 'warning', color: '#f59e0b', icon: '🟡', label: 'Observar',
+          keywords: ['incluso','semi-incluso','impactado','sobrecontorno','subcontorno',
+                     'espessamento','cálculo','aumento do espaço','dilaceração','giroversão',
+                     'cárie','lesão cariosa','restauração com falha','desvio','semi-irrompido'] },
+        { level: 'normal', color: '#22c55e', icon: '🟢', label: 'Normal',
+          keywords: ['normalidade','preservados','íntegros','habitual','simétric',
+                     'sem alterações','dentro dos padrões','ausência de alterações',
+                     'contornos preservados','morfologia preservada'] }
+    ];
+
+    const CLINICAL_SUGGESTIONS = [
+        { keywords: ['rarefação','periápice','periapical'],             text: 'Indicado: radiografia periapical para avaliação complementar.' },
+        { keywords: ['cárie profunda','envolvimento pulpar','câmara pulpar'], text: 'Indicado: avaliação pulpar. Considerar tratamento endodôntico.' },
+        { keywords: ['cárie','lesão cariosa'],                          text: 'Indicado: restauração dentária. Avaliar extensão clinicamente.' },
+        { keywords: ['incluso','semi-incluso','impactado'],             text: 'Indicado: avaliação cirúrgica para exodontia ou acompanhamento.' },
+        { keywords: ['reabsorção óssea','perda óssea'],                 text: 'Indicado: avaliação periodontal e plano de tratamento.' },
+        { keywords: ['espessamento','seio maxilar'],                    text: 'Indicado: avaliação com otorrinolaringologista.' },
+        { keywords: ['remanescente radicular'],                         text: 'Indicado: exodontia do remanescente radicular.' },
+        { keywords: ['cálculo'],                                        text: 'Indicado: raspagem e alisamento radicular.' },
+        { keywords: ['sobrecontorno','subcontorno'],                    text: 'Indicado: substituição da restauração.' },
+        { keywords: ['endodont','obturad'],                             text: 'Acompanhamento periapical periódico recomendado.' },
+    ];
+
+    function classifySeverity(text) {
+        const lower = text.toLowerCase();
+        for (const rule of SEVERITY_RULES) {
+            if (rule.keywords.some(k => lower.includes(k))) return rule;
+        }
+        return SEVERITY_RULES[1]; // default: warning
+    }
+
+    function getSuggestion(text) {
+        const lower = text.toLowerCase();
+        for (const s of CLINICAL_SUGGESTIONS) {
+            if (s.keywords.some(k => lower.includes(k))) return s.text;
+        }
+        return null;
+    }
+
+    // =========================================================================
+    // PULSE
+    // =========================================================================
+    let pulseInterval = null;
+
+    function startPulse(renderFn) {
+        if (pulseInterval) clearInterval(pulseInterval);
+        let alpha = 1, dir = -1, count = 0;
+        pulseInterval = setInterval(() => {
+            alpha += dir * 0.055;
+            if (alpha <= 0.25) { dir = 1; count++; }
+            if (alpha >= 1)    { dir = -1; }
+            if (count >= 3)    { clearInterval(pulseInterval); pulseInterval = null; renderFn(1); return; }
+            renderFn(alpha);
+        }, 22);
+    }
+
+    // =========================================================================
+    // MAIN
+    // =========================================================================
     let DATA = null;
-    
     try {
         const hash = window.location.hash.substring(1);
-        if (hash) {
-            const json = decodeURIComponent(escape(atob(hash)));
-            DATA = JSON.parse(json);
-        }
+        if (hash) DATA = JSON.parse(decodeURIComponent(escape(atob(hash))));
     } catch(e) { console.error(e); }
 
     if (!DATA) {
-        document.getElementById('findings-list').innerHTML = "<p style='text-align:center; color:red; padding:20px;'>Erro ao carregar dados.</p>";
+        document.getElementById('findings-list').innerHTML =
+            "<p style='text-align:center;color:#ef4444;padding:30px;font-size:13px;'>Erro ao carregar dados do laudo.</p>";
     } else {
         const listEl = document.getElementById('findings-list');
-        listEl.innerHTML = DATA.findingsHtml || "<p style='padding:10px;'>Nenhum achado interativo.</p>";
+
+        // Parse e classificação
+        const temp = document.createElement('div');
+        temp.innerHTML = DATA.findingsHtml || '<p>Nenhum achado.</p>';
+        const allPs = temp.querySelectorAll('p[data-highlight-color]');
+
+        const groups = { critical: [], warning: [], normal: [] };
+        allPs.forEach(p => {
+            p.classList.add('finding-item');
+            const sev = classifySeverity(p.textContent || '');
+            p.classList.add('sev-' + sev.level);
+            groups[sev.level].push(p);
+        });
+
+        // Monta seções
+        listEl.innerHTML = '';
+        [
+            { key: 'critical', title: 'Requer Atenção' },
+            { key: 'warning',  title: 'Observar' },
+            { key: 'normal',   title: 'Dentro da Normalidade' }
+        ].forEach(({ key, title }) => {
+            if (!groups[key].length) return;
+            const rule = SEVERITY_RULES.find(r => r.level === key);
+            const sec  = document.createElement('div');
+            sec.className = 'severity-section';
+            sec.innerHTML = `<div class="severity-section-title" style="color:${rule.color}">${rule.icon} ${title}</div>`;
+            groups[key].forEach(p => sec.appendChild(p));
+            listEl.appendChild(sec);
+        });
+
+        // Badges
+        const badgesEl = document.getElementById('severity-badges');
+        if (groups.critical.length) badgesEl.innerHTML += `<span class="badge badge-critical"><span class="badge-dot"></span>${groups.critical.length}</span>`;
+        if (groups.warning.length)  badgesEl.innerHTML += `<span class="badge badge-warning"><span class="badge-dot"></span>${groups.warning.length}</span>`;
+        if (groups.normal.length)   badgesEl.innerHTML += `<span class="badge badge-normal"><span class="badge-dot"></span>${groups.normal.length}</span>`;
 
         if (DATA.signature) document.getElementById('signature-img').src = DATA.signature;
 
-        const items = listEl.querySelectorAll('p[data-highlight-color]');
-        items.forEach(p => {
-            p.classList.add('finding-item');
-            p.style.borderLeftColor = p.dataset.highlightColor; 
-        });
-
         const viewer = document.getElementById('viewer-area');
         const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+        const ctx    = canvas.getContext('2d');
         let img = new Image();
         let scale = 1, panX = 0, panY = 0;
-        let isDragging = false, startX, startY;
-        let startClickX = 0, startClickY = 0;
-        let activeAnnotationId = null; 
-        let showAll = false;
-        let drawingScale = 1; 
+        let isDragging = false, startX, startY, startClickX = 0, startClickY = 0;
+        let activeAnnotationId = null, showAll = false, drawingScale = 1;
 
-        img.onload = () => {
-            resize();
-            drawingScale = img.naturalWidth / 1200; 
-            fitImage();
-            render();
-        };
+        img.onload = () => { resize(); drawingScale = img.naturalWidth / 1200; fitImage(); render(1); };
         img.src = DATA.image;
 
-        // Re-fit ao girar tela
-        window.addEventListener('resize', () => { resize(); fitImage(); render(); });
-        if (screen.orientation) {
-            screen.orientation.addEventListener('change', () => {
-                setTimeout(() => { resize(); fitImage(); render(); }, 200);
-            });
-        }
+        window.addEventListener('resize', () => { resize(); fitImage(); render(1); });
+        if (screen.orientation) screen.orientation.addEventListener('change', () => setTimeout(() => { resize(); fitImage(); render(1); }, 200));
 
-        function resize() {
-            canvas.width = viewer.clientWidth;
-            canvas.height = viewer.clientHeight;
-        }
+        function resize()   { canvas.width = viewer.clientWidth; canvas.height = viewer.clientHeight; }
+        function fitImage() { const rW = canvas.width/img.naturalWidth, rH = canvas.height/img.naturalHeight; scale = Math.min(rW,rH); panX = (canvas.width-img.naturalWidth*scale)/2; panY = (canvas.height-img.naturalHeight*scale)/2; }
+        function isLandscapeMobile() { return window.innerWidth<=900 && window.innerWidth>window.innerHeight; }
 
-        function fitImage() {
-            const rW = canvas.width / img.naturalWidth;
-            const rH = canvas.height / img.naturalHeight;
-            scale = Math.min(rW, rH); 
-            panX = (canvas.width - img.naturalWidth * scale) / 2;
-            panY = (canvas.height - img.naturalHeight * scale) / 2;
-        }
-
-        function isLandscapeMobile() {
-            return window.innerWidth <= 900 && window.innerWidth > window.innerHeight;
-        }
-
-        function render() {
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.setTransform(scale, 0, 0, scale, panX, panY);
-            ctx.drawImage(img, 0, 0);
+        function render(alpha) {
+            const a = (alpha === undefined) ? 1 : alpha;
+            ctx.setTransform(1,0,0,1,0,0);
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.setTransform(scale,0,0,scale,panX,panY);
+            ctx.drawImage(img,0,0);
+            ctx.globalAlpha = a;
             if (showAll) {
                 DATA.annotations.forEach(anno => drawAnnotation(anno, false));
             } else if (activeAnnotationId) {
                 const anno = DATA.annotations.find(a => a.id === activeAnnotationId);
                 if (anno) drawAnnotation(anno, true);
             }
+            ctx.globalAlpha = 1;
         }
 
-        function updateFindingCard(text, color) {
-            const card = document.getElementById('finding-card');
+        function updateFindingCard(text, sev) {
+            const card    = document.getElementById('finding-card');
             const content = document.getElementById('card-content');
-            if (!text || text.length < 2) { card.style.display = 'none'; return; }
+            const sugEl   = document.getElementById('card-suggestion');
+            const sugText = document.getElementById('card-suggestion-text');
+            if (!text || text.length < 2) { card.style.display='none'; return; }
             content.innerText = text;
-            card.style.borderLeftColor = color;
+            document.getElementById('card-severity-icon').textContent  = sev.icon;
+            document.getElementById('card-severity-label').textContent = sev.label;
+            document.getElementById('card-severity-label').style.color = sev.color;
+            card.style.borderLeftColor = sev.color;
+            const sugg = getSuggestion(text);
+            if (sugg) {
+                sugText.textContent = sugg;
+                sugEl.style.display = 'flex';
+                sugEl.style.borderColor = sev.color + '44';
+                sugEl.style.background  = sev.color + '11';
+                document.getElementById('card-suggestion-icon').style.color = sev.color;
+            } else {
+                sugEl.style.display = 'none';
+            }
             card.style.display = 'block';
+            card.classList.remove('show');
+            void card.offsetWidth;
+            card.classList.add('show');
         }
 
-        window.closeCard = function() {
-            document.getElementById('finding-card').style.display = 'none';
-        };
+        window.closeCard = () => { document.getElementById('finding-card').style.display = 'none'; };
 
         function resetView() {
-            activeAnnotationId = null;
-            showAll = false;
+            activeAnnotationId = null; showAll = false;
+            if (pulseInterval) clearInterval(pulseInterval);
             closeCard();
             document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
-            fitImage();
-            render();
+            fitImage(); render(1);
         }
 
         function drawAnnotation(anno, isActive) {
-            const el = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
+            const el    = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
             const color = el ? el.dataset.highlightColor : (anno.color || '#00FFFF');
             ctx.save();
             ctx.strokeStyle = color; ctx.fillStyle = color;
             ctx.lineJoin = 'round'; ctx.lineCap = 'round';
             ctx.shadowColor = 'black'; ctx.shadowBlur = 5 * drawingScale;
             const baseWidth = (anno.thickness || 4) * drawingScale;
-            ctx.lineWidth = isActive ? baseWidth * 1.5 : baseWidth;
+            ctx.lineWidth = isActive ? baseWidth * 1.6 : baseWidth;
 
             if (anno.points && anno.fillColor) {
                 ctx.beginPath();
-                anno.points.forEach((p, i) => {
-                    const x = p.x * img.naturalWidth, y = p.y * img.naturalHeight;
-                    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
-                });
-                ctx.closePath(); ctx.stroke();
-                ctx.globalAlpha = 0.25; ctx.fill(); ctx.globalAlpha = 1;
+                anno.points.forEach((p,i) => { const x=p.x*img.naturalWidth,y=p.y*img.naturalHeight; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+                ctx.closePath(); ctx.stroke(); ctx.globalAlpha=0.25; ctx.fill(); ctx.globalAlpha=1;
             } else if (anno.start && anno.end) {
-                const p1 = {x: anno.start.x*img.naturalWidth, y: anno.start.y*img.naturalHeight};
-                const p2 = {x: anno.end.x*img.naturalWidth, y: anno.end.y*img.naturalHeight};
-                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-                const fs = 20*drawingScale; ctx.font = `bold ${fs}px Arial`; ctx.textAlign = 'center'; 
-                ctx.shadowBlur = 0; ctx.lineWidth = 3; ctx.strokeStyle = 'black';
-                const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2;
-                ctx.strokeText(anno.text, mx, my-10); ctx.fillText(anno.text, mx, my-10);
+                const p1={x:anno.start.x*img.naturalWidth,y:anno.start.y*img.naturalHeight};
+                const p2={x:anno.end.x*img.naturalWidth,  y:anno.end.y*img.naturalHeight};
+                ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+                const fs=20*drawingScale; ctx.font=`bold ${fs}px Arial`; ctx.textAlign='center';
+                ctx.shadowBlur=0; ctx.lineWidth=3; ctx.strokeStyle='black';
+                const mx=(p1.x+p2.x)/2,my=(p1.y+p2.y)/2;
+                ctx.strokeText(anno.text,mx,my-10); ctx.fillText(anno.text,mx,my-10);
             } else if (anno.type && anno.size) {
-                const x = anno.x * img.naturalWidth, y = anno.y * img.naturalHeight;
-                const s = anno.size * img.naturalWidth;
-                let headLength = s * 0.3, shaftWidth = s * 0.1;
-                ctx.translate(x, y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
+                const x=anno.x*img.naturalWidth,y=anno.y*img.naturalHeight,s=anno.size*img.naturalWidth;
+                let hl=s*0.3,sw=s*0.1;
+                ctx.translate(x,y); ctx.rotate(anno.rotation); ctx.scale(anno.scale,anno.scale);
                 ctx.beginPath();
-                if (anno.type === 'normal') {
-                    ctx.moveTo(-s/2+headLength,0); ctx.lineTo(s/2,0);
-                    ctx.lineTo(s/2-headLength,-headLength/2); ctx.moveTo(s/2,0);
-                    ctx.lineTo(s/2-headLength,headLength/2);
-                    ctx.fillStyle=color; ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=shaftWidth; ctx.lineCap='round'; ctx.stroke();
-                } else if (anno.type === 'outline') {
-                    headLength=s*0.4; shaftWidth=s*0.15;
-                    ctx.moveTo(-s/2,-shaftWidth/2); ctx.lineTo(-s/2,shaftWidth/2);
-                    ctx.lineTo(s/2-headLength,shaftWidth/2); ctx.lineTo(s/2-headLength,headLength/2);
-                    ctx.lineTo(s/2,0); ctx.lineTo(s/2-headLength,-headLength/2);
-                    ctx.lineTo(s/2-headLength,-shaftWidth/2); ctx.closePath();
+                if (anno.type==='normal') {
+                    ctx.moveTo(-s/2+hl,0); ctx.lineTo(s/2,0); ctx.lineTo(s/2-hl,-hl/2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-hl,hl/2);
+                    ctx.fillStyle=color; ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=sw; ctx.lineCap='round'; ctx.stroke();
+                } else if (anno.type==='outline') {
+                    hl=s*0.4; sw=s*0.15;
+                    ctx.moveTo(-s/2,-sw/2); ctx.lineTo(-s/2,sw/2); ctx.lineTo(s/2-hl,sw/2); ctx.lineTo(s/2-hl,hl/2);
+                    ctx.lineTo(s/2,0); ctx.lineTo(s/2-hl,-hl/2); ctx.lineTo(s/2-hl,-sw/2); ctx.closePath();
                     ctx.strokeStyle=color; ctx.lineWidth=isActive?4*drawingScale:2*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
-                } else if (anno.type === 'complex') {
-                    headLength=s*0.4; shaftWidth=s*0.2;
-                    ctx.moveTo(-s/2,-shaftWidth/2); ctx.lineTo(-s/2,shaftWidth/2);
-                    ctx.lineTo(s/2-headLength,shaftWidth/2); ctx.lineTo(s/2-headLength,headLength/1.5);
-                    ctx.lineTo(s/2,0); ctx.lineTo(s/2-headLength,-headLength/1.5);
-                    ctx.lineTo(s/2-headLength,-shaftWidth/2); ctx.closePath();
+                } else if (anno.type==='complex') {
+                    hl=s*0.4; sw=s*0.2;
+                    ctx.moveTo(-s/2,-sw/2); ctx.lineTo(-s/2,sw/2); ctx.lineTo(s/2-hl,sw/2); ctx.lineTo(s/2-hl,hl/1.5);
+                    ctx.lineTo(s/2,0); ctx.lineTo(s/2-hl,-hl/1.5); ctx.lineTo(s/2-hl,-sw/2); ctx.closePath();
                     ctx.fillStyle=color; ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=1*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
                 }
-            } else if (anno.text) {
-                const x = anno.x*img.naturalWidth, y = anno.y*img.naturalHeight;
-                const fs = (parseInt(anno.font)||24) * drawingScale;
+            } else if (anno.text && anno.x!==undefined) {
+                const x=anno.x*img.naturalWidth,y=anno.y*img.naturalHeight;
+                const fs=(parseInt(anno.font)||24)*drawingScale;
                 ctx.font=`bold ${fs}px Arial`; ctx.shadowBlur=0; ctx.lineWidth=4*drawingScale; ctx.strokeStyle='black';
                 ctx.strokeText(anno.text,x,y); ctx.fillText(anno.text,x,y);
             } else if (anno.points) {
                 ctx.beginPath();
-                anno.points.forEach((p,i) => {
-                    const x=p.x*img.naturalWidth, y=p.y*img.naturalHeight;
-                    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-                });
+                anno.points.forEach((p,i) => { const x=p.x*img.naturalWidth,y=p.y*img.naturalHeight; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
                 ctx.stroke();
             }
             ctx.restore();
         }
 
-        listEl.addEventListener('click', (e) => {
+        listEl.addEventListener('click', e => {
             const item = e.target.closest('.finding-item');
             if (!item) return;
             document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
             const id = item.dataset.annotationId;
-            if (activeAnnotationId === id) { 
+            if (activeAnnotationId === id) {
                 resetView();
-            } else { 
-                activeAnnotationId = id; showAll = false; 
-                item.classList.add('active'); 
-                const anno = DATA.annotations.find(a => a.id === id); 
+            } else {
+                activeAnnotationId = id; showAll = false;
+                item.classList.add('active');
+                const anno = DATA.annotations.find(a => a.id === id);
                 if (anno) {
-                    const color = item.dataset.highlightColor || anno.color || '#00FFFF';
-                    const cardText = item.innerText.replace(/\n/g, ' ').trim();
-                    updateFindingCard(cardText, color);
-                    zoomNatural(anno); 
+                    const sev = classifySeverity(item.textContent || '');
+                    updateFindingCard((item.innerText||item.textContent).replace(/\n/g,' ').trim(), sev);
+                    zoomNatural(anno);
+                    startPulse(alpha => render(alpha));
                 }
             }
-            render();
+            render(1);
         });
 
         function zoomNatural(anno) {
-            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            if (anno.points) {
-                anno.points.forEach(p => {
-                    minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x);
-                    minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y);
-                });
-            } else if (anno.start && anno.end) {
-                minX=Math.min(anno.start.x,anno.end.x); maxX=Math.max(anno.start.x,anno.end.x);
-                minY=Math.min(anno.start.y,anno.end.y); maxY=Math.max(anno.start.y,anno.end.y);
-            } else if (anno.x !== undefined && anno.y !== undefined) {
-                let size = anno.size ? (anno.size*(anno.scale||1)) : 0.08;
-                minX=anno.x-(size/2); maxX=anno.x+(size/2);
-                minY=anno.y-(size/2); maxY=anno.y+(size/2);
-            }
-            if (maxX-minX < 0.1) { minX-=0.1; maxX+=0.1; }
-            if (maxY-minY < 0.1) { minY-=0.1; maxY+=0.1; }
-
-            const regW = (maxX-minX) * img.naturalWidth;
-            const regH = (maxY-minY) * img.naturalHeight;
-            const landscape = isLandscapeMobile();
-            const padX = canvas.width  * (landscape ? 0.18 : 0.3);
-            const padY = canvas.height * (landscape ? 0.18 : 0.3);
-
-            let tScale = Math.min((canvas.width-padX)/regW, (canvas.height-padY)/regH);
-            tScale = Math.min(tScale, 3.5);
-            tScale = Math.max(tScale, Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight));
-
-            const cX = ((minX+maxX)/2) * img.naturalWidth;
-            const cY = ((minY+maxY)/2) * img.naturalHeight;
-
-            scale = tScale;
-            panX = (canvas.width/2) - (cX*scale);
-            // Landscape: centraliza verticalmente normal; portrait mobile: levanta um pouco
-            const ratioY = landscape ? 0.47 : (window.innerWidth<=768 ? 0.35 : 0.5);
-            panY = (canvas.height*ratioY) - (cY*scale);
+            let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+            if (anno.points) { anno.points.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);}); }
+            else if (anno.start&&anno.end) { minX=Math.min(anno.start.x,anno.end.x);maxX=Math.max(anno.start.x,anno.end.x);minY=Math.min(anno.start.y,anno.end.y);maxY=Math.max(anno.start.y,anno.end.y); }
+            else if (anno.x!==undefined) { let sz=anno.size?(anno.size*(anno.scale||1)):0.08; minX=anno.x-sz/2;maxX=anno.x+sz/2;minY=anno.y-sz/2;maxY=anno.y+sz/2; }
+            if (maxX-minX<0.1){minX-=0.1;maxX+=0.1;} if (maxY-minY<0.1){minY-=0.1;maxY+=0.1;}
+            const regW=(maxX-minX)*img.naturalWidth, regH=(maxY-minY)*img.naturalHeight;
+            const landscape=isLandscapeMobile();
+            const padX=canvas.width*(landscape?0.18:0.3), padY=canvas.height*(landscape?0.18:0.3);
+            let tScale=Math.min((canvas.width-padX)/regW,(canvas.height-padY)/regH);
+            tScale=Math.min(tScale,3.5); tScale=Math.max(tScale,Math.min(canvas.width/img.naturalWidth,canvas.height/img.naturalHeight));
+            const cX=((minX+maxX)/2)*img.naturalWidth, cY=((minY+maxY)/2)*img.naturalHeight;
+            scale=tScale; panX=(canvas.width/2)-(cX*scale);
+            const ratioY=landscape?0.47:(window.innerWidth<=768?0.35:0.5);
+            panY=(canvas.height*ratioY)-(cY*scale);
         }
-        
-        viewer.addEventListener('mousedown', e => { 
-            isDragging=true; startX=e.clientX-panX; startY=e.clientY-panY; 
-            startClickX=e.clientX; startClickY=e.clientY; 
-        });
-        viewer.addEventListener('mousemove', e => { 
-            if(isDragging){ panX=e.clientX-startX; panY=e.clientY-startY; render(); } 
-        });
-        viewer.addEventListener('mouseup', () => isDragging=false);
 
-        viewer.addEventListener('click', e => {
-            if (Math.abs(e.clientX-startClickX)>5 || Math.abs(e.clientY-startClickY)>5) return;
-            if (e.target.closest('#finding-card') || e.target.closest('#app-header')) return;
-            const rect = canvas.getBoundingClientRect();
-            const relX = ((e.clientX-rect.left-panX)/scale)/img.naturalWidth;
-            const relY = ((e.clientY-rect.top-panY)/scale)/img.naturalHeight;
-            let clickedAnno=null, minDist=Infinity;
-            const threshold=0.05;
-            DATA.annotations.forEach(anno => {
+        viewer.addEventListener('mousedown', e=>{isDragging=true;startX=e.clientX-panX;startY=e.clientY-panY;startClickX=e.clientX;startClickY=e.clientY;});
+        viewer.addEventListener('mousemove', e=>{if(isDragging){panX=e.clientX-startX;panY=e.clientY-startY;render(1);}});
+        viewer.addEventListener('mouseup', ()=>isDragging=false);
+
+        viewer.addEventListener('click', e=>{
+            if(Math.abs(e.clientX-startClickX)>5||Math.abs(e.clientY-startClickY)>5)return;
+            if(e.target.closest('#finding-card')||e.target.closest('#app-header'))return;
+            const rect=canvas.getBoundingClientRect();
+            const relX=((e.clientX-rect.left-panX)/scale)/img.naturalWidth;
+            const relY=((e.clientY-rect.top-panY)/scale)/img.naturalHeight;
+            let clickedAnno=null,minDist=Infinity;
+            DATA.annotations.forEach(anno=>{
                 let dist=Infinity;
-                if(anno.points){ anno.points.forEach(p=>{ const d=Math.hypot(p.x-relX,p.y-relY); if(d<dist)dist=d; }); }
-                else if(anno.start&&anno.end){ const mx=(anno.start.x+anno.end.x)/2,my=(anno.start.y+anno.end.y)/2; dist=Math.hypot(mx-relX,my-relY); }
-                else if(anno.x!==undefined){ dist=Math.hypot(anno.x-relX,anno.y-relY); }
-                if(dist<threshold&&dist<minDist){ minDist=dist; clickedAnno=anno; }
+                if(anno.points){anno.points.forEach(p=>{const d=Math.hypot(p.x-relX,p.y-relY);if(d<dist)dist=d;});}
+                else if(anno.start&&anno.end){dist=Math.hypot((anno.start.x+anno.end.x)/2-relX,(anno.start.y+anno.end.y)/2-relY);}
+                else if(anno.x!==undefined){dist=Math.hypot(anno.x-relX,anno.y-relY);}
+                if(dist<0.05&&dist<minDist){minDist=dist;clickedAnno=anno;}
             });
             if(clickedAnno){
-                const listItem=document.querySelector(`.finding-item[data-annotation-id="${clickedAnno.id}"]`);
-                if(listItem){ listItem.click(); listItem.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+                const li=document.querySelector(`.finding-item[data-annotation-id="${clickedAnno.id}"]`);
+                if(li){li.click();li.scrollIntoView({behavior:'smooth',block:'nearest'});}
             } else { resetView(); }
         });
 
-        viewer.addEventListener('wheel', e => { 
-            e.preventDefault(); const d=e.deltaY>0?0.9:1.1; 
-            const mx=e.clientX-canvas.getBoundingClientRect().left;
-            const my=e.clientY-canvas.getBoundingClientRect().top; 
-            panX=mx-(mx-panX)*d; panY=my-(my-panY)*d; scale*=d; render(); 
-        });
-        
-        let idist=0, iscale=1;
-        viewer.addEventListener('touchstart', e => { 
-            if(e.touches.length===2){ 
-                idist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX,e.touches[0].pageY-e.touches[1].pageY); iscale=scale; 
-            } else if(e.touches.length===1){ 
-                isDragging=true; startX=e.touches[0].clientX-panX; startY=e.touches[0].clientY-panY; 
-                startClickX=e.touches[0].clientX; startClickY=e.touches[0].clientY;
-            } 
-        }, {passive:false});
-        
-        viewer.addEventListener('touchmove', e => { 
-            e.preventDefault(); 
-            if(e.touches.length===2){ 
-                const dist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX,e.touches[0].pageY-e.touches[1].pageY); 
-                const delta=dist/idist; const cx=viewer.offsetWidth/2,cy=viewer.offsetHeight/2; 
-                const ns=iscale*delta; panX=cx-(cx-panX)*(ns/scale); panY=cy-(cy-panY)*(ns/scale); scale=ns; render(); 
-            } else if(isDragging&&e.touches.length===1){ 
-                panX=e.touches[0].clientX-startX; panY=e.touches[0].clientY-startY; render(); 
-            } 
-        }, {passive:false});
-        
-        viewer.addEventListener('touchend', () => isDragging=false);
+        viewer.addEventListener('wheel', e=>{e.preventDefault();const d=e.deltaY>0?0.9:1.1;const mx=e.clientX-canvas.getBoundingClientRect().left,my=e.clientY-canvas.getBoundingClientRect().top;panX=mx-(mx-panX)*d;panY=my-(my-panY)*d;scale*=d;render(1);});
 
-        function toggleAllAction() {
-            showAll=!showAll; activeAnnotationId=null; closeCard();
-            document.querySelectorAll('.finding-item').forEach(el=>el.classList.remove('active'));
-            fitImage(); render();
-        }
-        document.getElementById('btn-toggle-all').addEventListener('click', toggleAllAction);
-        document.getElementById('btn-toggle-all-header').addEventListener('click', toggleAllAction);
-        document.getElementById('btn-reset-zoom').addEventListener('click', resetView);
+        let idist=0,iscale=1;
+        viewer.addEventListener('touchstart',e=>{if(e.touches.length===2){idist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX,e.touches[0].pageY-e.touches[1].pageY);iscale=scale;}else if(e.touches.length===1){isDragging=true;startX=e.touches[0].clientX-panX;startY=e.touches[0].clientY-panY;startClickX=e.touches[0].clientX;startClickY=e.touches[0].clientY;}},{passive:false});
+        viewer.addEventListener('touchmove',e=>{e.preventDefault();if(e.touches.length===2){const dist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX,e.touches[0].pageY-e.touches[1].pageY);const delta=dist/idist;const cx=viewer.offsetWidth/2,cy=viewer.offsetHeight/2;const ns=iscale*delta;panX=cx-(cx-panX)*(ns/scale);panY=cy-(cy-panY)*(ns/scale);scale=ns;render(1);}else if(isDragging&&e.touches.length===1){panX=e.touches[0].clientX-startX;panY=e.touches[0].clientY-startY;render(1);}},{passive:false});
+        viewer.addEventListener('touchend',()=>isDragging=false);
+
+        function toggleAllAction(){showAll=!showAll;activeAnnotationId=null;closeCard();document.querySelectorAll('.finding-item').forEach(el=>el.classList.remove('active'));fitImage();render(1);}
+        document.getElementById('btn-toggle-all').addEventListener('click',toggleAllAction);
+        document.getElementById('btn-toggle-all-header').addEventListener('click',toggleAllAction);
+        document.getElementById('btn-reset-zoom').addEventListener('click',resetView);
     }
 </script>
 </body>
