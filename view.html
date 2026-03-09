@@ -110,6 +110,23 @@
             padding: 2px 7px; margin: 2px 3px 2px 0; font-size: 11px; color: #94a3b8;
             white-space: nowrap;
         }
+        #card-recommend {
+            margin-top: 8px; padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            font-size: 11.5px; color: #94a3b8; line-height: 1.5;
+            display: none;
+        }
+        #card-recommend.visible { display: block; }
+        #card-recommend strong {
+            display: block; margin-bottom: 4px;
+            font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #4a6741;
+        }
+        .recommend-tag {
+            display: inline-block; background: rgba(56,161,105,0.1);
+            border: 1px solid rgba(56,161,105,0.25); border-radius: 4px;
+            padding: 2px 7px; margin: 2px 3px 2px 0; font-size: 11px; color: #68d391;
+            white-space: nowrap;
+        }
 
         /* --- SIDEBAR --- */
         #sidebar {
@@ -264,8 +281,12 @@
         <button id="btn-expand" onclick="toggleExpand()">Ver detalhes ↓</button>
         <div id="card-full"></div>
         <div id="card-impact">
-            <strong>💡 Impacto clínico</strong>
+            <strong>💡 Conduta clínica provável</strong>
             <div id="card-impact-tags"></div>
+        </div>
+        <div id="card-recommend">
+            <strong>🔬 Exame complementar sugerido</strong>
+            <div id="card-recommend-tags"></div>
         </div>
     </div>
     <canvas id="canvas"></canvas>
@@ -343,19 +364,42 @@ function classifyText(text) {
 // ============================================================
 // IMPACTO CLÍNICO
 // ============================================================
+// Conduta clínica provável
 const IMPACT_RULES = [
-    { words: ['canal mandibular','íntima proximidade','intima proximidade','sobrepostos ao canal'], tag: 'TC Cone Beam recomendado' },
-    { words: ['seio maxilar','espessamento','sinusite','mucosite sinusal','pseudocisto'], tag: 'Avaliar sinusite' },
-    { words: ['periápice','periapice','rarefação','radiolúcida','radiolucida','lesão periapical'], tag: 'Possível trat. endodôntico' },
-    { words: ['envolvimento pulpar','comprometimento pulpar','câmara pulpar','exposição pulpar'], tag: 'Tratamento endodôntico provável' },
-    { words: ['incluso','impactado','semi-incluso','semi incluso'], tag: 'Avaliação cirúrgica' },
+    { words: ['envolvimento pulpar','comprometimento pulpar','câmara pulpar','exposição pulpar','necrose'], tag: 'Tratamento endodôntico' },
+    { words: ['periápice','periapice','rarefação periapical','lesão periapical','abscesso','fístula','fistula'], tag: 'Tratamento endodôntico' },
+    { words: ['incluso','impactado','semi-incluso','semi incluso','pericoronite'], tag: 'Avaliação cirúrgica' },
+    { words: ['raízes residuais','raiz residual','remanescente radicular'], tag: 'Exodontia / cirurgia' },
+    { words: ['destruição coronária','destruicao coronaria','coroa destruída','sem remanescente'], tag: 'Possível exodontia' },
+    { words: ['cárie','cariosa','lesão cariosa','carie','radiolucência coronária'], tag: 'Restauração' },
+    { words: ['perda óssea','perda ossea','reabsorção alveolar','reabsorção óssea','defeito ósseo'], tag: 'Avaliação e trat. periodontal' },
+    { words: ['cálculo','calculo','cálculo subgengival','cálculo supragengival'], tag: 'Raspagem e alisamento radicular' },
     { words: ['reabsorção radicular','reabsorção interna','reabsorção externa','reabsorção cervical'], tag: 'Correlação clínica urgente' },
-    { words: ['restauração com falha','carr','radiolúcida sob a restauração','radiolucida sob'], tag: 'Radiografia interproximal' },
-    { words: ['alvéolo','alveolo','pós-cirúrgico'], tag: 'Acompanhar reparação' },
-    { words: ['cálculo','calculo','perda óssea','perda ossea','reabsorção alveolar'], tag: 'Avaliação periodontal' },
-    { words: ['implante osseointegrado','peri-implantite'], tag: 'Acompanhar osseointegração' },
-    { words: ['dilaceração','giroversão','transalveolar'], tag: 'Avaliar clinicamente' },
-    { words: ['cárie','cariosa','lesão cariosa','carie'], tag: 'Radiografia interproximal' },
+    { words: ['seio maxilar','espessamento','sinusite','mucosite sinusal','pseudocisto','cisto de retenção'], tag: 'Investigar sinusopatia (odontogênica x rinogênica) — otorrino' },
+    { words: ['canal mandibular','íntima proximidade','intima proximidade','sobrepostos ao canal'], tag: 'Avaliação pré-cirúrgica criteriosa' },
+    { words: ['peri-implantite','perda óssea peri-implantar'], tag: 'Trat. peri-implantite' },
+    { words: ['alvéolo','alveolo','pós-cirúrgico','pós-exodontia'], tag: 'Acompanhar reparação alveolar' },
+    { words: ['dilaceração','giroversão','transalveolar','anquilose'], tag: 'Planejamento cirúrgico cuidadoso' },
+    { words: ['fratura','linha de fratura','fragmento'], tag: 'Correlação clínica — trauma' },
+    { words: ['implante osseointegrado'], tag: 'Acompanhar osseointegração' },
+];
+
+// Exame complementar sugerido
+const RECOMMEND_RULES = [
+    { words: ['cárie','cariosa','lesão cariosa','carie','radiolucência coronária','interproximal'], tag: 'Radiografia interproximal (bitewing)' },
+    { words: ['envolvimento pulpar','comprometimento pulpar','câmara pulpar','necrose','abscesso','fístula','fistula','lesão periapical','periápice','periapice','rarefação periapical'], tag: 'Radiografia periapical' },
+    { words: ['reabsorção radicular','reabsorção interna','reabsorção externa','reabsorção cervical'], tag: 'Radiografia periapical' },
+    { words: ['perda óssea','perda ossea','reabsorção alveolar','cálculo','calculo','suporte periodontal','doença periodontal'], tag: 'Periapical de boca toda ou série periapical' },
+    { words: ['dente tratado','endodonticamente','tratamento endodôntico','obturação'], tag: 'Radiografia periapical (controle) ' },
+    { words: ['canal mandibular','íntima proximidade','intima proximidade','sobrepostos ao canal'], tag: 'TC Cone Beam mandibular — mandatória' },
+    { words: ['incluso','impactado','semi-incluso','semi incluso'], tag: 'TC Cone Beam' },
+    { words: ['seio maxilar','espessamento','sinusite','mucosite sinusal','pseudocisto','cisto de retenção'], tag: 'TC de seios paranasais' },
+    { words: ['cisto','tumor','lesão extensa','radiolúcida extensa','radiolucida extensa','lesão multilocular'], tag: 'TC Cone Beam + biópsia se indicado' },
+    { words: ['fratura','linha de fratura','fragmento radicular'], tag: 'TC Cone Beam (avaliação de fratura)' },
+    { words: ['reabsorção radicular','reabsorção cervical invasiva'], tag: 'TC Cone Beam (extensão da reabsorção)' },
+    { words: ['implante osseointegrado','planejamento de implante','área edêntula'], tag: 'TC Cone Beam (planejamento de implante)' },
+    { words: ['atm','côndilo','articulação temporomandibular','côndilo mandibular'], tag: 'RM de ATM ou TC Cone Beam de ATM' },
+    { words: ['peri-implantite','perda óssea peri-implantar'], tag: 'Radiografia periapical do implante' },
 ];
 
 function getImpacts(text) {
@@ -363,6 +407,19 @@ function getImpacts(text) {
     const found = [];
     const seen = new Set();
     for (const rule of IMPACT_RULES) {
+        if (rule.words.some(w => lower.includes(w)) && !seen.has(rule.tag)) {
+            found.push(rule.tag);
+            seen.add(rule.tag);
+        }
+    }
+    return found;
+}
+
+function getRecommends(text) {
+    const lower = text.toLowerCase();
+    const found = [];
+    const seen = new Set();
+    for (const rule of RECOMMEND_RULES) {
         if (rule.words.some(w => lower.includes(w)) && !seen.has(rule.tag)) {
             found.push(rule.tag);
             seen.add(rule.tag);
@@ -415,19 +472,41 @@ function stopPulse() {
 }
 
 function drawPulse(cx, cy, color) {
-    const maxR = 28 * drawingScale;
-    const t = (Math.sin(pulsePhase) + 1) / 2; // 0→1
-    const r = 8 * drawingScale + t * maxR;
-    const alpha = 0.7 - t * 0.65;
     ctx.save();
+
+    // Ponto central fixo brilhante
+    ctx.beginPath();
+    ctx.arc(cx, cy, 5 * drawingScale, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.95;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 14 * drawingScale;
+    ctx.fill();
+
+    // Anel externo pulsante
+    const t = (Math.sin(pulsePhase) + 1) / 2;
+    const r = 10 * drawingScale + t * 30 * drawingScale;
+    const alpha = 0.75 - t * 0.7;
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.strokeStyle = color;
     ctx.lineWidth = 2.5 * drawingScale;
     ctx.globalAlpha = alpha;
     ctx.shadowColor = color;
-    ctx.shadowBlur = 12 * drawingScale;
+    ctx.shadowBlur = 10 * drawingScale;
     ctx.stroke();
+
+    // Segundo anel defasado
+    const t2 = (Math.sin(pulsePhase - 1.2) + 1) / 2;
+    const r2 = 10 * drawingScale + t2 * 20 * drawingScale;
+    const alpha2 = 0.5 - t2 * 0.45;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r2, 0, Math.PI * 2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5 * drawingScale;
+    ctx.globalAlpha = alpha2;
+    ctx.stroke();
+
     ctx.restore();
 }
 
@@ -594,13 +673,24 @@ if (!DATA) {
             btnExp.style.display = 'none';
         }
 
-        // Impacto clínico
+        // Conduta clínica
         const impacts = getImpacts(text);
         if (impacts.length) {
             tags.innerHTML = impacts.map(t => `<span class="impact-tag">${t}</span>`).join('');
             impact.classList.add('visible');
         } else {
             impact.classList.remove('visible');
+        }
+
+        // Exame complementar
+        const recommend   = document.getElementById('card-recommend');
+        const recommendTags = document.getElementById('card-recommend-tags');
+        const recommends = getRecommends(text);
+        if (recommends.length) {
+            recommendTags.innerHTML = recommends.map(t => `<span class="recommend-tag">${t}</span>`).join('');
+            recommend.classList.add('visible');
+        } else {
+            recommend.classList.remove('visible');
         }
 
         card.style.borderLeftColor = sevColor;
