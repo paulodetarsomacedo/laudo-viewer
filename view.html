@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -7,45 +6,54 @@
     <title>Laudo Interativo</title>
     <style>
         * { box-sizing: border-box; }
-        :root { --bg-color: #000; --panel-bg: #151515; --text-color: #eee; --accent: #007bff; }
-        
-        body { 
-            margin: 0; padding: 0; background: var(--bg-color); color: var(--text-color); 
-            font-family: 'Segoe UI', sans-serif; height: 100vh; height: 100dvh; 
-            display: flex; overflow: hidden; 
+        :root {
+            --bg-color: #000;
+            --panel-bg: #111;
+            --text-color: #eee;
+            --accent: #007bff;
+            --c-critical: #e53e3e;
+            --c-semicritical: #dd6b20;
+            --c-attention: #d69e2e;
+            --c-complementar: #38a169;
         }
 
-        /* --- HEADER PRINCIPAL --- */
+        body {
+            margin: 0; padding: 0; background: var(--bg-color); color: var(--text-color);
+            font-family: 'Segoe UI', sans-serif; height: 100vh; height: 100dvh;
+            display: flex; overflow: hidden;
+        }
+
+        /* --- HEADER --- */
         #app-header {
             position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7); color: rgba(255, 255, 255, 0.95);
+            background-color: rgba(0,0,0,0.75); color: rgba(255,255,255,0.95);
             padding: 8px 20px; border-radius: 30px; font-size: 14px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1.5px; z-index: 50; 
+            text-transform: uppercase; letter-spacing: 1.5px; z-index: 50;
             border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(5px);
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             display: flex; align-items: center; gap: 15px;
         }
         #btn-toggle-all-header { display: none; }
 
-        /* --- ÁREA DA IMAGEM --- */
-        #viewer-area { 
+        /* --- VIEWER --- */
+        #viewer-area {
             flex: 1; position: relative; overflow: hidden; cursor: grab;
-            background: #000; display: flex; align-items: center; justify-content: center; 
+            background: #000; display: flex; align-items: center; justify-content: center;
         }
         #viewer-area:active { cursor: grabbing; }
         canvas { display: block; }
 
-        /* CARD FLUTUANTE */
+        /* --- CARD FLUTUANTE --- */
         #finding-card {
             position: absolute; display: none; z-index: 60;
-            background: rgba(20, 20, 20, 0.95); color: #fff;
-            backdrop-filter: blur(10px);
-            padding: 15px 40px 15px 20px;
+            background: rgba(15,15,18,0.97); color: #fff;
+            backdrop-filter: blur(12px);
+            padding: 14px 38px 14px 18px;
             border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
             border-left: 5px solid var(--accent);
-            font-size: 15px; line-height: 1.5;
-            max-width: 400px; min-width: 250px;
+            font-size: 14px; line-height: 1.5;
+            max-width: 420px; min-width: 260px;
             transition: opacity 0.3s ease;
         }
         @media (min-width: 769px) {
@@ -53,38 +61,129 @@
         }
         .close-card {
             position: absolute; top: 8px; right: 10px;
-            background: none; border: none; color: #aaa;
+            background: none; border: none; color: #666;
             font-size: 22px; cursor: pointer; padding: 0; line-height: 1;
+            transition: color 0.2s;
         }
         .close-card:hover { color: #fff; }
 
-        /* --- SIDEBAR (DESKTOP) --- */
-        #sidebar { 
-            width: 360px; background: var(--panel-bg); display: flex; flex-direction: column; 
-            border-left: 1px solid #333; z-index: 20; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+        /* Severidade badge no card */
+        .severity-badge {
+            display: inline-block; font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            padding: 2px 7px; border-radius: 20px; margin-bottom: 7px;
+            opacity: 0.9;
         }
-        #sidebar-header { padding: 15px; background: #1f1f1f; text-align: center; border-bottom: 1px solid #333; flex-shrink: 0; }
-        #sidebar-header h2 { margin: 0; color: var(--accent); font-size: 18px; }
+        .sev-critical   { background: rgba(229,62,62,0.2);  color: #fc8181; border: 1px solid rgba(229,62,62,0.4); }
+        .sev-semi       { background: rgba(221,107,32,0.2); color: #f6ad55; border: 1px solid rgba(221,107,32,0.4); }
+        .sev-attention  { background: rgba(214,158,46,0.2); color: #f6e05e; border: 1px solid rgba(214,158,46,0.4); }
+        .sev-complement { background: rgba(56,161,105,0.2); color: #68d391; border: 1px solid rgba(56,161,105,0.4); }
+
+        /* Texto resumo + expandir */
+        #card-summary { cursor: pointer; }
+        #card-full { display: none; margin-top: 6px; color: #ccc; font-size: 13px; line-height: 1.55; }
+        #card-full.open { display: block; }
+        #btn-expand {
+            display: inline-block; margin-top: 5px;
+            font-size: 11px; color: #888; cursor: pointer;
+            border: none; background: none; padding: 0;
+            text-decoration: underline; text-underline-offset: 2px;
+            transition: color 0.2s;
+        }
+        #btn-expand:hover { color: #ccc; }
+
+        /* Impacto clínico */
+        #card-impact {
+            margin-top: 10px; padding-top: 9px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            font-size: 11.5px; color: #94a3b8; line-height: 1.5;
+            display: none;
+        }
+        #card-impact.visible { display: block; }
+        #card-impact strong {
+            display: block; margin-bottom: 4px;
+            font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #64748b;
+        }
+        .impact-tag {
+            display: inline-block; background: rgba(100,116,139,0.15);
+            border: 1px solid rgba(100,116,139,0.3); border-radius: 4px;
+            padding: 2px 7px; margin: 2px 3px 2px 0; font-size: 11px; color: #94a3b8;
+            white-space: nowrap;
+        }
+
+        /* --- SIDEBAR --- */
+        #sidebar {
+            width: 360px; background: var(--panel-bg); display: flex; flex-direction: column;
+            border-left: 1px solid #222; z-index: 20; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+        }
+        #sidebar-header {
+            padding: 12px 15px; background: #161616; border-bottom: 1px solid #222; flex-shrink: 0;
+        }
+        #sidebar-header h2 { margin: 0 0 6px 0; color: var(--accent); font-size: 17px; }
+
+        /* Contador de severidade */
+        #severity-summary {
+            display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;
+        }
+        .sev-count {
+            font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .sev-count.critical   { background: rgba(229,62,62,0.15);  color: #fc8181; }
+        .sev-count.semi       { background: rgba(221,107,32,0.15); color: #f6ad55; }
+        .sev-count.attention  { background: rgba(214,158,46,0.15); color: #f6e05e; }
+        .sev-count.complement { background: rgba(56,161,105,0.15); color: #68d391; }
+        .sev-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+        .sev-dot.critical   { background: var(--c-critical); }
+        .sev-dot.semi       { background: var(--c-semicritical); }
+        .sev-dot.attention  { background: var(--c-attention); }
+        .sev-dot.complement { background: var(--c-complementar); }
+
         .instruction-box {
-            background: #252525; color: #aaa; font-size: 12px; padding: 10px 20px;
-            text-align: center; border-bottom: 1px solid #333; flex-shrink: 0;
+            background: #191919; color: #666; font-size: 11px; padding: 7px 15px;
+            border-bottom: 1px solid #222; flex-shrink: 0;
         }
-        #findings-list { flex: 1; overflow-y: auto; padding: 15px; }
-        .finding-item { 
-            background: #2a2a2a; margin-bottom: 10px; padding: 12px; border-radius: 8px; 
-            cursor: pointer; border-left: 5px solid transparent; transition: all 0.2s;
-            font-size: 14px; line-height: 1.4; color: #ccc;
+        #findings-list { flex: 1; overflow-y: auto; padding: 12px; }
+
+        .finding-item {
+            background: #1a1a1a; margin-bottom: 8px; padding: 11px 12px; border-radius: 8px;
+            cursor: pointer; border-left: 4px solid transparent; transition: all 0.18s;
+            font-size: 13px; line-height: 1.4; color: #bbb;
         }
-        .finding-item:hover { background: #333; color: #fff; transform: translateX(3px); }
-        .finding-item.active { background: #383838; color: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.1); border-color: #fff !important; }
-        #controls { padding: 15px; border-top: 1px solid #333; background: #1f1f1f; display: flex; gap: 10px; flex-direction: column; flex-shrink: 0; }
-        .btn { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn.secondary { background: #444; }
-        #signature-area { 
-            padding: 20px; text-align: center; border-top: 1px solid #333; 
-            background: #151515; flex-shrink: 0; display: flex; justify-content: center;
+        .finding-item:hover { background: #222; color: #fff; transform: translateX(2px); }
+        .finding-item.active { background: #252525; color: #fff; box-shadow: 0 0 14px rgba(255,255,255,0.07); }
+
+        /* Mini badge de severidade no item */
+        .item-sev-dot {
+            display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+            margin-right: 6px; vertical-align: middle; flex-shrink: 0;
         }
-        #signature-img { max-width: 150px; height: auto; filter: brightness(0) invert(1); opacity: 0.85; }
+
+        #controls {
+            padding: 12px 15px; border-top: 1px solid #222;
+            background: #161616; display: flex; gap: 8px; flex-direction: column; flex-shrink: 0;
+        }
+        .btn {
+            background: var(--accent); color: white; border: none;
+            padding: 11px; border-radius: 6px; font-weight: bold; cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn.secondary { background: #2a2a2a; }
+        #signature-area {
+            padding: 16px; text-align: center; border-top: 1px solid #222;
+            background: #111; flex-shrink: 0; display: flex; justify-content: center;
+        }
+        #signature-img { max-width: 150px; height: auto; filter: brightness(0) invert(1); opacity: 0.8; }
+
+        /* =====================================================================
+           PULSE ANIMATION
+        ===================================================================== */
+        @keyframes pulse-ring {
+            0%   { transform: scale(1);   opacity: 0.9; }
+            50%  { transform: scale(1.55); opacity: 0.3; }
+            100% { transform: scale(1);   opacity: 0.9; }
+        }
 
         /* =====================================================================
            MOBILE PORTRAIT
@@ -93,115 +192,59 @@
             body { flex-direction: column; }
             #app-header {
                 position: relative; top: 0; left: 0; transform: none;
-                width: 100%; border-radius: 0; border: none; border-bottom: 1px solid #333;
+                width: 100%; border-radius: 0; border: none; border-bottom: 1px solid #222;
                 background: #111; justify-content: space-between; padding: 10px 15px;
             }
-            #app-title { font-size: 13px; letter-spacing: 1px; }
-            #btn-toggle-all-header { 
-                display: block; padding: 8px 12px; font-size: 12px; 
+            #app-title { font-size: 12px; letter-spacing: 1px; }
+            #btn-toggle-all-header {
+                display: block; padding: 7px 11px; font-size: 11px;
                 background: var(--accent); color: white; border: none; border-radius: 5px; font-weight: bold;
             }
             #viewer-area { height: 45%; width: 100%; order: 1; border-bottom: 2px solid var(--accent); }
             #sidebar { height: 50%; width: 100%; order: 2; border-left: none; display: flex; flex-direction: column; }
-            #sidebar-header, #controls { display: none; } 
-            .instruction-box { padding: 8px; font-size: 12px; }
-            #findings-list { display: block; overflow-y: auto; overflow-x: hidden; padding: 10px; flex: 1; }
-            .finding-item { width: 100%; margin-bottom: 8px; font-size: 13px; border-left-width: 5px !important; border-bottom: none !important; }
-            #signature-area { padding: 10px; background: #111; flex-shrink: 0; min-height: 60px; }
-            #signature-img { max-width: 120px; max-height: 50px; }
+            #sidebar-header { display: block; padding: 8px 12px; }
+            #sidebar-header h2 { font-size: 14px; margin-bottom: 4px; }
+            #controls { display: none; }
+            .instruction-box { padding: 6px 12px; font-size: 11px; }
+            #findings-list { display: block; overflow-y: auto; overflow-x: hidden; padding: 8px; flex: 1; }
+            .finding-item { width: 100%; margin-bottom: 6px; font-size: 12px; }
+            #signature-area { padding: 8px; background: #111; flex-shrink: 0; min-height: 50px; }
+            #signature-img { max-width: 110px; max-height: 45px; }
             #finding-card {
-                top: auto; bottom: 15px; 
-                left: 50%; transform: translateX(-50%); 
-                width: 90%; max-width: 90%;
-                padding: 12px 35px 12px 15px; font-size: 13px;
+                top: auto; bottom: 12px;
+                left: 50%; transform: translateX(-50%);
+                width: 92%; max-width: 92%;
+                padding: 11px 32px 11px 14px; font-size: 13px;
             }
         }
 
         /* =====================================================================
-           MOBILE LANDSCAPE — radiografia grande à esquerda, achados à direita
+           MOBILE LANDSCAPE
         ===================================================================== */
         @media (max-width: 900px) and (orientation: landscape) {
-            body { 
-                flex-direction: row;
-                height: 100vh; height: 100dvh;
-            }
-
-            /* Header some — sem espaço vertical */
+            body { flex-direction: row; height: 100vh; height: 100dvh; }
             #app-header { display: none; }
-
-            /* Imagem: 63% da tela */
-            #viewer-area { 
-                flex: 0 0 63%;
-                height: 100%;
-                border-bottom: none;
-                border-right: 2px solid var(--accent);
+            #viewer-area {
+                flex: 0 0 63%; height: 100%;
+                border-bottom: none; border-right: 2px solid var(--accent);
             }
-
-            /* Achados: 37% restantes */
-            #sidebar { 
-                flex: 0 0 37%;
-                width: auto;
-                height: 100%;
-                border-left: none;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
+            #sidebar {
+                flex: 0 0 37%; width: auto; height: 100%;
+                border-left: none; display: flex; flex-direction: column; overflow: hidden;
             }
-
-            #sidebar-header { 
-                display: block;
-                padding: 7px 12px;
-                flex-shrink: 0;
-            }
-            #sidebar-header h2 { font-size: 13px; margin: 0; }
-
+            #sidebar-header { display: block; padding: 6px 10px; flex-shrink: 0; }
+            #sidebar-header h2 { font-size: 12px; margin: 0 0 3px 0; }
             .instruction-box { display: none; }
-
-            #findings-list { 
-                flex: 1;
-                overflow-y: auto;
-                overflow-x: hidden;
-                padding: 6px 8px;
-            }
-            .finding-item { 
-                font-size: 12px;
-                padding: 7px 9px;
-                margin-bottom: 5px;
-                border-radius: 5px;
-                line-height: 1.3;
-            }
-
-            #controls { 
-                display: flex;
-                flex-direction: row;
-                gap: 5px;
-                padding: 6px 8px;
-                flex-shrink: 0;
-            }
-            .btn { 
-                padding: 7px 4px;
-                font-size: 11px;
-                flex: 1;
-                border-radius: 5px;
-            }
-
-            #signature-area { 
-                padding: 5px 8px;
-                min-height: 40px;
-                flex-shrink: 0;
-            }
-            #signature-img { max-width: 80px; max-height: 32px; }
-
-            /* Card flutuante fica na base da imagem, lado esquerdo */
+            #findings-list { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 5px 7px; }
+            .finding-item { font-size: 11px; padding: 6px 8px; margin-bottom: 4px; border-radius: 5px; line-height: 1.3; }
+            #controls { display: flex; flex-direction: row; gap: 5px; padding: 5px 7px; flex-shrink: 0; }
+            .btn { padding: 6px 4px; font-size: 10px; flex: 1; border-radius: 5px; }
+            #signature-area { padding: 4px 7px; min-height: 36px; flex-shrink: 0; }
+            #signature-img { max-width: 75px; max-height: 28px; }
             #finding-card {
-                bottom: 10px;
-                left: 10px;
-                right: auto;
-                transform: none;
-                max-width: 56%;
-                font-size: 12px;
-                padding: 10px 28px 10px 12px;
-                border-radius: 8px;
+                bottom: 10px; left: 10px; right: auto; transform: none;
+                max-width: 55%; font-size: 12px;
+                padding: 10px 28px 10px 12px; border-radius: 8px;
             }
         }
     </style>
@@ -210,23 +253,33 @@
 
 <div id="app-header">
     <div id="app-title">LAUDO INTERATIVO</div>
-    <button id="btn-toggle-all-header">👁️ Ver Todos</button>
+    <button id="btn-toggle-all-header">👁️ Ver Mapa</button>
 </div>
 
 <div id="viewer-area">
     <div id="finding-card">
         <button class="close-card" onclick="closeCard()">×</button>
-        <div id="card-content">Texto do achado aqui...</div>
+        <div id="card-severity-badge"></div>
+        <div id="card-summary"></div>
+        <button id="btn-expand" onclick="toggleExpand()">Ver detalhes ↓</button>
+        <div id="card-full"></div>
+        <div id="card-impact">
+            <strong>💡 Impacto clínico</strong>
+            <div id="card-impact-tags"></div>
+        </div>
     </div>
     <canvas id="canvas"></canvas>
 </div>
 
 <div id="sidebar">
-    <div id="sidebar-header"><h2>Achados Radiográficos</h2></div>
-    <div class="instruction-box">Clique no desenho ou no texto abaixo para destacar.</div>
+    <div id="sidebar-header">
+        <h2>Achados Radiográficos</h2>
+        <div id="severity-summary"></div>
+    </div>
+    <div class="instruction-box">Toque no achado ou na imagem para destacar</div>
     <div id="findings-list">Carregando...</div>
     <div id="controls">
-        <button id="btn-toggle-all" class="btn">👁️ Ver Todos</button>
+        <button id="btn-toggle-all" class="btn">👁️ Ver Mapa</button>
         <button id="btn-reset-zoom" class="btn secondary">⟲ Reset</button>
     </div>
     <div id="signature-area">
@@ -235,305 +288,528 @@
 </div>
 
 <script>
-    let DATA = null;
-    
-    try {
-        const hash = window.location.hash.substring(1);
-        if (hash) {
-            const json = decodeURIComponent(escape(atob(hash)));
-            DATA = JSON.parse(json);
-        }
-    } catch(e) { console.error(e); }
-
-    if (!DATA) {
-        document.getElementById('findings-list').innerHTML = "<p style='text-align:center; color:red; padding:20px;'>Erro ao carregar dados.</p>";
-    } else {
-        const listEl = document.getElementById('findings-list');
-        listEl.innerHTML = DATA.findingsHtml || "<p style='padding:10px;'>Nenhum achado interativo.</p>";
-
-        if (DATA.signature) document.getElementById('signature-img').src = DATA.signature;
-
-        const items = listEl.querySelectorAll('p[data-highlight-color]');
-        items.forEach(p => {
-            p.classList.add('finding-item');
-            p.style.borderLeftColor = p.dataset.highlightColor; 
-        });
-
-        const viewer = document.getElementById('viewer-area');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        let img = new Image();
-        let scale = 1, panX = 0, panY = 0;
-        let isDragging = false, startX, startY;
-        let startClickX = 0, startClickY = 0;
-        let activeAnnotationId = null; 
-        let showAll = false;
-        let drawingScale = 1; 
-
-        img.onload = () => {
-            resize();
-            drawingScale = img.naturalWidth / 1200; 
-            fitImage();
-            render();
-        };
-        img.src = DATA.image;
-
-        // Re-fit ao girar tela
-        window.addEventListener('resize', () => { resize(); fitImage(); render(); });
-        if (screen.orientation) {
-            screen.orientation.addEventListener('change', () => {
-                setTimeout(() => { resize(); fitImage(); render(); }, 200);
-            });
-        }
-
-        function resize() {
-            canvas.width = viewer.clientWidth;
-            canvas.height = viewer.clientHeight;
-        }
-
-        function fitImage() {
-            const rW = canvas.width / img.naturalWidth;
-            const rH = canvas.height / img.naturalHeight;
-            scale = Math.min(rW, rH); 
-            panX = (canvas.width - img.naturalWidth * scale) / 2;
-            panY = (canvas.height - img.naturalHeight * scale) / 2;
-        }
-
-        function isLandscapeMobile() {
-            return window.innerWidth <= 900 && window.innerWidth > window.innerHeight;
-        }
-
-        function render() {
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.setTransform(scale, 0, 0, scale, panX, panY);
-            ctx.drawImage(img, 0, 0);
-            if (showAll) {
-                DATA.annotations.forEach(anno => drawAnnotation(anno, false));
-            } else if (activeAnnotationId) {
-                const anno = DATA.annotations.find(a => a.id === activeAnnotationId);
-                if (anno) drawAnnotation(anno, true);
-            }
-        }
-
-        function updateFindingCard(text, color) {
-            const card = document.getElementById('finding-card');
-            const content = document.getElementById('card-content');
-            if (!text || text.length < 2) { card.style.display = 'none'; return; }
-            content.innerText = text;
-            card.style.borderLeftColor = color;
-            card.style.display = 'block';
-        }
-
-        window.closeCard = function() {
-            document.getElementById('finding-card').style.display = 'none';
-        };
-
-        function resetView() {
-            activeAnnotationId = null;
-            showAll = false;
-            closeCard();
-            document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
-            fitImage();
-            render();
-        }
-
-        function drawAnnotation(anno, isActive) {
-            const el = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
-            const color = el ? el.dataset.highlightColor : (anno.color || '#00FFFF');
-            ctx.save();
-            ctx.strokeStyle = color; ctx.fillStyle = color;
-            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-            ctx.shadowColor = 'black'; ctx.shadowBlur = 5 * drawingScale;
-            const baseWidth = (anno.thickness || 4) * drawingScale;
-            ctx.lineWidth = isActive ? baseWidth * 1.5 : baseWidth;
-
-            if (anno.points && anno.fillColor) {
-                ctx.beginPath();
-                anno.points.forEach((p, i) => {
-                    const x = p.x * img.naturalWidth, y = p.y * img.naturalHeight;
-                    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
-                });
-                ctx.closePath(); ctx.stroke();
-                ctx.globalAlpha = 0.25; ctx.fill(); ctx.globalAlpha = 1;
-            } else if (anno.start && anno.end) {
-                const p1 = {x: anno.start.x*img.naturalWidth, y: anno.start.y*img.naturalHeight};
-                const p2 = {x: anno.end.x*img.naturalWidth, y: anno.end.y*img.naturalHeight};
-                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-                const fs = 20*drawingScale; ctx.font = `bold ${fs}px Arial`; ctx.textAlign = 'center'; 
-                ctx.shadowBlur = 0; ctx.lineWidth = 3; ctx.strokeStyle = 'black';
-                const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2;
-                ctx.strokeText(anno.text, mx, my-10); ctx.fillText(anno.text, mx, my-10);
-            } else if (anno.type && anno.size) {
-                const x = anno.x * img.naturalWidth, y = anno.y * img.naturalHeight;
-                const s = anno.size * img.naturalWidth;
-                let headLength = s * 0.3, shaftWidth = s * 0.1;
-                ctx.translate(x, y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
-                ctx.beginPath();
-                if (anno.type === 'normal') {
-                    ctx.moveTo(-s/2+headLength,0); ctx.lineTo(s/2,0);
-                    ctx.lineTo(s/2-headLength,-headLength/2); ctx.moveTo(s/2,0);
-                    ctx.lineTo(s/2-headLength,headLength/2);
-                    ctx.fillStyle=color; ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=shaftWidth; ctx.lineCap='round'; ctx.stroke();
-                } else if (anno.type === 'outline') {
-                    headLength=s*0.4; shaftWidth=s*0.15;
-                    ctx.moveTo(-s/2,-shaftWidth/2); ctx.lineTo(-s/2,shaftWidth/2);
-                    ctx.lineTo(s/2-headLength,shaftWidth/2); ctx.lineTo(s/2-headLength,headLength/2);
-                    ctx.lineTo(s/2,0); ctx.lineTo(s/2-headLength,-headLength/2);
-                    ctx.lineTo(s/2-headLength,-shaftWidth/2); ctx.closePath();
-                    ctx.strokeStyle=color; ctx.lineWidth=isActive?4*drawingScale:2*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
-                } else if (anno.type === 'complex') {
-                    headLength=s*0.4; shaftWidth=s*0.2;
-                    ctx.moveTo(-s/2,-shaftWidth/2); ctx.lineTo(-s/2,shaftWidth/2);
-                    ctx.lineTo(s/2-headLength,shaftWidth/2); ctx.lineTo(s/2-headLength,headLength/1.5);
-                    ctx.lineTo(s/2,0); ctx.lineTo(s/2-headLength,-headLength/1.5);
-                    ctx.lineTo(s/2-headLength,-shaftWidth/2); ctx.closePath();
-                    ctx.fillStyle=color; ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=1*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
-                }
-            } else if (anno.text) {
-                const x = anno.x*img.naturalWidth, y = anno.y*img.naturalHeight;
-                const fs = (parseInt(anno.font)||24) * drawingScale;
-                ctx.font=`bold ${fs}px Arial`; ctx.shadowBlur=0; ctx.lineWidth=4*drawingScale; ctx.strokeStyle='black';
-                ctx.strokeText(anno.text,x,y); ctx.fillText(anno.text,x,y);
-            } else if (anno.points) {
-                ctx.beginPath();
-                anno.points.forEach((p,i) => {
-                    const x=p.x*img.naturalWidth, y=p.y*img.naturalHeight;
-                    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-                });
-                ctx.stroke();
-            }
-            ctx.restore();
-        }
-
-        listEl.addEventListener('click', (e) => {
-            const item = e.target.closest('.finding-item');
-            if (!item) return;
-            document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
-            const id = item.dataset.annotationId;
-            if (activeAnnotationId === id) { 
-                resetView();
-            } else { 
-                activeAnnotationId = id; showAll = false; 
-                item.classList.add('active'); 
-                const anno = DATA.annotations.find(a => a.id === id); 
-                if (anno) {
-                    const color = item.dataset.highlightColor || anno.color || '#00FFFF';
-                    const cardText = item.innerText.replace(/\n/g, ' ').trim();
-                    updateFindingCard(cardText, color);
-                    zoomNatural(anno); 
-                }
-            }
-            render();
-        });
-
-        function zoomNatural(anno) {
-            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            if (anno.points) {
-                anno.points.forEach(p => {
-                    minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x);
-                    minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y);
-                });
-            } else if (anno.start && anno.end) {
-                minX=Math.min(anno.start.x,anno.end.x); maxX=Math.max(anno.start.x,anno.end.x);
-                minY=Math.min(anno.start.y,anno.end.y); maxY=Math.max(anno.start.y,anno.end.y);
-            } else if (anno.x !== undefined && anno.y !== undefined) {
-                let size = anno.size ? (anno.size*(anno.scale||1)) : 0.08;
-                minX=anno.x-(size/2); maxX=anno.x+(size/2);
-                minY=anno.y-(size/2); maxY=anno.y+(size/2);
-            }
-            if (maxX-minX < 0.1) { minX-=0.1; maxX+=0.1; }
-            if (maxY-minY < 0.1) { minY-=0.1; maxY+=0.1; }
-
-            const regW = (maxX-minX) * img.naturalWidth;
-            const regH = (maxY-minY) * img.naturalHeight;
-            const landscape = isLandscapeMobile();
-            const padX = canvas.width  * (landscape ? 0.18 : 0.3);
-            const padY = canvas.height * (landscape ? 0.18 : 0.3);
-
-            let tScale = Math.min((canvas.width-padX)/regW, (canvas.height-padY)/regH);
-            tScale = Math.min(tScale, 3.5);
-            tScale = Math.max(tScale, Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight));
-
-            const cX = ((minX+maxX)/2) * img.naturalWidth;
-            const cY = ((minY+maxY)/2) * img.naturalHeight;
-
-            scale = tScale;
-            panX = (canvas.width/2) - (cX*scale);
-            // Landscape: centraliza verticalmente normal; portrait mobile: levanta um pouco
-            const ratioY = landscape ? 0.47 : (window.innerWidth<=768 ? 0.35 : 0.5);
-            panY = (canvas.height*ratioY) - (cY*scale);
-        }
-        
-        viewer.addEventListener('mousedown', e => { 
-            isDragging=true; startX=e.clientX-panX; startY=e.clientY-panY; 
-            startClickX=e.clientX; startClickY=e.clientY; 
-        });
-        viewer.addEventListener('mousemove', e => { 
-            if(isDragging){ panX=e.clientX-startX; panY=e.clientY-startY; render(); } 
-        });
-        viewer.addEventListener('mouseup', () => isDragging=false);
-
-        viewer.addEventListener('click', e => {
-            if (Math.abs(e.clientX-startClickX)>5 || Math.abs(e.clientY-startClickY)>5) return;
-            if (e.target.closest('#finding-card') || e.target.closest('#app-header')) return;
-            const rect = canvas.getBoundingClientRect();
-            const relX = ((e.clientX-rect.left-panX)/scale)/img.naturalWidth;
-            const relY = ((e.clientY-rect.top-panY)/scale)/img.naturalHeight;
-            let clickedAnno=null, minDist=Infinity;
-            const threshold=0.05;
-            DATA.annotations.forEach(anno => {
-                let dist=Infinity;
-                if(anno.points){ anno.points.forEach(p=>{ const d=Math.hypot(p.x-relX,p.y-relY); if(d<dist)dist=d; }); }
-                else if(anno.start&&anno.end){ const mx=(anno.start.x+anno.end.x)/2,my=(anno.start.y+anno.end.y)/2; dist=Math.hypot(mx-relX,my-relY); }
-                else if(anno.x!==undefined){ dist=Math.hypot(anno.x-relX,anno.y-relY); }
-                if(dist<threshold&&dist<minDist){ minDist=dist; clickedAnno=anno; }
-            });
-            if(clickedAnno){
-                const listItem=document.querySelector(`.finding-item[data-annotation-id="${clickedAnno.id}"]`);
-                if(listItem){ listItem.click(); listItem.scrollIntoView({behavior:'smooth',block:'nearest'}); }
-            } else { resetView(); }
-        });
-
-        viewer.addEventListener('wheel', e => { 
-            e.preventDefault(); const d=e.deltaY>0?0.9:1.1; 
-            const mx=e.clientX-canvas.getBoundingClientRect().left;
-            const my=e.clientY-canvas.getBoundingClientRect().top; 
-            panX=mx-(mx-panX)*d; panY=my-(my-panY)*d; scale*=d; render(); 
-        });
-        
-        let idist=0, iscale=1;
-        viewer.addEventListener('touchstart', e => { 
-            if(e.touches.length===2){ 
-                idist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX,e.touches[0].pageY-e.touches[1].pageY); iscale=scale; 
-            } else if(e.touches.length===1){ 
-                isDragging=true; startX=e.touches[0].clientX-panX; startY=e.touches[0].clientY-panY; 
-                startClickX=e.touches[0].clientX; startClickY=e.touches[0].clientY;
-            } 
-        }, {passive:false});
-        
-        viewer.addEventListener('touchmove', e => { 
-            e.preventDefault(); 
-            if(e.touches.length===2){ 
-                const dist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX,e.touches[0].pageY-e.touches[1].pageY); 
-                const delta=dist/idist; const cx=viewer.offsetWidth/2,cy=viewer.offsetHeight/2; 
-                const ns=iscale*delta; panX=cx-(cx-panX)*(ns/scale); panY=cy-(cy-panY)*(ns/scale); scale=ns; render(); 
-            } else if(isDragging&&e.touches.length===1){ 
-                panX=e.touches[0].clientX-startX; panY=e.touches[0].clientY-startY; render(); 
-            } 
-        }, {passive:false});
-        
-        viewer.addEventListener('touchend', () => isDragging=false);
-
-        function toggleAllAction() {
-            showAll=!showAll; activeAnnotationId=null; closeCard();
-            document.querySelectorAll('.finding-item').forEach(el=>el.classList.remove('active'));
-            fitImage(); render();
-        }
-        document.getElementById('btn-toggle-all').addEventListener('click', toggleAllAction);
-        document.getElementById('btn-toggle-all-header').addEventListener('click', toggleAllAction);
-        document.getElementById('btn-reset-zoom').addEventListener('click', resetView);
+// ============================================================
+// SISTEMA DE SEVERIDADE
+// ============================================================
+const SEV_RULES = [
+    {
+        level: 'critical',
+        label: '🔴 Crítico',
+        color: '#e53e3e',
+        words: [
+            'incluso','impactado','reabsorção','envolvimento pulpar','comprometimento pulpar',
+            'lesão extensa','rarefação','radiolúcida','radiolucida','periápice','periapice',
+            'canal mandibular','íntima proximidade','intima proximidade','cisto','tumor',
+            'necrose','fístula','fistula','abscesso','osteíte','osteite','fratura','dilaceração severa',
+            'reabsorção radicular','reabsorção interna','reabsorção externa'
+        ]
+    },
+    {
+        level: 'semi',
+        label: '🟠 Semi-crítico',
+        color: '#dd6b20',
+        words: [
+            'semi-incluso','semi incluso','cárie','cariosa','carie','obturação inadequada',
+            'restauração com falha','sobrecontorno','subcontorno','remanescente radicular',
+            'alvéolo','alveolo','espessamento','seio maxilar','sinusite','mucosite',
+            'lesão cariosa','lesão radiolúcida','lesão radiolucida','carr','care',
+            'peri-implantite','mobilidade','lesão periapical','pericoronite'
+        ]
+    },
+    {
+        level: 'attention',
+        label: '🟡 Atenção',
+        color: '#d69e2e',
+        words: [
+            'aumento do espaço','calcificação','atrição','giroversão','dilaceração',
+            'arredondamento apical','pino intrarradicular','implante','contenção',
+            'cálculo','calculo','perda óssea','perda ossea','reabsorção leve',
+            'obturação','restauração radiopaca','tratado endodonticamente','endodonticamente',
+            'condensação','selamento','semi-irrompido','irrompido'
+        ]
     }
+];
+
+function classifyText(text) {
+    const lower = text.toLowerCase();
+    for (const rule of SEV_RULES) {
+        if (rule.words.some(w => lower.includes(w))) {
+            return rule;
+        }
+    }
+    return { level: 'complement', label: '🟢 Complementar', color: '#38a169' };
+}
+
+// ============================================================
+// IMPACTO CLÍNICO
+// ============================================================
+const IMPACT_RULES = [
+    { words: ['canal mandibular','íntima proximidade','intima proximidade','sobrepostos ao canal'], tag: 'TC Cone Beam recomendado' },
+    { words: ['seio maxilar','espessamento','sinusite','mucosite sinusal','pseudocisto'], tag: 'Avaliar sinusite' },
+    { words: ['periápice','periapice','rarefação','radiolúcida','radiolucida','lesão periapical'], tag: 'Possível trat. endodôntico' },
+    { words: ['envolvimento pulpar','comprometimento pulpar','câmara pulpar','exposição pulpar'], tag: 'Tratamento endodôntico provável' },
+    { words: ['incluso','impactado','semi-incluso','semi incluso'], tag: 'Avaliação cirúrgica' },
+    { words: ['reabsorção radicular','reabsorção interna','reabsorção externa','reabsorção cervical'], tag: 'Correlação clínica urgente' },
+    { words: ['restauração com falha','carr','radiolúcida sob a restauração','radiolucida sob'], tag: 'Radiografia interproximal' },
+    { words: ['alvéolo','alveolo','pós-cirúrgico'], tag: 'Acompanhar reparação' },
+    { words: ['cálculo','calculo','perda óssea','perda ossea','reabsorção alveolar'], tag: 'Avaliação periodontal' },
+    { words: ['implante osseointegrado','peri-implantite'], tag: 'Acompanhar osseointegração' },
+    { words: ['dilaceração','giroversão','transalveolar'], tag: 'Avaliar clinicamente' },
+    { words: ['cárie','cariosa','lesão cariosa','carie'], tag: 'Radiografia interproximal' },
+];
+
+function getImpacts(text) {
+    const lower = text.toLowerCase();
+    const found = [];
+    const seen = new Set();
+    for (const rule of IMPACT_RULES) {
+        if (rule.words.some(w => lower.includes(w)) && !seen.has(rule.tag)) {
+            found.push(rule.tag);
+            seen.add(rule.tag);
+        }
+    }
+    return found;
+}
+
+// ============================================================
+// RESUMO CURTO
+// ============================================================
+function makeSummary(text, maxLen = 90) {
+    const clean = text.replace(/\n/g, ' ').trim();
+    if (clean.length <= maxLen) return { summary: clean, full: null };
+    const cut = clean.lastIndexOf(' ', maxLen);
+    return {
+        summary: clean.slice(0, cut > 0 ? cut : maxLen) + '…',
+        full: clean
+    };
+}
+
+let cardExpanded = false;
+window.toggleExpand = function() {
+    cardExpanded = !cardExpanded;
+    const full = document.getElementById('card-full');
+    const btn  = document.getElementById('btn-expand');
+    full.classList.toggle('open', cardExpanded);
+    btn.textContent = cardExpanded ? 'Recolher ↑' : 'Ver detalhes ↓';
+};
+
+// ============================================================
+// PULSE CANVAS
+// ============================================================
+let pulseAnim = null;
+let pulsePhase = 0;
+
+function startPulse() {
+    stopPulse();
+    pulsePhase = 0;
+    function step() {
+        pulsePhase += 0.04;
+        render();
+        pulseAnim = requestAnimationFrame(step);
+    }
+    pulseAnim = requestAnimationFrame(step);
+}
+
+function stopPulse() {
+    if (pulseAnim) { cancelAnimationFrame(pulseAnim); pulseAnim = null; }
+}
+
+function drawPulse(cx, cy, color) {
+    const maxR = 28 * drawingScale;
+    const t = (Math.sin(pulsePhase) + 1) / 2; // 0→1
+    const r = 8 * drawingScale + t * maxR;
+    const alpha = 0.7 - t * 0.65;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5 * drawingScale;
+    ctx.globalAlpha = alpha;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 12 * drawingScale;
+    ctx.stroke();
+    ctx.restore();
+}
+
+// ============================================================
+// HELPERS PARA CENTRO DA ANOTAÇÃO
+// ============================================================
+function getAnnoCenterNorm(anno) {
+    if (anno.points && anno.points.length) {
+        const xs = anno.points.map(p => p.x);
+        const ys = anno.points.map(p => p.y);
+        return {
+            x: (Math.min(...xs) + Math.max(...xs)) / 2,
+            y: (Math.min(...ys) + Math.max(...ys)) / 2
+        };
+    }
+    if (anno.start && anno.end) {
+        return { x: (anno.start.x + anno.end.x) / 2, y: (anno.start.y + anno.end.y) / 2 };
+    }
+    if (anno.x !== undefined) return { x: anno.x, y: anno.y };
+    return null;
+}
+
+// ============================================================
+// MAIN
+// ============================================================
+let DATA = null;
+try {
+    const hash = window.location.hash.substring(1);
+    if (hash) {
+        const json = decodeURIComponent(escape(atob(hash)));
+        DATA = JSON.parse(json);
+    }
+} catch(e) { console.error(e); }
+
+if (!DATA) {
+    document.getElementById('findings-list').innerHTML =
+        "<p style='text-align:center;color:red;padding:20px;'>Erro ao carregar dados.</p>";
+} else {
+    const listEl = document.getElementById('findings-list');
+    listEl.innerHTML = DATA.findingsHtml ||
+        "<p style='padding:10px;'>Nenhum achado interativo.</p>";
+
+    if (DATA.signature) document.getElementById('signature-img').src = DATA.signature;
+
+    // Classifica e estiliza cada item
+    const items = listEl.querySelectorAll('p[data-highlight-color]');
+    const sevCounts = { critical: 0, semi: 0, attention: 0, complement: 0 };
+
+    items.forEach(p => {
+        p.classList.add('finding-item');
+        const text   = p.innerText || p.textContent || '';
+        const sev    = classifyText(text);
+        p.dataset.severity      = sev.level;
+        p.dataset.severityColor = sev.color;
+        // Usa a cor de severidade como cor da borda — ignora cor original
+        p.style.borderLeftColor = sev.color;
+        sevCounts[sev.level] = (sevCounts[sev.level] || 0) + 1;
+
+        // Dot no início do item
+        const dot = document.createElement('span');
+        dot.className = `item-sev-dot sev-dot ${sev.level}`;
+        dot.style.background = sev.color;
+        p.prepend(dot);
+    });
+
+    // Contador de severidade no header
+    buildSeveritySummary(sevCounts, items.length);
+
+    const viewer = document.getElementById('viewer-area');
+    const canvas = document.getElementById('canvas');
+    const ctx    = canvas.getContext('2d');
+    let img = new Image();
+    let scale = 1, panX = 0, panY = 0;
+    let isDragging = false, startX, startY;
+    let startClickX = 0, startClickY = 0;
+    let activeAnnotationId = null;
+    let showAll = false;
+    let drawingScale = 1;
+
+    img.onload = () => {
+        resize(); drawingScale = img.naturalWidth / 1200; fitImage(); render();
+    };
+    img.src = DATA.image;
+
+    window.addEventListener('resize', () => { resize(); fitImage(); render(); });
+    if (screen.orientation) {
+        screen.orientation.addEventListener('change', () => {
+            setTimeout(() => { resize(); fitImage(); render(); }, 200);
+        });
+    }
+
+    function resize() {
+        canvas.width  = viewer.clientWidth;
+        canvas.height = viewer.clientHeight;
+    }
+    function fitImage() {
+        const rW = canvas.width  / img.naturalWidth;
+        const rH = canvas.height / img.naturalHeight;
+        scale = Math.min(rW, rH);
+        panX = (canvas.width  - img.naturalWidth  * scale) / 2;
+        panY = (canvas.height - img.naturalHeight * scale) / 2;
+    }
+    function isLandscapeMobile() {
+        return window.innerWidth <= 900 && window.innerWidth > window.innerHeight;
+    }
+
+    function render() {
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.setTransform(scale,0,0,scale,panX,panY);
+        ctx.drawImage(img,0,0);
+
+        if (showAll) {
+            DATA.annotations.forEach(anno => drawAnnotation(anno, false));
+        } else if (activeAnnotationId) {
+            const anno = DATA.annotations.find(a => a.id === activeAnnotationId);
+            if (anno) {
+                drawAnnotation(anno, true);
+                // Pulse no centro
+                const cn = getAnnoCenterNorm(anno);
+                if (cn) {
+                    const el  = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
+                    const col = el ? el.dataset.severityColor : '#00ffff';
+                    drawPulse(cn.x * img.naturalWidth, cn.y * img.naturalHeight, col);
+                }
+            }
+        }
+    }
+
+    // ---- CARD ----
+    function updateFindingCard(text, sevColor, sevLevel) {
+        const card   = document.getElementById('finding-card');
+        const badge  = document.getElementById('card-severity-badge');
+        const sumEl  = document.getElementById('card-summary');
+        const fullEl = document.getElementById('card-full');
+        const btnExp = document.getElementById('btn-expand');
+        const impact = document.getElementById('card-impact');
+        const tags   = document.getElementById('card-impact-tags');
+
+        if (!text || text.length < 2) { card.style.display = 'none'; return; }
+
+        // Severidade badge
+        const sevMap = {
+            critical:   { cls: 'sev-critical',   label: '🔴 Crítico' },
+            semi:       { cls: 'sev-semi',        label: '🟠 Semi-crítico' },
+            attention:  { cls: 'sev-attention',   label: '🟡 Atenção' },
+            complement: { cls: 'sev-complement',  label: '🟢 Complementar' }
+        };
+        const sm = sevMap[sevLevel] || sevMap.complement;
+        badge.innerHTML = `<span class="severity-badge ${sm.cls}">${sm.label}</span>`;
+
+        // Resumo + full
+        cardExpanded = false;
+        const { summary, full } = makeSummary(text);
+        sumEl.textContent = summary;
+        if (full) {
+            fullEl.textContent = full;
+            fullEl.classList.remove('open');
+            btnExp.textContent = 'Ver detalhes ↓';
+            btnExp.style.display = 'inline-block';
+        } else {
+            fullEl.textContent = '';
+            fullEl.classList.remove('open');
+            btnExp.style.display = 'none';
+        }
+
+        // Impacto clínico
+        const impacts = getImpacts(text);
+        if (impacts.length) {
+            tags.innerHTML = impacts.map(t => `<span class="impact-tag">${t}</span>`).join('');
+            impact.classList.add('visible');
+        } else {
+            impact.classList.remove('visible');
+        }
+
+        card.style.borderLeftColor = sevColor;
+        card.style.display = 'block';
+    }
+
+    window.closeCard = function() {
+        document.getElementById('finding-card').style.display = 'none';
+        stopPulse();
+    };
+
+    function resetView() {
+        activeAnnotationId = null; showAll = false;
+        closeCard();
+        document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
+        stopPulse(); fitImage(); render();
+    }
+
+    // ---- DRAW ANNOTATION ----
+    function drawAnnotation(anno, isActive) {
+        const el    = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
+        // Usa cor de severidade se disponível, senão cor original
+        const color = (el && el.dataset.severityColor) ? el.dataset.severityColor : (anno.color || '#00FFFF');
+        ctx.save();
+        ctx.strokeStyle = color; ctx.fillStyle = color;
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        ctx.shadowColor = 'black'; ctx.shadowBlur = 5 * drawingScale;
+        const baseWidth = (anno.thickness || 4) * drawingScale;
+        ctx.lineWidth = isActive ? baseWidth * 1.6 : baseWidth;
+
+        if (anno.points && anno.fillColor) {
+            ctx.beginPath();
+            anno.points.forEach((p,i) => {
+                const x = p.x*img.naturalWidth, y = p.y*img.naturalHeight;
+                i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+            });
+            ctx.closePath(); ctx.stroke();
+            ctx.globalAlpha = 0.22; ctx.fill(); ctx.globalAlpha = 1;
+        } else if (anno.start && anno.end) {
+            const p1 = {x:anno.start.x*img.naturalWidth, y:anno.start.y*img.naturalHeight};
+            const p2 = {x:anno.end.x*img.naturalWidth,   y:anno.end.y*img.naturalHeight};
+            ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+            const fs = 20*drawingScale; ctx.font=`bold ${fs}px Arial`; ctx.textAlign='center';
+            ctx.shadowBlur=0; ctx.lineWidth=3; ctx.strokeStyle='black';
+            const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+            ctx.strokeText(anno.text,mx,my-10); ctx.fillStyle=color; ctx.fillText(anno.text,mx,my-10);
+        } else if (anno.type && anno.size) {
+            const x = anno.x*img.naturalWidth, y = anno.y*img.naturalHeight;
+            const s = anno.size*img.naturalWidth;
+            let headLength=s*0.3, shaftWidth=s*0.1;
+            ctx.translate(x,y); ctx.rotate(anno.rotation); ctx.scale(anno.scale,anno.scale);
+            ctx.beginPath();
+            if (anno.type==='normal') {
+                ctx.moveTo(-s/2+headLength,0); ctx.lineTo(s/2,0);
+                ctx.lineTo(s/2-headLength,-headLength/2); ctx.moveTo(s/2,0);
+                ctx.lineTo(s/2-headLength,headLength/2);
+                ctx.fillStyle=color; ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=shaftWidth; ctx.lineCap='round'; ctx.stroke();
+            } else if (anno.type==='outline') {
+                headLength=s*0.4; shaftWidth=s*0.15;
+                ctx.moveTo(-s/2,-shaftWidth/2); ctx.lineTo(-s/2,shaftWidth/2);
+                ctx.lineTo(s/2-headLength,shaftWidth/2); ctx.lineTo(s/2-headLength,headLength/2);
+                ctx.lineTo(s/2,0); ctx.lineTo(s/2-headLength,-headLength/2);
+                ctx.lineTo(s/2-headLength,-shaftWidth/2); ctx.closePath();
+                ctx.strokeStyle=color; ctx.lineWidth=isActive?4*drawingScale:2*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
+            } else if (anno.type==='complex') {
+                headLength=s*0.4; shaftWidth=s*0.2;
+                ctx.moveTo(-s/2,-shaftWidth/2); ctx.lineTo(-s/2,shaftWidth/2);
+                ctx.lineTo(s/2-headLength,shaftWidth/2); ctx.lineTo(s/2-headLength,headLength/1.5);
+                ctx.lineTo(s/2,0); ctx.lineTo(s/2-headLength,-headLength/1.5);
+                ctx.lineTo(s/2-headLength,-shaftWidth/2); ctx.closePath();
+                ctx.fillStyle=color; ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=1*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
+            }
+        } else if (anno.text) {
+            const x=anno.x*img.naturalWidth, y=anno.y*img.naturalHeight;
+            const fs=(parseInt(anno.font)||24)*drawingScale;
+            ctx.font=`bold ${fs}px Arial`; ctx.shadowBlur=0; ctx.lineWidth=4*drawingScale; ctx.strokeStyle='black';
+            ctx.strokeText(anno.text,x,y); ctx.fillText(anno.text,x,y);
+        } else if (anno.points) {
+            ctx.beginPath();
+            anno.points.forEach((p,i) => {
+                const x=p.x*img.naturalWidth, y=p.y*img.naturalHeight;
+                i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+            });
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    // ---- CLICK NA LISTA ----
+    listEl.addEventListener('click', e => {
+        const item = e.target.closest('.finding-item');
+        if (!item) return;
+        document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
+        const id = item.dataset.annotationId;
+        if (activeAnnotationId === id) {
+            resetView();
+        } else {
+            activeAnnotationId = id; showAll = false;
+            item.classList.add('active');
+            const anno = DATA.annotations.find(a => a.id === id);
+            if (anno) {
+                const sevColor = item.dataset.severityColor || '#00ffff';
+                const sevLevel = item.dataset.severity || 'complement';
+                const cardText = item.innerText.replace(/\n/g,' ').trim();
+                updateFindingCard(cardText, sevColor, sevLevel);
+                zoomNatural(anno);
+                startPulse();
+            }
+        }
+        render();
+    });
+
+    // ---- ZOOM NATURAL ----
+    function zoomNatural(anno) {
+        let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+        if (anno.points) {
+            anno.points.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
+        } else if (anno.start&&anno.end) {
+            minX=Math.min(anno.start.x,anno.end.x);maxX=Math.max(anno.start.x,anno.end.x);
+            minY=Math.min(anno.start.y,anno.end.y);maxY=Math.max(anno.start.y,anno.end.y);
+        } else if (anno.x!==undefined) {
+            let size=anno.size?(anno.size*(anno.scale||1)):0.08;
+            minX=anno.x-(size/2);maxX=anno.x+(size/2);minY=anno.y-(size/2);maxY=anno.y+(size/2);
+        }
+        if (maxX-minX<0.1){minX-=0.1;maxX+=0.1;}
+        if (maxY-minY<0.1){minY-=0.1;maxY+=0.1;}
+        const regW=(maxX-minX)*img.naturalWidth;
+        const regH=(maxY-minY)*img.naturalHeight;
+        const landscape=isLandscapeMobile();
+        const padX=canvas.width*(landscape?0.18:0.3);
+        const padY=canvas.height*(landscape?0.18:0.3);
+        let tScale=Math.min((canvas.width-padX)/regW,(canvas.height-padY)/regH);
+        tScale=Math.min(tScale,3.5);
+        tScale=Math.max(tScale,Math.min(canvas.width/img.naturalWidth,canvas.height/img.naturalHeight));
+        const cX=((minX+maxX)/2)*img.naturalWidth;
+        const cY=((minY+maxY)/2)*img.naturalHeight;
+        scale=tScale; panX=(canvas.width/2)-(cX*scale);
+        const ratioY=landscape?0.47:(window.innerWidth<=768?0.35:0.5);
+        panY=(canvas.height*ratioY)-(cY*scale);
+    }
+
+    // ---- MOUSE / TOUCH ----
+    viewer.addEventListener('mousedown', e=>{isDragging=true;startX=e.clientX-panX;startY=e.clientY-panY;startClickX=e.clientX;startClickY=e.clientY;});
+    viewer.addEventListener('mousemove', e=>{if(isDragging){panX=e.clientX-startX;panY=e.clientY-startY;render();}});
+    viewer.addEventListener('mouseup', ()=>isDragging=false);
+
+    viewer.addEventListener('click', e=>{
+        if(Math.abs(e.clientX-startClickX)>5||Math.abs(e.clientY-startClickY)>5)return;
+        if(e.target.closest('#finding-card')||e.target.closest('#app-header'))return;
+        const rect=canvas.getBoundingClientRect();
+        const relX=((e.clientX-rect.left-panX)/scale)/img.naturalWidth;
+        const relY=((e.clientY-rect.top-panY)/scale)/img.naturalHeight;
+        let clickedAnno=null,minDist=Infinity;
+        const threshold=0.05;
+        DATA.annotations.forEach(anno=>{
+            let dist=Infinity;
+            if(anno.points){anno.points.forEach(p=>{const d=Math.hypot(p.x-relX,p.y-relY);if(d<dist)dist=d;});}
+            else if(anno.start&&anno.end){const mx=(anno.start.x+anno.end.x)/2,my=(anno.start.y+anno.end.y)/2;dist=Math.hypot(mx-relX,my-relY);}
+            else if(anno.x!==undefined){dist=Math.hypot(anno.x-relX,anno.y-relY);}
+            if(dist<threshold&&dist<minDist){minDist=dist;clickedAnno=anno;}
+        });
+        if(clickedAnno){
+            const li=document.querySelector(`.finding-item[data-annotation-id="${clickedAnno.id}"]`);
+            if(li){li.click();li.scrollIntoView({behavior:'smooth',block:'nearest'});}
+        } else { resetView(); }
+    });
+
+    viewer.addEventListener('wheel',e=>{
+        e.preventDefault();const d=e.deltaY>0?0.9:1.1;
+        const mx=e.clientX-canvas.getBoundingClientRect().left;
+        const my=e.clientY-canvas.getBoundingClientRect().top;
+        panX=mx-(mx-panX)*d;panY=my-(my-panY)*d;scale*=d;render();
+    });
+
+    let idist=0,iscale=1;
+    viewer.addEventListener('touchstart',e=>{
+        if(e.touches.length===2){idist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX,e.touches[0].pageY-e.touches[1].pageY);iscale=scale;}
+        else if(e.touches.length===1){isDragging=true;startX=e.touches[0].clientX-panX;startY=e.touches[0].clientY-panY;startClickX=e.touches[0].clientX;startClickY=e.touches[0].clientY;}
+    },{passive:false});
+    viewer.addEventListener('touchmove',e=>{
+        e.preventDefault();
+        if(e.touches.length===2){
+            const dist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX,e.touches[0].pageY-e.touches[1].pageY);
+            const delta=dist/idist;const cx=viewer.offsetWidth/2,cy=viewer.offsetHeight/2;
+            const ns=iscale*delta;panX=cx-(cx-panX)*(ns/scale);panY=cy-(cy-panY)*(ns/scale);scale=ns;render();
+        } else if(isDragging&&e.touches.length===1){panX=e.touches[0].clientX-startX;panY=e.touches[0].clientY-startY;render();}
+    },{passive:false});
+    viewer.addEventListener('touchend',()=>isDragging=false);
+
+    function toggleAllAction(){
+        showAll=!showAll;activeAnnotationId=null;closeCard();
+        document.querySelectorAll('.finding-item').forEach(el=>el.classList.remove('active'));
+        stopPulse();fitImage();render();
+    }
+    document.getElementById('btn-toggle-all').addEventListener('click',toggleAllAction);
+    document.getElementById('btn-toggle-all-header').addEventListener('click',toggleAllAction);
+    document.getElementById('btn-reset-zoom').addEventListener('click',resetView);
+
+    // ---- CONTADOR DE SEVERIDADE ----
+    function buildSeveritySummary(counts, total) {
+        const el = document.getElementById('severity-summary');
+        const parts = [];
+        if (counts.critical)   parts.push(`<span class="sev-count critical"><span class="sev-dot critical"></span>${counts.critical} crítico${counts.critical>1?'s':''}</span>`);
+        if (counts.semi)       parts.push(`<span class="sev-count semi"><span class="sev-dot semi"></span>${counts.semi} semi-crítico${counts.semi>1?'s':''}</span>`);
+        if (counts.attention)  parts.push(`<span class="sev-count attention"><span class="sev-dot attention"></span>${counts.attention} atenção</span>`);
+        if (counts.complement) parts.push(`<span class="sev-count complement"><span class="sev-dot complement"></span>${counts.complement} complementar${counts.complement>1?'es':''}</span>`);
+        el.innerHTML = `<span style="font-size:11px;color:#555;margin-right:4px;">${total} achados</span>` + parts.join('');
+    }
+}
 </script>
 </body>
 </html>
