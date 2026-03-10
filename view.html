@@ -7,10 +7,10 @@
     <style>
         * { box-sizing: border-box; }
         :root {
-            --bg-color: #000;
-            --panel-bg: #111;
+            --bg-color: #0b0f14;
+            --panel-bg: #121821;
             --text-color: #eee;
-            --accent: #007bff;
+            --accent: #2ea8ff;
             --c-critical: #e53e3e;
             --c-semicritical: #dd6b20;
             --c-attention: #d69e2e;
@@ -228,19 +228,12 @@
             #signature-area { padding: 8px; background: #111; flex-shrink: 0; min-height: 50px; }
             #signature-img { max-width: 110px; max-height: 45px; }
             #finding-card {
-                position: fixed;
-                bottom: 0; top: auto;
-                left: 0; right: 0;
-                transform: none;
-                width: 100%; max-width: 100%;
-                max-height: 38vh; overflow-y: auto;
-                padding: 10px 32px 12px 13px;
-                font-size: 11.5px;
-                border-radius: 14px 14px 0 0;
-                border-left: none;
-                border-top: 4px solid var(--accent);
-                box-shadow: 0 -6px 30px rgba(0,0,0,0.85);
-                z-index: 200;
+                left: 50%; transform: translateX(-50%);
+                bottom: 10px; top: auto;
+                width: 92%; max-width: 92%;
+                max-height: 28vh; overflow-y: auto;
+                padding: 8px 28px 8px 11px; font-size: 11.5px;
+                position: absolute;
             }
             #card-full { font-size: 11px; }
             #card-clinical-row { gap: 6px; }
@@ -896,7 +889,65 @@ if (!DATA) {
         }
 
         card.style.borderLeftColor = sevColor;
+        card.style.borderTopColor  = sevColor;
         card.style.display = 'block';
+    }
+
+    // Posiciona o card próximo à anotação na tela, sem cobri-la
+    function positionCardNearAnno(anno) {
+        const card = document.getElementById('finding-card');
+        if (!card || card.style.display === 'none') return;
+
+        const cn = getAnnoCenterNorm(anno);
+        if (!cn) return;
+
+        // Centro da anotação em px de tela
+        const cxScreen = cn.x * img.naturalWidth * scale + panX;
+        const cyScreen = cn.y * img.naturalHeight * scale + panY;
+
+        // Raio da anotação em px de tela (para não sobrepor)
+        let annoR = 30;
+        if (anno.points && anno.points.length > 1) {
+            const xs = anno.points.map(p => p.x * img.naturalWidth * scale);
+            const ys = anno.points.map(p => p.y * img.naturalHeight * scale);
+            const w  = Math.max(...xs) - Math.min(...xs);
+            const h  = Math.max(...ys) - Math.min(...ys);
+            annoR = Math.max(w, h) * 0.55;
+        }
+
+        const viewerRect = document.getElementById('viewer-area').getBoundingClientRect();
+        const cardW = Math.min(card.offsetWidth || 320, viewerRect.width * 0.88);
+        const cardH = card.offsetHeight || 160;
+        const margin = 14;
+        const gap = annoR + 10; // distância do centro ao card
+
+        // Tenta posicionar ABAIXO, senão ACIMA
+        let top, left;
+
+        const spaceBelow = viewerRect.height - cyScreen - gap;
+        const spaceAbove = cyScreen - gap;
+
+        if (spaceBelow >= cardH + margin) {
+            top = cyScreen + gap;
+        } else if (spaceAbove >= cardH + margin) {
+            top = cyScreen - gap - cardH;
+        } else {
+            // Sem espaço suficiente — centraliza verticalmente com offset
+            top = Math.max(margin, Math.min(cyScreen - cardH / 2, viewerRect.height - cardH - margin));
+        }
+
+        // Centraliza horizontalmente no achado, mas mantém dentro do viewer
+        left = cxScreen - cardW / 2;
+        left = Math.max(margin, Math.min(left, viewerRect.width - cardW - margin));
+
+        card.style.position = 'absolute';
+        card.style.left     = left + 'px';
+        card.style.top      = top + 'px';
+        card.style.bottom   = 'auto';
+        card.style.right    = 'auto';
+        card.style.transform = 'none';
+        card.style.width    = cardW + 'px';
+        card.style.maxWidth = cardW + 'px';
     }
 
     window.closeCard = function() {
@@ -1159,7 +1210,10 @@ if (!DATA) {
                 const sevLevel = item.dataset.severity || 'complement';
                 const cardText = item.innerText.replace(/\n/g,' ').trim();
                 updateFindingCard(cardText, sevColor, sevLevel);
-                zoomNatural(anno);
+                const target = calcZoomNatural(anno);
+                smoothZoomTo(target.scale, target.panX, target.panY, 380, () => {
+                    positionCardNearAnno(anno);
+                });
                 startPulse();
             }
         }
@@ -1167,7 +1221,7 @@ if (!DATA) {
     });
 
     // ---- ZOOM NATURAL ----
-    function zoomNatural(anno) {
+    function calcZoomNatural(anno) {
         let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
         if (anno.points) {
             anno.points.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
@@ -1190,9 +1244,14 @@ if (!DATA) {
         tScale=Math.max(tScale,Math.min(canvas.width/img.naturalWidth,canvas.height/img.naturalHeight));
         const cX=((minX+maxX)/2)*img.naturalWidth;
         const cY=((minY+maxY)/2)*img.naturalHeight;
-        scale=tScale; panX=(canvas.width/2)-(cX*scale);
-        const ratioY=landscape?0.47:(window.innerWidth<=768?0.35:0.5);
-        panY=(canvas.height*ratioY)-(cY*scale);
+        const tPanX = canvas.width/2 - cX*tScale;
+        const ratioY = landscape?0.47:(window.innerWidth<=768?0.35:0.5);
+        const tPanY  = canvas.height*ratioY - cY*tScale;
+        return { scale: tScale, panX: tPanX, panY: tPanY };
+    }
+    function zoomNatural(anno) {
+        const t = calcZoomNatural(anno);
+        scale = t.scale; panX = t.panX; panY = t.panY;
     }
 
     // ---- MOUSE / TOUCH ----
@@ -1249,7 +1308,7 @@ if (!DATA) {
 
     // Smooth animated zoom
     let animFrame = null;
-    function smoothZoomTo(targetScale, targetPanX, targetPanY, duration) {
+    function smoothZoomTo(targetScale, targetPanX, targetPanY, duration, onComplete) {
         if (animFrame) cancelAnimationFrame(animFrame);
         const startScale = scale, startPanX = panX, startPanY = panY;
         const startTime = performance.now();
@@ -1262,7 +1321,7 @@ if (!DATA) {
             panY  = startPanY  + (targetPanY  - startPanY)  * e;
             render();
             if (t < 1) animFrame = requestAnimationFrame(step);
-            else animFrame = null;
+            else { animFrame = null; if (onComplete) onComplete(); }
         }
         animFrame = requestAnimationFrame(step);
     }
