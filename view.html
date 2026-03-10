@@ -754,7 +754,7 @@ if (!DATA) {
             ctxA.setTransform(scale,0,0,scale,panX,panY);
             ctxA.drawImage(img,0,0);
             ctxA.setTransform(1,0,0,1,0,0);
-            ctxA.fillStyle = 'rgba(0,0,0,0.52)';
+            ctxA.fillStyle = 'rgba(0,0,0,0.30)';
             ctxA.fillRect(0,0,offA.width,offA.height);
 
             // Desenha canvas A no canvas principal
@@ -799,19 +799,16 @@ if (!DATA) {
         }
     }
 
-    // Lupa real: clip circular no canvas principal, redesenha a imagem em 2×
-    // dentro do clip. Sem canvas offscreen, sem compositing de máscara.
+    // Spotlight: overlay leve no fundo, círculo revela imagem original sem zoom
     function drawSpotlightLupa(anno) {
         const cn = getAnnoCenterNorm(anno);
         if (!cn) return;
 
-        // Centro da annotation em coords de TELA
         const cxImg    = cn.x * img.naturalWidth;
         const cyImg    = cn.y * img.naturalHeight;
         const cxScreen = cxImg * scale + panX;
         const cyScreen = cyImg * scale + panY;
 
-        // Raio da lupa em pixels de tela
         let annoR = 60;
         if (anno.points && anno.points.length > 1) {
             const xs = anno.points.map(p => p.x * img.naturalWidth * scale);
@@ -825,28 +822,25 @@ if (!DATA) {
         ctx.save();
         ctx.setTransform(1,0,0,1,0,0);
 
-        // Clip circular — tudo desenhado a partir daqui fica restrito ao círculo
+        // Clip circular — revela a imagem original (sem zoom) dentro do círculo
         ctx.beginPath();
-        ctx.arc(cxScreen, cyScreen, radius * 0.88, 0, Math.PI * 2);
+        ctx.arc(cxScreen, cyScreen, radius, 0, Math.PI * 2);
         ctx.clip();
 
-        // Redesenha a imagem em zoom 2× dentro do clip, centralizada no achado
-        const zScale = scale * 2.0;
-        const zPanX  = cxScreen - cxImg * zScale;
-        const zPanY  = cyScreen - cyImg * zScale;
-        ctx.setTransform(zScale, 0, 0, zScale, zPanX, zPanY);
+        // Redesenha a imagem original com scale/pan normais (sem zoom)
+        ctx.setTransform(scale, 0, 0, scale, panX, panY);
         ctx.drawImage(img, 0, 0);
 
         ctx.restore();
 
-        // Anel branco sutil na borda da lupa (fora do clip, no espaço de tela)
+        // Anel branco sutil na borda
         ctx.save();
         ctx.setTransform(1,0,0,1,0,0);
         const pulseT = (Math.sin(pulsePhase * 0.7) + 1) / 2;
         ctx.beginPath();
-        ctx.arc(cxScreen, cyScreen, radius * 0.88, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(255,255,255,${0.18 + pulseT * 0.10})`;
-        ctx.lineWidth = 1.8;
+        ctx.arc(cxScreen, cyScreen, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${0.15 + pulseT * 0.08})`;
+        ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.restore();
     }
