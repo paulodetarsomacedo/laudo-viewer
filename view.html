@@ -367,6 +367,51 @@ function classifyText(text) {
 }
 
 // ============================================================
+// DENTES ANTERIORES (numeração FDI / ISO-3950)
+// Superiores: 11, 12, 13, 21, 22, 23
+// Inferiores: 31, 32, 33, 41, 42, 43
+// ============================================================
+const DENTES_ANTERIORES = [
+    '11','12','13','21','22','23',
+    '31','32','33','41','42','43'
+];
+
+/**
+ * Verifica se o texto menciona sobrecontorno e se o dente
+ * referenciado é anterior ou posterior.
+ * Retorna: 'anterior' | 'posterior' | null (se não for sobrecontorno)
+ */
+function detectSobrecontornoTipo(text) {
+    const lower = text.toLowerCase();
+    if (!lower.includes('sobrecontorno')) return null;
+
+    // Procura números de dentes no texto (formato FDI de 2 dígitos)
+    const matches = text.match(/\b([1-4][1-8])\b/g);
+    if (matches) {
+        // Se qualquer dente mencionado for anterior, prioriza anterior
+        for (const num of matches) {
+            if (DENTES_ANTERIORES.includes(num)) return 'anterior';
+        }
+        return 'posterior';
+    }
+
+    // Sem número de dente encontrado — tenta inferir por palavras-chave
+    const anterioresKeywords = [
+        'incisivo','incisivos','canino','caninos','central','lateral',
+        'anterior','anteriores','frontal','frontais'
+    ];
+    if (anterioresKeywords.some(w => lower.includes(w))) return 'anterior';
+
+    const posterioresKeywords = [
+        'pré-molar','pre-molar','premolar','molar','molares','posterior','posteriores'
+    ];
+    if (posterioresKeywords.some(w => lower.includes(w))) return 'posterior';
+
+    // Padrão sem informação: trata como posterior (mais comum para sobrecontorno)
+    return 'posterior';
+}
+
+// ============================================================
 // IMPACTO CLÍNICO
 // ============================================================
 // Conduta clínica provável
@@ -392,14 +437,15 @@ const IMPACT_RULES = [
     { words: ['cisto','lesão cística','lesão radiolúcida bem delimitada','folicular','dentígero'], tag: 'Avaliação e possível enucleação' },
     { words: ['tumor','lesão mista','lesão radiopaca irregular','calcificação distrófica'], tag: 'Biópsia e correlação histopatológica' },
     { words: ['atresia','desvio de septo','hipertrofia de corneto'], tag: 'Avaliação otorrinolaringológica' },
+    { words: ['sobrecontorno'], tag: 'Substituição / ajuste da restauração' },
 ];
 
 // Exame complementar sugerido
 const RECOMMEND_RULES = [
-    { words: ['lesão interproximal','cárie interproximal','carie interproximal','face mesial','face distal','lesão proximal'], tag: 'Bitewing (interproximal)' },
-    // Cárie profunda com envolvimento pulpar → periapical (não bitewing)
+    { words: ['lesão interproximal','cárie interproximal','carie interproximal','face mesial','face distal','lesão proximal'], tag: 'Radiografia interproximal da região' },
+    // Cárie profunda com envolvimento pulpar → periapical (não interproximal)
     { words: ['cárie profunda','carie profunda','lesão cariosa profunda','exposição pulpar','provável exposição pulpar','provavel exposicao pulpar','envolvimento pulpar','comprometimento pulpar'], tag: 'Radiografia periapical' },
-    { words: ['cárie','cariosa','lesão cariosa','carie','radiolucência coronária','lesão de cárie','lesao de carie'], tag: 'Bitewing ou periapical' },
+    { words: ['cárie','cariosa','lesão cariosa','carie','radiolucência coronária','lesão de cárie','lesao de carie'], tag: 'Radiografia interproximal ou periapical da região' },
     // Destruição coronária → periapical para avaliar raiz e periápice
     { words: ['destruição coronária','destruicao coronaria','coroa destruída','extensa destruição','sem remanescente coronário'], tag: 'Radiografia periapical' },
     { words: ['envolvimento pulpar','comprometimento pulpar','câmara pulpar','necrose','abscesso','fístula','fistula','periodontite apical'], tag: 'Radiografia periapical' },
@@ -407,7 +453,7 @@ const RECOMMEND_RULES = [
     { words: ['reabsorção radicular','reabsorcao radicular','reabsorção interna','reabsorção externa'], tag: 'Periapical + TC Cone Beam' },
     { words: ['reabsorção cervical invasiva'], tag: 'TC Cone Beam (extensão da reabsorção)' },
     { words: ['perda óssea','perda ossea','reabsorção alveolar','suporte periodontal reduzido','defeito ósseo angular'], tag: 'Série periapical completa' },
-    { words: ['cálculo','calculo','tártaro','doença periodontal generalizada'], tag: 'Série periapical ou bitewing bilateral' },
+    { words: ['cálculo','calculo','tártaro','doença periodontal generalizada'], tag: 'Série periapical ou interproximal bilateral' },
     { words: ['dente tratado endodonticamente','endodonticamente','tratamento endodôntico concluído','obturação endodôntica'], tag: 'Periapical de controle pós-trat.' },
     { words: ['canal mandibular','íntima proximidade','intima proximidade','sobrepostos ao canal','contato com o canal mandibular'], tag: 'TC Cone Beam mandibular — mandatória' },
     { words: ['incluso','impactado','semi-incluso','semi incluso'], tag: 'TC Cone Beam' },
@@ -423,7 +469,7 @@ const RECOMMEND_RULES = [
     { words: ['sobrecarga oclusal','atrição intensa','desgaste severo'], tag: 'Avaliação clínica + modelos de estudo' },
 ];
 
-// Palavras que indicam envolvimento pulpar — excluem "Restauração" e "Bitewing ou periapical"
+// Palavras que indicam envolvimento pulpar — excluem "Restauração" e "interproximal ou periapical"
 const PULPAR_WORDS = [
     'envolvimento pulpar','comprometimento pulpar','câmara pulpar','exposição pulpar',
     'necrose pulpar','cárie profunda','carie profunda','provável exposição','provavel exposicao',
@@ -468,11 +514,29 @@ function getRecommends(text) {
     const temResidual = RESIDUAL_WORDS.some(w => lower.includes(w));
     const found = [];
     const seen = new Set();
+
+    // ── Lógica especial para sobrecontorno ──────────────────────────────────
+    const tipoSobre = detectSobrecontornoTipo(text);
+    if (tipoSobre !== null) {
+        if (tipoSobre === 'anterior') {
+            found.push('Radiografia periapical da região');
+            found.push('Avaliação clínica');
+        } else {
+            found.push('Radiografia interproximal da região');
+        }
+        seen.add('Radiografia periapical da região');
+        seen.add('Avaliação clínica');
+        seen.add('Radiografia interproximal da região');
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     for (const rule of RECOMMEND_RULES) {
         if (!rule.words.some(w => lower.includes(w))) continue;
         if (seen.has(rule.tag)) continue;
-        // Se há envolvimento pulpar → bloqueia bitewing genérico (já tem periapical específico)
-        if (rule.tag === 'Bitewing ou periapical' && (temPulpar || temResidual)) continue;
+        // Se há envolvimento pulpar → bloqueia interproximal genérico (já tem periapical específico)
+        if (rule.tag === 'Radiografia interproximal ou periapical da região' && (temPulpar || temResidual)) continue;
+        // Não duplica periapical se sobrecontorno anterior já adicionou
+        if (rule.tag === 'Radiografia periapical' && seen.has('Radiografia periapical da região')) continue;
         found.push(rule.tag);
         seen.add(rule.tag);
     }
