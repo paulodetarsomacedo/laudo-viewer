@@ -327,7 +327,7 @@ const SEV_RULES = [
             'lesão extensa','rarefação','radiolúcida','radiolucida','periápice','periapice',
             'canal mandibular','íntima proximidade','intima proximidade','cisto','tumor',
             'necrose','fístula','fistula','abscesso','osteíte','osteite','fratura','dilaceração severa',
-            'reabsorção radicular','reabsorção interna','reabsorção externa'
+            'reabsorção radicular','reabsorcao radicular','reabsorção interna','reabsorção externa'
         ]
     },
     {
@@ -375,11 +375,11 @@ const IMPACT_RULES = [
     { words: ['periápice','periapice','rarefação periapical','lesão periapical','abscesso periapical','fístula','fistula','periodontite apical'], tag: 'Tratamento endodôntico' },
     { words: ['lesão cariosa','cariosa','cárie','carie','radiolucência coronária','lesão interproximal'], tag: 'Restauração' },
     { words: ['incluso','impactado','semi-incluso','semi incluso','pericoronite','não irrompido'], tag: 'Avaliação cirúrgica' },
-    { words: ['raízes residuais','raiz residual','remanescente radicular','raiz retida'], tag: 'Exodontia / cirurgia' },
+    { words: ['raízes residuais','raizes residuais','raiz residual','remanescente radicular','raiz retida'], tag: 'Exodontia / cirurgia' },
     { words: ['destruição coronária','destruicao coronaria','coroa destruída','sem remanescente coronário','extensa destruição'], tag: 'Avaliar exodontia' },
     { words: ['perda óssea','perda ossea','reabsorção alveolar','reabsorção óssea','defeito ósseo','defeito angular','nível ósseo reduzido'], tag: 'Avaliação e trat. periodontal' },
     { words: ['cálculo','calculo','cálculo subgengival','cálculo supragengival','tártaro'], tag: 'Raspagem e alisamento radicular' },
-    { words: ['reabsorção radicular','reabsorção interna','reabsorção externa','reabsorção cervical invasiva'], tag: 'Correlação clínica urgente' },
+    { words: ['reabsorção radicular','reabsorcao radicular','reabsorção interna','reabsorção externa','reabsorção cervical invasiva'], tag: 'Correlação clínica urgente' },
     { words: ['seio maxilar','espessamento mucoso','sinusite','mucosite sinusal','pseudocisto sinusal','cisto de retenção sinusal','velamento sinusal'], tag: 'Investigar causa (odontogênica x rinogênica) — otorrino' },
     { words: ['canal mandibular','íntima proximidade','intima proximidade','sobrepostos ao canal','contato com o canal'], tag: 'Avaliação pré-cirúrgica criteriosa' },
     { words: ['peri-implantite','perda óssea peri-implantar','reabsorção peri-implantar'], tag: 'Trat. peri-implantite' },
@@ -400,7 +400,7 @@ const RECOMMEND_RULES = [
     { words: ['cárie','cariosa','lesão cariosa','carie','radiolucência coronária'], tag: 'Bitewing ou periapical' },
     { words: ['envolvimento pulpar','comprometimento pulpar','câmara pulpar','necrose','abscesso','fístula','fistula','periodontite apical'], tag: 'Periapical da região' },
     { words: ['lesão periapical','periápice','periapice','rarefação periapical','rarefação óssea periapical'], tag: 'Periapical da região' },
-    { words: ['reabsorção radicular','reabsorção interna','reabsorção externa'], tag: 'Periapical + TC Cone Beam' },
+    { words: ['reabsorção radicular','reabsorcao radicular','reabsorção interna','reabsorção externa'], tag: 'Periapical + TC Cone Beam' },
     { words: ['reabsorção cervical invasiva'], tag: 'TC Cone Beam (extensão da reabsorção)' },
     { words: ['perda óssea','perda ossea','reabsorção alveolar','suporte periodontal reduzido','defeito ósseo angular'], tag: 'Série periapical completa' },
     { words: ['cálculo','calculo','tártaro','doença periodontal generalizada'], tag: 'Série periapical ou bitewing bilateral' },
@@ -414,7 +414,7 @@ const RECOMMEND_RULES = [
     { words: ['implante osseointegrado','planejamento implante','área edêntula','rebordo residual'], tag: 'TC Cone Beam (planejamento de implante)' },
     { words: ['peri-implantite','perda óssea peri-implantar'], tag: 'Periapical do implante + sondagem' },
     { words: ['atm','côndilo','articulação temporomandibular','côndilo mandibular','remodelação condilar'], tag: 'RM de ATM (partes moles) ou TC Cone Beam ATM (osso)' },
-    { words: ['raízes residuais','raiz residual','remanescente radicular'], tag: 'Periapical da região' },
+    { words: ['raízes residuais','raizes residuais','raiz residual','remanescente radicular','raiz retida'], tag: 'Periapical da região' },
     { words: ['desvio de septo','hipertrofia de corneto','atresia de coana'], tag: 'TC de seios paranasais + avaliação otorrino' },
     { words: ['sobrecarga oclusal','atrição intensa','desgaste severo'], tag: 'Avaliação clínica + modelos de estudo' },
 ];
@@ -424,7 +424,7 @@ const PULPAR_WORDS = [
     'envolvimento pulpar','comprometimento pulpar','câmara pulpar','exposição pulpar',
     'necrose pulpar','cárie profunda','carie profunda','provável exposição','provavel exposicao',
     'abscesso','fístula','fistula','periodontite apical','lesão periapical','periápice','periapice',
-    'rarefação periapical','rarefação óssea'
+    'rarefação periapical','rarefacao periapical','rarefação óssea','rarefacao ossea'
 ];
 // Palavras que indicam dente já tratado — excluem "Restauração" e "Tratamento endodôntico"
 const TRATADO_WORDS = [
@@ -432,7 +432,7 @@ const TRATADO_WORDS = [
     'tratamento endodôntico concluído'
 ];
 const RESIDUAL_WORDS = [
-    'raízes residuais','raiz residual','raizes residuais','remanescente radicular','raiz retida'
+    'raízes residuais','raizes residuais','raiz residual','remanescente radicular','raiz retida'
 ];
 
 function getImpacts(text) {
