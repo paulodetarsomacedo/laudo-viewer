@@ -397,9 +397,13 @@ const IMPACT_RULES = [
 // Exame complementar sugerido
 const RECOMMEND_RULES = [
     { words: ['lesão interproximal','cárie interproximal','carie interproximal','face mesial','face distal','lesão proximal'], tag: 'Bitewing (interproximal)' },
-    { words: ['cárie','cariosa','lesão cariosa','carie','radiolucência coronária'], tag: 'Bitewing ou periapical' },
-    { words: ['envolvimento pulpar','comprometimento pulpar','câmara pulpar','necrose','abscesso','fístula','fistula','periodontite apical'], tag: 'Periapical da região' },
-    { words: ['lesão periapical','periápice','periapice','rarefação periapical','rarefação óssea periapical'], tag: 'Periapical da região' },
+    // Cárie profunda com envolvimento pulpar → periapical (não bitewing)
+    { words: ['cárie profunda','carie profunda','lesão cariosa profunda','exposição pulpar','provável exposição pulpar','provavel exposicao pulpar','envolvimento pulpar','comprometimento pulpar'], tag: 'Radiografia periapical' },
+    { words: ['cárie','cariosa','lesão cariosa','carie','radiolucência coronária','lesão de cárie','lesao de carie'], tag: 'Bitewing ou periapical' },
+    // Destruição coronária → periapical para avaliar raiz e periápice
+    { words: ['destruição coronária','destruicao coronaria','coroa destruída','extensa destruição','sem remanescente coronário'], tag: 'Radiografia periapical' },
+    { words: ['envolvimento pulpar','comprometimento pulpar','câmara pulpar','necrose','abscesso','fístula','fistula','periodontite apical'], tag: 'Radiografia periapical' },
+    { words: ['lesão periapical','periápice','periapice','rarefação periapical','rarefação óssea periapical'], tag: 'Radiografia periapical' },
     { words: ['reabsorção radicular','reabsorcao radicular','reabsorção interna','reabsorção externa'], tag: 'Periapical + TC Cone Beam' },
     { words: ['reabsorção cervical invasiva'], tag: 'TC Cone Beam (extensão da reabsorção)' },
     { words: ['perda óssea','perda ossea','reabsorção alveolar','suporte periodontal reduzido','defeito ósseo angular'], tag: 'Série periapical completa' },
@@ -459,15 +463,16 @@ function getImpacts(text) {
 
 function getRecommends(text) {
     const lower = text.toLowerCase();
-    const temPulpar  = PULPAR_WORDS.some(w => lower.includes(w));
-    const temTratado = TRATADO_WORDS.some(w => lower.includes(w));
+    const temPulpar   = PULPAR_WORDS.some(w => lower.includes(w));
+    const temTratado  = TRATADO_WORDS.some(w => lower.includes(w));
+    const temResidual = RESIDUAL_WORDS.some(w => lower.includes(w));
     const found = [];
     const seen = new Set();
     for (const rule of RECOMMEND_RULES) {
         if (!rule.words.some(w => lower.includes(w))) continue;
         if (seen.has(rule.tag)) continue;
-        // Se há envolvimento pulpar, troca bitewing por periapical
-        if (rule.tag === 'Bitewing ou periapical' && temPulpar) continue;
+        // Se há envolvimento pulpar → bloqueia bitewing genérico (já tem periapical específico)
+        if (rule.tag === 'Bitewing ou periapical' && (temPulpar || temResidual)) continue;
         found.push(rule.tag);
         seen.add(rule.tag);
     }
@@ -815,14 +820,22 @@ if (!DATA) {
             ctx.lineWidth   = isActive ? baseWidth * 2.2 : baseWidth * 1.4;
             ctx.stroke();
 
-            // 4. Se ativo: linha interna fina mais clara
+            // 4. Se ativo: dash animado + linha interna branca
             if (isActive) {
+                // Dash correndo pelo contorno
+                const dashLen  = 12 * drawingScale;
+                const dashGap  = 8  * drawingScale;
+                const dashOffset = (pulsePhase * 18) % (dashLen + dashGap);
                 ctx.beginPath();
                 pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
                 ctx.closePath();
-                ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-                ctx.lineWidth   = baseWidth * 0.6;
+                ctx.setLineDash([dashLen, dashGap]);
+                ctx.lineDashOffset = -dashOffset;
+                ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+                ctx.lineWidth   = baseWidth * 0.7;
                 ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.lineDashOffset = 0;
             }
 
         // ── DESENHO LIVRE (sem fillColor = linha aberta) ─────────────────────
@@ -851,84 +864,32 @@ if (!DATA) {
             const x = anno.x * img.naturalWidth;
             const y = anno.y * img.naturalHeight;
             const s = anno.size * img.naturalWidth;
+            let headLength = s*0.3, shaftWidth = s*0.1;
             ctx.translate(x, y);
             ctx.rotate(anno.rotation);
             ctx.scale(anno.scale, anno.scale);
-
-            const drawArrowShape = (type, s, fill) => {
-                let headLength = s * 0.32, shaftWidth = s * 0.09;
-                ctx.beginPath();
-                if (type === 'normal') {
-                    // Haste fina + ponta triangular fechada
-                    const tipX = s / 2;
-                    const baseX = tipX - headLength;
-                    ctx.moveTo(-s/2, 0);
-                    ctx.lineTo(baseX, 0);
-                    ctx.moveTo(tipX, 0);
-                    ctx.lineTo(baseX, -headLength * 0.55);
-                    ctx.lineTo(baseX,  headLength * 0.55);
-                    ctx.closePath();
-                    if (fill) { ctx.fillStyle = color; ctx.fill(); }
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = shaftWidth;
-                    ctx.lineCap = 'round';
-                    ctx.stroke();
-                } else if (type === 'outline') {
-                    headLength = s*0.4; shaftWidth = s*0.14;
-                    ctx.moveTo(-s/2, -shaftWidth/2);
-                    ctx.lineTo(-s/2,  shaftWidth/2);
-                    ctx.lineTo(s/2-headLength,  shaftWidth/2);
-                    ctx.lineTo(s/2-headLength,  headLength/2);
-                    ctx.lineTo(s/2, 0);
-                    ctx.lineTo(s/2-headLength, -headLength/2);
-                    ctx.lineTo(s/2-headLength, -shaftWidth/2);
-                    ctx.closePath();
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = isActive ? 3.5*drawingScale : 2*drawingScale;
-                    ctx.lineJoin = 'miter';
-                    if (fill) { ctx.fillStyle = color+'33'; ctx.fill(); }
-                    ctx.stroke();
-                } else if (type === 'complex') {
-                    headLength = s*0.4; shaftWidth = s*0.2;
-                    ctx.moveTo(-s/2, -shaftWidth/2);
-                    ctx.lineTo(-s/2,  shaftWidth/2);
-                    ctx.lineTo(s/2-headLength,  shaftWidth/2);
-                    ctx.lineTo(s/2-headLength,  headLength/1.5);
-                    ctx.lineTo(s/2, 0);
-                    ctx.lineTo(s/2-headLength, -headLength/1.5);
-                    ctx.lineTo(s/2-headLength, -shaftWidth/2);
-                    ctx.closePath();
-                    ctx.fillStyle = color;
-                    ctx.fill();
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 1 * drawingScale;
-                    ctx.lineJoin = 'miter';
-                    ctx.stroke();
-                }
-            };
-
-            // Camada 1 — sombra escura deslocada
-            ctx.save();
-            ctx.globalAlpha = 0.5;
-            ctx.translate(1.5*drawingScale, 1.5*drawingScale);
-            ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-            ctx.fillStyle   = 'rgba(0,0,0,0.6)';
-            ctx.lineWidth   = (anno.size * img.naturalWidth * 0.09) + 3;
-            drawArrowShape(anno.type, s, true);
-            ctx.restore();
-
-            // Camada 2 — seta principal
-            ctx.globalAlpha = globalFade;
-            drawArrowShape(anno.type, s, true);
-
-            // Camada 3 — se ativo, brilho branco fino na borda superior
-            if (isActive) {
-                ctx.save();
-                ctx.globalAlpha = 0.2;
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth   = 1.5 * drawingScale;
-                drawArrowShape(anno.type, s, false);
-                ctx.restore();
+            ctx.beginPath();
+            if (anno.type==='normal') {
+                ctx.moveTo(-s/2+headLength,0); ctx.lineTo(s/2,0);
+                ctx.lineTo(s/2-headLength,-headLength/2); ctx.moveTo(s/2,0);
+                ctx.lineTo(s/2-headLength,headLength/2);
+                ctx.fillStyle=color; ctx.fill();
+                ctx.strokeStyle=color; ctx.lineWidth=shaftWidth; ctx.lineCap='round'; ctx.stroke();
+            } else if (anno.type==='outline') {
+                headLength=s*0.4; shaftWidth=s*0.15;
+                ctx.moveTo(-s/2,-shaftWidth/2); ctx.lineTo(-s/2,shaftWidth/2);
+                ctx.lineTo(s/2-headLength,shaftWidth/2); ctx.lineTo(s/2-headLength,headLength/2);
+                ctx.lineTo(s/2,0); ctx.lineTo(s/2-headLength,-headLength/2);
+                ctx.lineTo(s/2-headLength,-shaftWidth/2); ctx.closePath();
+                ctx.strokeStyle=color; ctx.lineWidth=isActive?4*drawingScale:2*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
+            } else if (anno.type==='complex') {
+                headLength=s*0.4; shaftWidth=s*0.2;
+                ctx.moveTo(-s/2,-shaftWidth/2); ctx.lineTo(-s/2,shaftWidth/2);
+                ctx.lineTo(s/2-headLength,shaftWidth/2); ctx.lineTo(s/2-headLength,headLength/1.5);
+                ctx.lineTo(s/2,0); ctx.lineTo(s/2-headLength,-headLength/1.5);
+                ctx.lineTo(s/2-headLength,-shaftWidth/2); ctx.closePath();
+                ctx.fillStyle=color; ctx.fill();
+                ctx.strokeStyle=color; ctx.lineWidth=1*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
             }
 
         // ── TEXTO ────────────────────────────────────────────────────────────
