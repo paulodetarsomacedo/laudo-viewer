@@ -765,70 +765,206 @@ if (!DATA) {
     // ---- DRAW ANNOTATION ----
     function drawAnnotation(anno, isActive) {
         const el    = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
-        // Usa cor de severidade se disponível, senão cor original
         const color = (el && el.dataset.severityColor) ? el.dataset.severityColor : (anno.color || '#00FFFF');
-        ctx.save();
-        ctx.strokeStyle = color; ctx.fillStyle = color;
-        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-        ctx.shadowColor = 'black'; ctx.shadowBlur = 5 * drawingScale;
         const baseWidth = (anno.thickness || 4) * drawingScale;
-        ctx.lineWidth = isActive ? baseWidth * 1.6 : baseWidth;
 
+        // Quando showAll, não-ativos ficam mais suaves
+        const globalFade = (showAll && !isActive) ? 0.55 : 1.0;
+
+        ctx.save();
+        ctx.globalAlpha = globalFade;
+        ctx.lineJoin = 'round';
+        ctx.lineCap  = 'round';
+
+        // ── POLÍGONO / DESENHO LIVRE (com fillColor = área fechada) ──────────
         if (anno.points && anno.fillColor) {
+            const pts = anno.points.map(p => ({
+                x: p.x * img.naturalWidth,
+                y: p.y * img.naturalHeight
+            }));
+
+            // Calcula centro para gradiente radial
+            const cx = pts.reduce((s,p) => s + p.x, 0) / pts.length;
+            const cy = pts.reduce((s,p) => s + p.y, 0) / pts.length;
+            const maxR = Math.max(...pts.map(p => Math.hypot(p.x-cx, p.y-cy)));
+
+            // 1. Fill com gradiente radial — opaco no centro, some nas bordas
             ctx.beginPath();
-            anno.points.forEach((p,i) => {
-                const x = p.x*img.naturalWidth, y = p.y*img.naturalHeight;
-                i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
-            });
-            ctx.closePath(); ctx.stroke();
-            ctx.globalAlpha = 0.22; ctx.fill(); ctx.globalAlpha = 1;
-        } else if (anno.start && anno.end) {
-            const p1 = {x:anno.start.x*img.naturalWidth, y:anno.start.y*img.naturalHeight};
-            const p2 = {x:anno.end.x*img.naturalWidth,   y:anno.end.y*img.naturalHeight};
-            ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
-            const fs = 20*drawingScale; ctx.font=`bold ${fs}px Arial`; ctx.textAlign='center';
-            ctx.shadowBlur=0; ctx.lineWidth=3; ctx.strokeStyle='black';
-            const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
-            ctx.strokeText(anno.text,mx,my-10); ctx.fillStyle=color; ctx.fillText(anno.text,mx,my-10);
-        } else if (anno.type && anno.size) {
-            const x = anno.x*img.naturalWidth, y = anno.y*img.naturalHeight;
-            const s = anno.size*img.naturalWidth;
-            let headLength=s*0.3, shaftWidth=s*0.1;
-            ctx.translate(x,y); ctx.rotate(anno.rotation); ctx.scale(anno.scale,anno.scale);
+            pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+            ctx.closePath();
+            const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
+            grad.addColorStop(0,   color + '44'); // centro ~27% opaco
+            grad.addColorStop(0.6, color + '22'); // meio ~13%
+            grad.addColorStop(1,   color + '00'); // borda transparente
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            // 2. Contorno externo escuro — âncora visual
             ctx.beginPath();
-            if (anno.type==='normal') {
-                ctx.moveTo(-s/2+headLength,0); ctx.lineTo(s/2,0);
-                ctx.lineTo(s/2-headLength,-headLength/2); ctx.moveTo(s/2,0);
-                ctx.lineTo(s/2-headLength,headLength/2);
-                ctx.fillStyle=color; ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=shaftWidth; ctx.lineCap='round'; ctx.stroke();
-            } else if (anno.type==='outline') {
-                headLength=s*0.4; shaftWidth=s*0.15;
-                ctx.moveTo(-s/2,-shaftWidth/2); ctx.lineTo(-s/2,shaftWidth/2);
-                ctx.lineTo(s/2-headLength,shaftWidth/2); ctx.lineTo(s/2-headLength,headLength/2);
-                ctx.lineTo(s/2,0); ctx.lineTo(s/2-headLength,-headLength/2);
-                ctx.lineTo(s/2-headLength,-shaftWidth/2); ctx.closePath();
-                ctx.strokeStyle=color; ctx.lineWidth=isActive?4*drawingScale:2*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
-            } else if (anno.type==='complex') {
-                headLength=s*0.4; shaftWidth=s*0.2;
-                ctx.moveTo(-s/2,-shaftWidth/2); ctx.lineTo(-s/2,shaftWidth/2);
-                ctx.lineTo(s/2-headLength,shaftWidth/2); ctx.lineTo(s/2-headLength,headLength/1.5);
-                ctx.lineTo(s/2,0); ctx.lineTo(s/2-headLength,-headLength/1.5);
-                ctx.lineTo(s/2-headLength,-shaftWidth/2); ctx.closePath();
-                ctx.fillStyle=color; ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=1*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
-            }
-        } else if (anno.text) {
-            const x=anno.x*img.naturalWidth, y=anno.y*img.naturalHeight;
-            const fs=(parseInt(anno.font)||24)*drawingScale;
-            ctx.font=`bold ${fs}px Arial`; ctx.shadowBlur=0; ctx.lineWidth=4*drawingScale; ctx.strokeStyle='black';
-            ctx.strokeText(anno.text,x,y); ctx.fillText(anno.text,x,y);
-        } else if (anno.points) {
-            ctx.beginPath();
-            anno.points.forEach((p,i) => {
-                const x=p.x*img.naturalWidth, y=p.y*img.naturalHeight;
-                i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-            });
+            pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+            ctx.closePath();
+            ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+            ctx.lineWidth   = (isActive ? baseWidth * 2.2 : baseWidth * 1.4) + 2;
             ctx.stroke();
+
+            // 3. Contorno principal colorido
+            ctx.beginPath();
+            pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+            ctx.closePath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth   = isActive ? baseWidth * 2.2 : baseWidth * 1.4;
+            ctx.stroke();
+
+            // 4. Se ativo: linha interna fina mais clara
+            if (isActive) {
+                ctx.beginPath();
+                pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+                ctx.closePath();
+                ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+                ctx.lineWidth   = baseWidth * 0.6;
+                ctx.stroke();
+            }
+
+        // ── DESENHO LIVRE (sem fillColor = linha aberta) ─────────────────────
+        } else if (anno.points) {
+            const pts = anno.points.map(p => ({
+                x: p.x * img.naturalWidth,
+                y: p.y * img.naturalHeight
+            }));
+
+            // Sombra escura
+            ctx.beginPath();
+            pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+            ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+            ctx.lineWidth   = (isActive ? baseWidth * 1.8 : baseWidth * 1.2) + 2;
+            ctx.stroke();
+
+            // Linha principal
+            ctx.beginPath();
+            pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+            ctx.strokeStyle = color;
+            ctx.lineWidth   = isActive ? baseWidth * 1.8 : baseWidth * 1.2;
+            ctx.stroke();
+
+        // ── SETAS ────────────────────────────────────────────────────────────
+        } else if (anno.type && anno.size) {
+            const x = anno.x * img.naturalWidth;
+            const y = anno.y * img.naturalHeight;
+            const s = anno.size * img.naturalWidth;
+            ctx.translate(x, y);
+            ctx.rotate(anno.rotation);
+            ctx.scale(anno.scale, anno.scale);
+
+            const drawArrowShape = (type, s, fill) => {
+                let headLength = s * 0.32, shaftWidth = s * 0.09;
+                ctx.beginPath();
+                if (type === 'normal') {
+                    // Haste fina + ponta triangular fechada
+                    const tipX = s / 2;
+                    const baseX = tipX - headLength;
+                    ctx.moveTo(-s/2, 0);
+                    ctx.lineTo(baseX, 0);
+                    ctx.moveTo(tipX, 0);
+                    ctx.lineTo(baseX, -headLength * 0.55);
+                    ctx.lineTo(baseX,  headLength * 0.55);
+                    ctx.closePath();
+                    if (fill) { ctx.fillStyle = color; ctx.fill(); }
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = shaftWidth;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                } else if (type === 'outline') {
+                    headLength = s*0.4; shaftWidth = s*0.14;
+                    ctx.moveTo(-s/2, -shaftWidth/2);
+                    ctx.lineTo(-s/2,  shaftWidth/2);
+                    ctx.lineTo(s/2-headLength,  shaftWidth/2);
+                    ctx.lineTo(s/2-headLength,  headLength/2);
+                    ctx.lineTo(s/2, 0);
+                    ctx.lineTo(s/2-headLength, -headLength/2);
+                    ctx.lineTo(s/2-headLength, -shaftWidth/2);
+                    ctx.closePath();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = isActive ? 3.5*drawingScale : 2*drawingScale;
+                    ctx.lineJoin = 'miter';
+                    if (fill) { ctx.fillStyle = color+'33'; ctx.fill(); }
+                    ctx.stroke();
+                } else if (type === 'complex') {
+                    headLength = s*0.4; shaftWidth = s*0.2;
+                    ctx.moveTo(-s/2, -shaftWidth/2);
+                    ctx.lineTo(-s/2,  shaftWidth/2);
+                    ctx.lineTo(s/2-headLength,  shaftWidth/2);
+                    ctx.lineTo(s/2-headLength,  headLength/1.5);
+                    ctx.lineTo(s/2, 0);
+                    ctx.lineTo(s/2-headLength, -headLength/1.5);
+                    ctx.lineTo(s/2-headLength, -shaftWidth/2);
+                    ctx.closePath();
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1 * drawingScale;
+                    ctx.lineJoin = 'miter';
+                    ctx.stroke();
+                }
+            };
+
+            // Camada 1 — sombra escura deslocada
+            ctx.save();
+            ctx.globalAlpha = 0.5;
+            ctx.translate(1.5*drawingScale, 1.5*drawingScale);
+            ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillStyle   = 'rgba(0,0,0,0.6)';
+            ctx.lineWidth   = (anno.size * img.naturalWidth * 0.09) + 3;
+            drawArrowShape(anno.type, s, true);
+            ctx.restore();
+
+            // Camada 2 — seta principal
+            ctx.globalAlpha = globalFade;
+            drawArrowShape(anno.type, s, true);
+
+            // Camada 3 — se ativo, brilho branco fino na borda superior
+            if (isActive) {
+                ctx.save();
+                ctx.globalAlpha = 0.2;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth   = 1.5 * drawingScale;
+                drawArrowShape(anno.type, s, false);
+                ctx.restore();
+            }
+
+        // ── TEXTO ────────────────────────────────────────────────────────────
+        } else if (anno.text && anno.x !== undefined) {
+            const x = anno.x * img.naturalWidth;
+            const y = anno.y * img.naturalHeight;
+            const fs = (parseInt(anno.font) || 24) * drawingScale;
+            ctx.font = `bold ${fs}px Arial`;
+            ctx.textAlign = 'center';
+            // Sombra escura
+            ctx.lineWidth   = 5 * drawingScale;
+            ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+            ctx.strokeText(anno.text, x, y);
+            ctx.fillStyle = color;
+            ctx.fillText(anno.text, x, y);
+
+        // ── MEDIÇÃO (start/end com texto) ────────────────────────────────────
+        } else if (anno.start && anno.end) {
+            const p1 = {x: anno.start.x*img.naturalWidth, y: anno.start.y*img.naturalHeight};
+            const p2 = {x: anno.end.x*img.naturalWidth,   y: anno.end.y*img.naturalHeight};
+            ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth   = baseWidth;
+            ctx.stroke();
+            if (anno.text) {
+                const fs = 20*drawingScale;
+                ctx.font = `bold ${fs}px Arial`;
+                ctx.textAlign = 'center';
+                const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+                ctx.lineWidth=4*drawingScale; ctx.strokeStyle='rgba(0,0,0,0.7)';
+                ctx.strokeText(anno.text, mx, my-10);
+                ctx.fillStyle=color;
+                ctx.fillText(anno.text, mx, my-10);
+            }
         }
+
         ctx.restore();
     }
 
