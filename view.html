@@ -217,11 +217,69 @@
             #viewer-area { height: 55%; width: 100%; order: 1; border-bottom: 2px solid var(--accent); }
             #sidebar { height: 45%; width: 100%; order: 2; border-left: none; display: flex; flex-direction: column; }
             #sidebar-header { display: block; padding: 8px 12px; }
-            #sidebar-header h2 { font-size: 14px; margin-bottom: 4px; }
+            #sidebar-header h2 { font-size: 17px; margin-bottom: 4px; }
             #controls { display: none; }
             .instruction-box { padding: 6px 12px; font-size: 11px; }
-            #findings-list { display: block; overflow-y: auto; overflow-x: hidden; padding: 8px; flex: 1; }
-            .finding-item { width: 100%; margin-bottom: 6px; font-size: 12px; }
+
+            /* ── CARROSSEL portrait ── */
+            #findings-list {
+                display: flex !important;
+                flex-direction: row;
+                overflow-x: auto;
+                overflow-y: hidden;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                padding: 6px 10px 6px 10px;
+                gap: 8px;
+                flex: 1;
+                align-items: stretch;
+                scrollbar-width: none;
+            }
+            #findings-list::-webkit-scrollbar { display: none; }
+            .finding-item {
+                flex: 0 0 72vw !important;
+                width: 72vw !important;
+                margin-bottom: 0 !important;
+                scroll-snap-align: center;
+                font-size: 12px;
+                display: flex;
+                align-items: flex-start;
+                min-height: 0;
+            }
+            /* Navegação carrossel */
+            #carousel-nav {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 4px 10px 6px;
+                flex-shrink: 0;
+                gap: 8px;
+            }
+            .carousel-btn {
+                background: #1e1e1e;
+                border: 1px solid #333;
+                color: #aaa;
+                border-radius: 20px;
+                padding: 5px 12px;
+                font-size: 11px;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                transition: all 0.18s;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            .carousel-btn:active { background: #2a2a2a; color: #fff; }
+            .carousel-btn:disabled { opacity: 0.25; pointer-events: none; }
+            #carousel-counter {
+                font-size: 11px;
+                color: #555;
+                text-align: center;
+                flex: 1;
+                white-space: nowrap;
+            }
             #signature-area { padding: 8px; background: #111; flex-shrink: 0; min-height: 50px; }
             #signature-img { max-width: 110px; max-height: 45px; }
 
@@ -308,6 +366,11 @@
     </div>
     <div class="instruction-box">Toque no achado ou na imagem para destacar</div>
     <div id="findings-list">Carregando...</div>
+    <div id="carousel-nav" style="display:none;">
+        <button class="carousel-btn" id="carousel-prev">◀ Anterior</button>
+        <span id="carousel-counter">1 / 1</span>
+        <button class="carousel-btn" id="carousel-next">Próximo ▶</button>
+    </div>
     <div id="controls">
         <button id="btn-toggle-all" class="btn">🔍 Visão Geral</button>
         <button id="btn-reset-zoom" class="btn secondary">⟲ Reset</button>
@@ -733,6 +796,97 @@ if (!DATA) {
         p.prepend(dot);
     });
     buildSeveritySummary(sevCounts, items.length);
+
+    // ============================================================
+    // CARROSSEL — apenas mobile portrait
+    // ============================================================
+    const carouselNav     = document.getElementById('carousel-nav');
+    const carouselPrev    = document.getElementById('carousel-prev');
+    const carouselNext    = document.getElementById('carousel-next');
+    const carouselCounter = document.getElementById('carousel-counter');
+    const allItems        = Array.from(listEl.querySelectorAll('.finding-item'));
+    let carouselIndex     = 0;  // índice do card visível no carrossel
+
+    function isMobilePortraitNow() {
+        return window.innerWidth <= 768 && window.innerHeight > window.innerWidth;
+    }
+
+    function setupCarousel() {
+        if (!isMobilePortraitNow()) {
+            carouselNav.style.display = 'none';
+            return;
+        }
+        carouselNav.style.display = 'flex';
+        updateCarouselCounter();
+        updateCarouselButtons();
+    }
+
+    function updateCarouselCounter() {
+        carouselCounter.textContent = `${carouselIndex + 1} / ${allItems.length}`;
+    }
+
+    function updateCarouselButtons() {
+        carouselPrev.disabled = carouselIndex === 0;
+        carouselNext.disabled = carouselIndex === allItems.length - 1;
+    }
+
+    function scrollCarouselTo(idx, triggerClick) {
+        if (idx < 0 || idx >= allItems.length) return;
+        carouselIndex = idx;
+        // Scroll snap para o item
+        const item = allItems[idx];
+        item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        updateCarouselCounter();
+        updateCarouselButtons();
+        if (triggerClick) item.click();
+    }
+
+    carouselPrev.addEventListener('click', () => {
+        scrollCarouselTo(carouselIndex - 1, true);
+    });
+    carouselNext.addEventListener('click', () => {
+        scrollCarouselTo(carouselIndex + 1, true);
+    });
+
+    // Quando um item da lista é clicado (qualquer origem), sincroniza o índice
+    listEl.addEventListener('click', e => {
+        const item = e.target.closest('.finding-item');
+        if (!item || !isMobilePortraitNow()) return;
+        const idx = allItems.indexOf(item);
+        if (idx !== -1) {
+            carouselIndex = idx;
+            updateCarouselCounter();
+            updateCarouselButtons();
+        }
+    });
+
+    // Detectar swipe/scroll manual no carrossel e atualizar contador
+    let scrollTimer = null;
+    listEl.addEventListener('scroll', () => {
+        if (!isMobilePortraitNow()) return;
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+            // Descobre qual item está mais centrado
+            const listRect = listEl.getBoundingClientRect();
+            const center   = listRect.left + listRect.width / 2;
+            let closest = 0, minDist = Infinity;
+            allItems.forEach((item, i) => {
+                const r    = item.getBoundingClientRect();
+                const dist = Math.abs((r.left + r.width / 2) - center);
+                if (dist < minDist) { minDist = dist; closest = i; }
+            });
+            carouselIndex = closest;
+            updateCarouselCounter();
+            updateCarouselButtons();
+        }, 80);
+    });
+
+    // Inicializa e reage a mudança de orientação
+    setupCarousel();
+    window.addEventListener('resize', setupCarousel);
+    if (screen.orientation) {
+        screen.orientation.addEventListener('change', () => setTimeout(setupCarousel, 250));
+    }
 
     const viewer = document.getElementById('viewer-area');
     const canvas = document.getElementById('canvas');
