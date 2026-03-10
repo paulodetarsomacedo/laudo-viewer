@@ -55,12 +55,29 @@
             border-bottom: 3px solid var(--accent);
             font-size: 13px; line-height: 1.5;
             width: 300px;
-            max-height: 38vh; overflow-y: auto;
+            max-height: 42vh; overflow-y: auto;
             bottom: 24px; left: 24px;
             transition: border-color 0.25s;
         }
+        /* Header: entidade esquerda + badge direita */
+        #card-header-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 9px 36px 8px 13px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px 8px 0 0;
+            gap: 8px; flex-shrink: 0;
+        }
+        #card-entity-label {
+            font-size: 10px; font-weight: 900; text-transform: uppercase;
+            letter-spacing: 1.5px; color: #fff; opacity: 0.92; line-height: 1.2;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        #card-entity-label strong {
+            font-size: 14px; letter-spacing: 0.3px; margin-right: 3px;
+        }
         #card-body {
-            padding: 12px 34px 12px 14px;
+            padding: 10px 34px 12px 13px;
         }
         .close-card {
             position: absolute; top: 7px; right: 8px;
@@ -82,18 +99,8 @@
         .sev-attention  { background: rgba(214,158,46,0.2); color: #f6e05e; border: 1px solid rgba(214,158,46,0.4); }
         .sev-complement { background: rgba(56,161,105,0.2); color: #68d391; border: 1px solid rgba(56,161,105,0.4); }
 
-        /* Texto resumo + expandir */
-        #card-summary { cursor: pointer; color: #ddd; font-size: 12.5px; }
-        #card-full { display: none; margin-top: 6px; color: #bbb; font-size: 12px; line-height: 1.55; }
-        #card-full.open { display: block; }
-        #btn-expand {
-            display: inline-block; margin-top: 5px;
-            font-size: 10.5px; color: #666; cursor: pointer;
-            border: none; background: none; padding: 0;
-            text-decoration: underline; text-underline-offset: 2px;
-            transition: color 0.2s;
-        }
-        #btn-expand:hover { color: #ccc; }
+        /* Texto resumo */
+        #card-summary { color: #ddd; font-size: 12.5px; line-height: 1.5; margin-bottom: 2px; }
 
         /* Conduta + Recomendação */
         #card-clinical-row {
@@ -171,7 +178,6 @@
             border-left: 4px solid transparent;
             border-bottom: 2px solid transparent;
             transition: all 0.18s; font-size: 13px; line-height: 1.4; color: #bbb;
-            overflow: hidden;
         }
         .finding-item:hover { background: #222; color: #fff; transform: translateX(2px); }
         .finding-item.active { background: #252525; color: #fff; box-shadow: 0 0 14px rgba(255,255,255,0.07); }
@@ -191,11 +197,10 @@
         .item-entity-label strong {
             font-size: 12px; letter-spacing: 0.2px; margin-right: 2px; font-weight: 900;
         }
-        /* Corpo do texto do item */
+        /* Corpo do texto — mostra TODO o conteúdo */
         .item-body {
-            padding: 7px 10px 8px 10px;
-            font-size: 13px; line-height: 1.4; color: #bbb;
-            flex: 1; min-height: 0;
+            padding: 7px 10px 9px 10px;
+            font-size: 13px; line-height: 1.5; color: #bbb;
         }
 
         #controls {
@@ -271,10 +276,11 @@
                 flex-direction: column !important;
                 align-items: stretch !important;
                 padding: 0 !important;
-                min-height: 0;
+                height: auto !important;
+                align-self: flex-start !important;
             }
             .item-header { padding: 5px 10px 4px 10px; }
-            .item-body { font-size: 12px; padding: 6px 10px 7px 10px; }
+            .item-body { font-size: 12px; padding: 6px 10px 8px 10px; line-height: 1.45; }
             /* Navegação carrossel */
             #carousel-nav {
                 display: flex;
@@ -314,17 +320,18 @@
 
             /* Card mobile: compacto, posicionado via JS */
             #finding-card {
-                width: 66vw;
-                max-height: 24vh;
+                width: 68vw;
+                max-height: 32vh;
                 font-size: 10px;
                 line-height: 1.3;
                 border-radius: 9px;
             }
-            #card-body { padding: 6px 24px 7px 9px; }
-            #card-severity-badge { margin-bottom: 4px; }
-            .severity-badge { font-size: 8px; padding: 1px 5px; }
-            #card-summary { font-size: 10px; }
-            #card-full { font-size: 9.5px; }
+            #card-header-row { padding: 6px 28px 5px 9px; gap: 5px; border-radius: 6px 6px 0 0; }
+            #card-entity-label { font-size: 8.5px; letter-spacing: 1.2px; }
+            #card-entity-label strong { font-size: 11px; }
+            #card-body { padding: 6px 22px 7px 9px; }
+            .severity-badge { font-size: 7.5px; padding: 1px 5px; }
+            #card-summary { font-size: 10px; line-height: 1.4; }
             #card-clinical-row { gap: 3px; margin-top: 5px; padding-top: 5px; }
             .impact-tag, .recommend-tag { font-size: 8.5px; padding: 1px 3px; }
             #card-impact strong, #card-recommend strong { font-size: 7.5px; }
@@ -361,7 +368,10 @@
                 max-height: 40vh; overflow-y: auto;
                 border-radius: 8px;
             }
-            #card-body { padding: 8px 24px 8px 9px; }
+            #card-header-row { padding: 7px 28px 6px 10px; border-radius: 6px 6px 0 0; }
+            #card-entity-label { font-size: 9px; letter-spacing: 1.2px; }
+            #card-entity-label strong { font-size: 12px; }
+            #card-body { padding: 8px 22px 8px 10px; }
             .severity-badge { font-size: 8.5px; }
             #card-summary { font-size: 11px; }
             #card-clinical-row { gap: 5px; margin-top: 7px; padding-top: 7px; }
@@ -379,11 +389,12 @@
 <div id="viewer-area">
     <div id="finding-card">
         <button class="close-card" onclick="closeCard()">×</button>
-        <div id="card-body">
+        <div id="card-header-row">
+            <div id="card-entity-label">—</div>
             <div id="card-severity-badge"></div>
+        </div>
+        <div id="card-body">
             <div id="card-summary"></div>
-            <button id="btn-expand" onclick="toggleExpand()">Ver detalhes ↓</button>
-            <div id="card-full"></div>
             <div id="card-clinical-row">
                 <div id="card-impact">
                     <strong>💡 Conduta provável</strong>
@@ -735,11 +746,54 @@ function getRecommends(text) {
     return found;
 }
 
-function makeSummary(text, maxLen = 90) {
-    const clean = text.replace(/\n/g, ' ').trim();
-    if (clean.length <= maxLen) return { summary: clean, full: null };
-    const cut = clean.lastIndexOf(' ', maxLen);
-    return { summary: clean.slice(0, cut > 0 ? cut : maxLen) + '…', full: clean };
+// Extrai 6-7 palavras-chave clínicas do achado para o card de conduta
+function makeSummary(text) {
+    const clean = text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // Termos clínicos relevantes a preservar (por prioridade)
+    const CLINICAL_TERMS = [
+        'incluso','impactado','semi-incluso','reabsorção','rizólise','necrose','abscesso',
+        'fístula','cisto','fratura','periápice','periapical','furca','furcação',
+        'cárie','lesão','perda óssea','implante','canal','obturação','restauração',
+        'seio maxilar','espessamento','sinusite','peri-implantite','pericoronite',
+        'radiolúcida','radiopaca','calcificação','giroversão','dilaceração','atrição',
+        'irrompido','decíduo','erupção','sucessor','endodonticamente','tratado',
+    ];
+
+    const lower = clean.toLowerCase();
+
+    // Coleta os termos encontrados em ordem de aparição
+    const found = [];
+    CLINICAL_TERMS.forEach(term => {
+        const idx = lower.indexOf(term);
+        if (idx !== -1) found.push({ term, idx });
+    });
+    found.sort((a, b) => a.idx - b.idx);
+
+    // Extrai palavras únicas ao redor dos termos encontrados
+    const words = clean.split(/\s+/);
+    const selected = [];
+    const usedIdx = new Set();
+
+    found.forEach(({ term }) => {
+        const tWords = term.split(' ');
+        words.forEach((w, i) => {
+            if (usedIdx.has(i)) return;
+            if (w.toLowerCase().includes(tWords[0])) {
+                tWords.forEach((_, j) => { if (words[i+j]) { usedIdx.add(i+j); selected.push(words[i+j]); } });
+            }
+        });
+        if (selected.length >= 7) return;
+    });
+
+    // Se encontrou termos, monta frase curta; senão usa as primeiras palavras
+    if (selected.length >= 2) {
+        return { summary: selected.slice(0, 7).join(' '), full: clean };
+    }
+
+    // Fallback: primeiras 6 palavras
+    const fallback = words.slice(0, 6).join(' ');
+    return { summary: fallback + (words.length > 6 ? '…' : ''), full: words.length > 6 ? clean : null };
 }
 
 let cardExpanded = false;
@@ -1191,38 +1245,40 @@ if (!DATA) {
     }
 
     function updateFindingCard(text, sevColor, sevLevel) {
-        const card   = document.getElementById('finding-card');
-        const badge  = document.getElementById('card-severity-badge');
-        const sumEl  = document.getElementById('card-summary');
-        const fullEl = document.getElementById('card-full');
-        const btnExp = document.getElementById('btn-expand');
-        const tags   = document.getElementById('card-impact-tags');
+        const card    = document.getElementById('finding-card');
+        const entity  = document.getElementById('card-entity-label');
+        const badge   = document.getElementById('card-severity-badge');
+        const sumEl   = document.getElementById('card-summary');
+        const tags    = document.getElementById('card-impact-tags');
         if (!text || text.length < 2) { card.style.display = 'none'; return; }
 
         // Bordas coloridas com a cor de severidade
         card.style.borderLeftColor   = sevColor;
         card.style.borderBottomColor = sevColor;
 
-        // Badge de severidade — usa SEV_LABELS (mesmos labels do resto do app)
+        // Header colorido sutil
+        const hdr = document.getElementById('card-header-row');
+        if (hdr) hdr.style.background = `linear-gradient(90deg, ${sevColor}18 0%, transparent 100%)`;
+
+        // Entidade: DENTE XX ou label semântico
+        const { label, number } = extractCardTitle(text);
+        entity.innerHTML = number
+            ? `<strong>${number}</strong> · ${label}`
+            : `<strong>${label}</strong>`;
+
+        // Badge de severidade
         const sm = SEV_LABELS[sevLevel] || SEV_LABELS.complement;
         badge.innerHTML = `<span class="severity-badge sev-${sevLevel}">${sm.badge}</span>`;
 
-        // Resumo + full
-        cardExpanded = false;
-        const { summary, full } = makeSummary(text);
+        // Resumo curto (6-7 palavras-chave)
+        const { summary } = makeSummary(text);
         sumEl.textContent = summary;
-        if (full) {
-            fullEl.textContent = full; fullEl.classList.remove('open');
-            btnExp.textContent = 'Ver detalhes ↓'; btnExp.style.display = 'inline-block';
-        } else {
-            fullEl.textContent = ''; fullEl.classList.remove('open'); btnExp.style.display = 'none';
-        }
 
         // Conduta + Exame
-        const clinicalRow   = document.getElementById('card-clinical-row');
-        const impacts       = getImpacts(text);
-        const recommends    = getRecommends(text);
-        tags.innerHTML      = impacts.map(t => `<span class="impact-tag">${t}</span>`).join('');
+        const clinicalRow = document.getElementById('card-clinical-row');
+        const impacts     = getImpacts(text);
+        const recommends  = getRecommends(text);
+        tags.innerHTML    = impacts.map(t => `<span class="impact-tag">${t}</span>`).join('');
         document.getElementById('card-recommend-tags').innerHTML =
             recommends.map(t => `<span class="recommend-tag">${t}</span>`).join('');
         if (impacts.length || recommends.length) clinicalRow.classList.add('visible');
@@ -1317,45 +1373,68 @@ if (!DATA) {
         const color = (el && el.dataset.severityColor) ? el.dataset.severityColor : (anno.color || '#00FFFF');
         const baseWidth = (anno.thickness || 4) * drawingScale;
         const isZoom = isActive === true;
-        const strokeW = isZoom ? baseWidth * 0.8 : baseWidth * 1.4;
-        const strokeAlpha = isZoom ? 1.0 : 0.90;
+
+        // Stroke: mais fino e uniforme — zoom usa linha ainda mais fina
+        const strokeW = isZoom ? baseWidth * 0.55 : baseWidth * 0.85;
+        const strokeAlpha = isZoom ? 0.95 : 0.85;
+
         ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
 
         if (anno.points && anno.fillColor) {
             const pts = anno.points.map(p => ({ x: p.x*img.naturalWidth, y: p.y*img.naturalHeight }));
-            const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
-            const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+            const cx  = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+            const cy  = pts.reduce((s,p)=>s+p.y,0)/pts.length;
             const maxR = Math.max(...pts.map(p=>Math.hypot(p.x-cx,p.y-cy)))*1.1;
-            if (isZoom) {
-                const gp = (Math.sin(pulsePhase*1.2)+1)/2;
-                ctx.save(); ctx.filter=`blur(${5*drawingScale}px)`;
-                buildSmoothPath(ctx,pts,true);
-                ctx.strokeStyle=hexAlpha(color,0.25+gp*0.15); ctx.lineWidth=strokeW*4; ctx.stroke();
-                ctx.filter='none'; ctx.restore();
-            }
-            buildSmoothPath(ctx,pts,true);
+
+            // Fill gradiente suave
+            buildSmoothPath(ctx, pts, true);
             const grad = ctx.createRadialGradient(cx,cy,0,cx,cy,maxR);
-            const fo = isZoom ? 0.06 : 0.11;
-            grad.addColorStop(0,hexAlpha(color,fo*1.5)); grad.addColorStop(0.6,hexAlpha(color,fo)); grad.addColorStop(1,hexAlpha(color,0));
-            ctx.fillStyle=grad; ctx.fill();
-            if (!isZoom) { buildSmoothPath(ctx,pts,true); ctx.strokeStyle='rgba(0,0,0,0.45)'; ctx.lineWidth=strokeW+2.5*drawingScale; ctx.stroke(); }
-            buildSmoothPath(ctx,pts,true); ctx.strokeStyle=hexAlpha(color,strokeAlpha); ctx.lineWidth=strokeW; ctx.stroke();
-            if (isZoom) {
-                const dL=8*drawingScale, dG=12*drawingScale, dO=(pulsePhase*12)%(dL+dG);
-                buildSmoothPath(ctx,pts,true); ctx.setLineDash([dL,dG]); ctx.lineDashOffset=-dO;
-                ctx.strokeStyle='rgba(255,255,255,0.45)'; ctx.lineWidth=strokeW*0.7; ctx.stroke();
-                ctx.setLineDash([]); ctx.lineDashOffset=0;
+            const fo = isZoom ? 0.07 : 0.10;
+            grad.addColorStop(0, hexAlpha(color, fo*1.4));
+            grad.addColorStop(0.7, hexAlpha(color, fo));
+            grad.addColorStop(1, hexAlpha(color, 0));
+            ctx.fillStyle = grad; ctx.fill();
+
+            // Sombra sutil sob o contorno (sem blur pesado)
+            if (!isZoom) {
+                buildSmoothPath(ctx, pts, true);
+                ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+                ctx.lineWidth = strokeW + 1.5 * drawingScale;
+                ctx.stroke();
             }
+
+            // Contorno principal — linha limpa
+            buildSmoothPath(ctx, pts, true);
+            ctx.strokeStyle = hexAlpha(color, strokeAlpha);
+            ctx.lineWidth = strokeW;
+            ctx.stroke();
+
+            // Zoom: linha tracejada animada mais sutil
+            if (isZoom) {
+                const dL = 6*drawingScale, dG = 10*drawingScale;
+                const dO = (pulsePhase * 10) % (dL + dG);
+                buildSmoothPath(ctx, pts, true);
+                ctx.setLineDash([dL, dG]); ctx.lineDashOffset = -dO;
+                ctx.strokeStyle = `rgba(255,255,255,0.25)`;
+                ctx.lineWidth = strokeW * 0.55;
+                ctx.stroke();
+                ctx.setLineDash([]); ctx.lineDashOffset = 0;
+            }
+
         } else if (anno.points) {
             const pts = anno.points.map(p => ({ x: p.x*img.naturalWidth, y: p.y*img.naturalHeight }));
-            if (isZoom) {
-                const gp=(Math.sin(pulsePhase*1.2)+1)/2;
-                ctx.save(); ctx.filter=`blur(${4*drawingScale}px)`;
-                buildSmoothPath(ctx,pts,false); ctx.strokeStyle=hexAlpha(color,0.28+gp*0.14); ctx.lineWidth=strokeW*3.5; ctx.stroke();
-                ctx.filter='none'; ctx.restore();
+
+            if (!isZoom) {
+                buildSmoothPath(ctx, pts, false);
+                ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+                ctx.lineWidth = strokeW + 1.2*drawingScale;
+                ctx.stroke();
             }
-            if (!isZoom) { buildSmoothPath(ctx,pts,false); ctx.strokeStyle='rgba(0,0,0,0.45)'; ctx.lineWidth=strokeW+2*drawingScale; ctx.stroke(); }
-            buildSmoothPath(ctx,pts,false); ctx.strokeStyle=hexAlpha(color,strokeAlpha); ctx.lineWidth=strokeW; ctx.stroke();
+            buildSmoothPath(ctx, pts, false);
+            ctx.strokeStyle = hexAlpha(color, strokeAlpha);
+            ctx.lineWidth = strokeW;
+            ctx.stroke();
+
         } else if (anno.type && anno.size) {
             const x=anno.x*img.naturalWidth, y=anno.y*img.naturalHeight, s=anno.size*img.naturalWidth;
             let hL=s*0.3, sW=s*0.1;
@@ -1368,28 +1447,28 @@ if (!DATA) {
                 hL=s*0.4; sW=s*0.15;
                 ctx.moveTo(-s/2,-sW/2); ctx.lineTo(-s/2,sW/2); ctx.lineTo(s/2-hL,sW/2); ctx.lineTo(s/2-hL,hL/2);
                 ctx.lineTo(s/2,0); ctx.lineTo(s/2-hL,-hL/2); ctx.lineTo(s/2-hL,-sW/2); ctx.closePath();
-                ctx.strokeStyle=color; ctx.lineWidth=isActive?4*drawingScale:2*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
+                ctx.strokeStyle=color; ctx.lineWidth=isActive?2.5*drawingScale:1.5*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
             } else if (anno.type==='complex') {
                 hL=s*0.4; sW=s*0.2;
                 ctx.moveTo(-s/2,-sW/2); ctx.lineTo(-s/2,sW/2); ctx.lineTo(s/2-hL,sW/2); ctx.lineTo(s/2-hL,hL/1.5);
                 ctx.lineTo(s/2,0); ctx.lineTo(s/2-hL,-hL/1.5); ctx.lineTo(s/2-hL,-sW/2); ctx.closePath();
-                ctx.fillStyle=color; ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=1*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
+                ctx.fillStyle=color; ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=0.8*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
             }
         } else if (anno.text && anno.x !== undefined) {
             const x=anno.x*img.naturalWidth, y=anno.y*img.naturalHeight;
             const fs=(parseInt(anno.font)||24)*drawingScale;
             ctx.font=`bold ${fs}px Arial`; ctx.textAlign='center';
-            ctx.lineWidth=5*drawingScale; ctx.strokeStyle='rgba(0,0,0,0.7)'; ctx.strokeText(anno.text,x,y);
+            ctx.lineWidth=4*drawingScale; ctx.strokeStyle='rgba(0,0,0,0.65)'; ctx.strokeText(anno.text,x,y);
             ctx.fillStyle=color; ctx.fillText(anno.text,x,y);
         } else if (anno.start && anno.end) {
             const p1={x:anno.start.x*img.naturalWidth,y:anno.start.y*img.naturalHeight};
             const p2={x:anno.end.x*img.naturalWidth,  y:anno.end.y*img.naturalHeight};
             ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y);
-            ctx.strokeStyle=color; ctx.lineWidth=baseWidth; ctx.stroke();
+            ctx.strokeStyle=color; ctx.lineWidth=baseWidth*0.7; ctx.stroke();
             if (anno.text) {
                 const fs=20*drawingScale; ctx.font=`bold ${fs}px Arial`; ctx.textAlign='center';
                 const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
-                ctx.lineWidth=4*drawingScale; ctx.strokeStyle='rgba(0,0,0,0.7)'; ctx.strokeText(anno.text,mx,my-10);
+                ctx.lineWidth=3.5*drawingScale; ctx.strokeStyle='rgba(0,0,0,0.65)'; ctx.strokeText(anno.text,mx,my-10);
                 ctx.fillStyle=color; ctx.fillText(anno.text,mx,my-10);
             }
         }
