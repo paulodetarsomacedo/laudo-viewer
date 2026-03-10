@@ -180,20 +180,22 @@
         .item-header {
             display: flex; align-items: center; gap: 7px;
             padding: 5px 10px 4px 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
         }
         .item-entity-label {
             font-size: 9px; font-weight: 800; text-transform: uppercase;
             letter-spacing: 1.4px; line-height: 1;
-            opacity: 0.9;
+            opacity: 0.95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .item-entity-label strong {
-            font-size: 11.5px; letter-spacing: 0.2px; margin-right: 3px;
+            font-size: 12px; letter-spacing: 0.2px; margin-right: 2px; font-weight: 900;
         }
         /* Corpo do texto do item */
         .item-body {
             padding: 7px 10px 8px 10px;
             font-size: 13px; line-height: 1.4; color: #bbb;
+            flex: 1; min-height: 0;
         }
 
         #controls {
@@ -265,10 +267,14 @@
                 margin-bottom: 0 !important;
                 scroll-snap-align: center;
                 font-size: 12px;
-                display: flex;
-                align-items: flex-start;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                padding: 0 !important;
                 min-height: 0;
             }
+            .item-header { padding: 5px 10px 4px 10px; }
+            .item-body { font-size: 12px; padding: 6px 10px 7px 10px; }
             /* Navegação carrossel */
             #carousel-nav {
                 display: flex;
@@ -342,7 +348,9 @@
             #sidebar-header h2 { font-size: 12px; margin: 0 0 3px 0; }
             .instruction-box { display: none; }
             #findings-list { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 5px 7px; }
-            .finding-item { font-size: 11px; padding: 6px 8px; margin-bottom: 4px; border-radius: 5px; line-height: 1.3; }
+            .finding-item { font-size: 11px; margin-bottom: 4px; border-radius: 5px; line-height: 1.3; }
+            .item-header { padding: 4px 8px 3px 8px; font-size: 10px; }
+            .item-body { font-size: 11px; padding: 5px 8px 6px 8px; }
             #controls { display: flex; flex-direction: row; gap: 5px; padding: 5px 7px; flex-shrink: 0; }
             .btn { padding: 6px 4px; font-size: 10px; flex: 1; border-radius: 5px; }
             #signature-area { padding: 4px 7px; min-height: 36px; flex-shrink: 0; }
@@ -414,12 +422,22 @@
 
 <script>
 // ============================================================
+// LABELS DE SEVERIDADE — fonte única para todo o app
+// ============================================================
+const SEV_LABELS = {
+    critical:   { badge: '🔴 Críticos',           short: 'Críticos',           summary: (n) => `${n} crítico${n>1?'s':''}`           },
+    semi:       { badge: '🟠 Importantes',         short: 'Importantes',        summary: (n) => `${n} importante${n>1?'s':''}`         },
+    attention:  { badge: '🟡 Observação',          short: 'Observação',         summary: (n) => `${n} observação`                      },
+    complement: { badge: '🟢 Achados secundários', short: 'Achados secundários', summary: (n) => `${n} secundário${n>1?'s':''}`        },
+};
+
+// ============================================================
 // SISTEMA DE SEVERIDADE
 // ============================================================
 const SEV_RULES = [
     {
         level: 'critical',
-        label: '🔴 Crítico',
+        label: '● Urgência',
         color: '#e53e3e',
         words: [
             'incluso','impactado','reabsorção','envolvimento pulpar','comprometimento pulpar',
@@ -436,7 +454,7 @@ const SEV_RULES = [
     },
     {
         level: 'semi',
-        label: '🟠 Semi-crítico',
+        label: '● Monitoramento',
         color: '#dd6b20',
         words: [
             'semi-incluso','semi incluso','cárie','cariosa','carie','obturação inadequada',
@@ -451,7 +469,7 @@ const SEV_RULES = [
     },
     {
         level: 'attention',
-        label: '🟡 Atenção',
+        label: '● Acompanhamento',
         color: '#d69e2e',
         words: [
             'aumento do espaço','calcificação','atrição','giroversão','dilaceração',
@@ -469,9 +487,12 @@ const SEV_RULES = [
 function classifyText(text) {
     const lower = text.toLowerCase();
     for (const rule of SEV_RULES) {
-        if (rule.words.some(w => lower.includes(w))) return rule;
+        const sl = SEV_LABELS[rule.level];
+        if (rule.words.some(w => lower.includes(w)))
+            return { level: rule.level, label: sl ? sl.badge : rule.label, color: rule.color };
     }
-    return { level: 'complement', label: '🟢 Complementar', color: '#38a169' };
+    const sl = SEV_LABELS.complement;
+    return { level: 'complement', label: sl ? sl.badge : '● Informativo', color: '#38a169' };
 }
 
 // ============================================================
@@ -816,9 +837,11 @@ if (!DATA) {
     const sevCounts = { critical: 0, semi: 0, attention: 0, complement: 0 };
     items.forEach(p => {
         p.classList.add('finding-item');
-        // Salva o texto original antes de manipular o DOM
+        // Extrai texto puro do HTML original (antes de qualquer modificação)
         const originalHTML = p.innerHTML;
-        const text = p.innerText || p.textContent || '';
+        const tmp = document.createElement('div');
+        tmp.innerHTML = originalHTML;
+        const text = tmp.textContent || tmp.innerText || '';
         const sev  = classifyText(text);
         p.dataset.severity      = sev.level;
         p.dataset.severityColor = sev.color;
@@ -826,11 +849,15 @@ if (!DATA) {
         p.style.borderBottomColor = sev.color;
         sevCounts[sev.level] = (sevCounts[sev.level] || 0) + 1;
 
-        // Header com DENTE XX ou entidade
+        // Header: extrai título a partir do texto puro
         const { label, number } = extractCardTitle(text);
+        // Fallback: se não reconheceu entidade, usa o label clínico de severidade
+        const resolvedLabel = (label === 'ACHADO')
+            ? (SEV_LABELS[sev.level] ? SEV_LABELS[sev.level].short.toUpperCase() : 'ACHADO')
+            : label;
         const headerLabel = number
             ? `<strong>DENTE ${number}</strong>`
-            : `<strong>${label}</strong>`;
+            : `<strong>${resolvedLabel}</strong>`;
 
         p.innerHTML =
             `<div class="item-header" style="background:${sev.color}14">` +
@@ -1176,15 +1203,9 @@ if (!DATA) {
         card.style.borderLeftColor   = sevColor;
         card.style.borderBottomColor = sevColor;
 
-        // Badge de severidade
-        const sevMap = {
-            critical:   { cls: 'sev-critical',   label: '🔴 Crítico' },
-            semi:       { cls: 'sev-semi',        label: '🟠 Semi-crítico' },
-            attention:  { cls: 'sev-attention',   label: '🟡 Atenção' },
-            complement: { cls: 'sev-complement',  label: '🟢 Complementar' }
-        };
-        const sm = sevMap[sevLevel] || sevMap.complement;
-        badge.innerHTML = `<span class="severity-badge ${sm.cls}">${sm.label}</span>`;
+        // Badge de severidade — usa SEV_LABELS (mesmos labels do resto do app)
+        const sm = SEV_LABELS[sevLevel] || SEV_LABELS.complement;
+        badge.innerHTML = `<span class="severity-badge sev-${sevLevel}">${sm.badge}</span>`;
 
         // Resumo + full
         cardExpanded = false;
@@ -1422,7 +1443,8 @@ if (!DATA) {
             if (anno) {
                 const sevColor = item.dataset.severityColor || '#00ffff';
                 const sevLevel = item.dataset.severity || 'complement';
-                const cardText = item.innerText.replace(/\n/g,' ').trim();
+                const bodyEl  = item.querySelector('.item-body');
+                const cardText = (bodyEl ? bodyEl.innerText : item.innerText).replace(/\n/g,' ').trim();
                 updateFindingCard(cardText, sevColor, sevLevel);
                 zoomNatural(anno);
                 // Posiciona via JS apenas no portrait; landscape e desktop ficam fixos via CSS
@@ -1583,14 +1605,16 @@ if (!DATA) {
         const el=document.getElementById('severity-summary');
         const parts=[];
         const defs=[
-            {key:'critical',  cls:'critical',  label:(n)=>`${n} crítico${n>1?'s':''}`},
-            {key:'semi',      cls:'semi',       label:(n)=>`${n} semi-crítico${n>1?'s':''}`},
-            {key:'attention', cls:'attention',  label:(n)=>`${n} atenção`},
-            {key:'complement',cls:'complement', label:(n)=>`${n} complementar${n>1?'es':''}`},
+            {key:'critical',  cls:'critical'},
+            {key:'semi',      cls:'semi'},
+            {key:'attention', cls:'attention'},
+            {key:'complement',cls:'complement'},
         ];
         defs.forEach(d=>{
             if(!counts[d.key])return;
-            parts.push(`<span class="sev-count ${d.cls}" data-filter="${d.key}"><span class="sev-dot ${d.cls}"></span>${d.label(counts[d.key])}</span>`);
+            const n = counts[d.key];
+            const lbl = SEV_LABELS[d.key].short;
+            parts.push(`<span class="sev-count ${d.cls}" data-filter="${d.key}"><span class="sev-dot ${d.cls}"></span><span>${n} · ${lbl}</span></span>`);
         });
         el.innerHTML=`<span style="font-size:11px;color:#555;margin-right:4px;">${total} achados</span>`+parts.join('');
         el.querySelectorAll('.sev-count[data-filter]').forEach(badge=>{
