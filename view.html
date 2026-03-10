@@ -46,31 +46,56 @@
         /* --- CARD FLUTUANTE --- */
         #finding-card {
             position: absolute; display: none; z-index: 60;
-            background: rgba(15,15,18,0.97); color: #fff;
-            backdrop-filter: blur(12px);
-            padding: 14px 38px 14px 18px;
+            background: rgba(12,12,16,0.97); color: #fff;
+            backdrop-filter: blur(16px);
+            padding: 0;
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
-            border-left: 5px solid var(--accent);
-            font-size: 14px; line-height: 1.5;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.05);
+            border-left: 4px solid var(--accent);
+            border-bottom: 3px solid var(--accent);
+            font-size: 13px; line-height: 1.5;
             width: 340px;
-            max-height: 42vh; overflow-y: auto;
+            max-height: 44vh; overflow-y: auto;
             bottom: 30px; left: 30px;
+            transition: border-color 0.25s;
+        }
+        /* Header do card */
+        #card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 9px 36px 8px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px 8px 0 0;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        #card-entity {
+            font-size: 11px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 1.6px;
+            color: #fff; opacity: 0.92;
+            line-height: 1.2;
+        }
+        #card-entity span.entity-number {
+            font-size: 15px; letter-spacing: 0.5px; margin-right: 2px;
+        }
+        /* Body do card */
+        #card-body {
+            padding: 10px 36px 12px 14px;
         }
         .close-card {
-            position: absolute; top: 8px; right: 10px;
-            background: none; border: none; color: #666;
-            font-size: 22px; cursor: pointer; padding: 0; line-height: 1;
+            position: absolute; top: 7px; right: 8px;
+            background: none; border: none; color: #555;
+            font-size: 20px; cursor: pointer; padding: 0; line-height: 1;
             transition: color 0.2s;
         }
         .close-card:hover { color: #fff; }
 
         /* Severidade badge no card */
         .severity-badge {
-            display: inline-block; font-size: 10px; font-weight: 700;
+            display: inline-block; font-size: 9px; font-weight: 700;
             text-transform: uppercase; letter-spacing: 1px;
-            padding: 2px 7px; border-radius: 20px; margin-bottom: 7px;
-            opacity: 0.9;
+            padding: 2px 7px; border-radius: 20px;
+            opacity: 0.9; flex-shrink: 0;
         }
         .sev-critical   { background: rgba(229,62,62,0.2);  color: #fc8181; border: 1px solid rgba(229,62,62,0.4); }
         .sev-semi       { background: rgba(221,107,32,0.2); color: #f6ad55; border: 1px solid rgba(221,107,32,0.4); }
@@ -78,12 +103,12 @@
         .sev-complement { background: rgba(56,161,105,0.2); color: #68d391; border: 1px solid rgba(56,161,105,0.4); }
 
         /* Texto resumo + expandir */
-        #card-summary { cursor: pointer; }
-        #card-full { display: none; margin-top: 6px; color: #ccc; font-size: 13px; line-height: 1.55; }
+        #card-summary { cursor: pointer; color: #ddd; font-size: 12.5px; }
+        #card-full { display: none; margin-top: 6px; color: #bbb; font-size: 12px; line-height: 1.55; }
         #card-full.open { display: block; }
         #btn-expand {
             display: inline-block; margin-top: 5px;
-            font-size: 11px; color: #888; cursor: pointer;
+            font-size: 10.5px; color: #666; cursor: pointer;
             border: none; background: none; padding: 0;
             text-decoration: underline; text-underline-offset: 2px;
             transition: color 0.2s;
@@ -92,8 +117,8 @@
 
         /* Conduta + Recomendação */
         #card-clinical-row {
-            display: none; margin-top: 10px; padding-top: 9px;
-            border-top: 1px solid rgba(255,255,255,0.08);
+            display: none; margin-top: 9px; padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.07);
             gap: 10px;
         }
         #card-clinical-row.visible { display: flex; }
@@ -289,14 +314,18 @@
                 max-height: 28vh;
                 font-size: 10.5px;
                 line-height: 1.35;
-                padding: 7px 26px 7px 9px;
                 border-radius: 9px;
-                bottom: auto; left: auto;
             }
+            #card-header { padding: 7px 30px 6px 10px; }
+            #card-entity { font-size: 9.5px; }
+            #card-entity span.entity-number { font-size: 13px; }
+            #card-body { padding: 7px 26px 8px 10px; }
+            #card-summary { font-size: 10.5px; }
             #card-full { font-size: 10px; }
             #card-clinical-row { gap: 4px; margin-top: 6px; padding-top: 6px; }
             .impact-tag, .recommend-tag { font-size: 9px; padding: 1px 4px; }
             #card-impact strong, #card-recommend strong { font-size: 8px; }
+            .severity-badge { font-size: 8.5px; padding: 1px 5px; }
         }
 
         /* =====================================================================
@@ -341,18 +370,23 @@
 <div id="viewer-area">
     <div id="finding-card">
         <button class="close-card" onclick="closeCard()">×</button>
-        <div id="card-severity-badge"></div>
-        <div id="card-summary"></div>
-        <button id="btn-expand" onclick="toggleExpand()">Ver detalhes ↓</button>
-        <div id="card-full"></div>
-        <div id="card-clinical-row">
-            <div id="card-impact">
-                <strong>💡 Conduta provável</strong>
-                <div id="card-impact-tags"></div>
-            </div>
-            <div id="card-recommend">
-                <strong>🔬 Exame sugerido</strong>
-                <div id="card-recommend-tags"></div>
+        <div id="card-header">
+            <div id="card-entity">—</div>
+            <div id="card-severity-badge"></div>
+        </div>
+        <div id="card-body">
+            <div id="card-summary"></div>
+            <button id="btn-expand" onclick="toggleExpand()">Ver detalhes ↓</button>
+            <div id="card-full"></div>
+            <div id="card-clinical-row">
+                <div id="card-impact">
+                    <strong>💡 Conduta provável</strong>
+                    <div id="card-impact-tags"></div>
+                </div>
+                <div id="card-recommend">
+                    <strong>🔬 Exame sugerido</strong>
+                    <div id="card-recommend-tags"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -999,14 +1033,78 @@ if (!DATA) {
     }
 
     // ---- CARD ----
+    // ---- EXTRAÇÃO DO TÍTULO DO CARD ----
+    // Retorna objeto { label, number } onde:
+    //   label  = 'DENTE' | 'REGIÃO' | 'SINUSITE' | 'PERDA ÓSSEA' | etc.
+    //   number = '36' | null
+    function extractCardTitle(text) {
+        const lower = text.toLowerCase();
+
+        // 1. Tenta extrair número de dente permanente (11–18, 21–28, 31–38, 41–48)
+        const permMatch = text.match(/\b([1-4][1-8])\b/g);
+        if (permMatch && permMatch.length > 0) {
+            const num = permMatch[0];
+            return { label: 'DENTE', number: num };
+        }
+
+        // 2. Tenta extrair número de dente decíduo (51–55, 61–65, 71–75, 81–85)
+        const decMatch = text.match(/\b([5-8][1-5])\b/g);
+        if (decMatch && decMatch.length > 0) {
+            const num = decMatch[0];
+            return { label: 'DENTE', number: num };
+        }
+
+        // 3. Sem número — classifica por contexto semântico
+        const ctx = [
+            { keys: ['sinusite','seio maxilar','espessamento mucoso','mucosite sinusal','velamento sinusal','pseudocisto sinusal'], label: 'SINUSITE' },
+            { keys: ['perda óssea','perda ossea','reabsorção alveolar','suporte periodontal','defeito ósseo','defeito angular','nível ósseo'], label: 'PERDA ÓSSEA' },
+            { keys: ['lesão cística','cisto','dentígero','folicular','lesão radiolúcida bem delimitada'], label: 'LESÃO CÍSTICA' },
+            { keys: ['tumor','lesão mista','lesão radiopaca irregular','lesão multilocular'], label: 'LESÃO ÓSSEA' },
+            { keys: ['fratura','linha de fratura','fratura mandibular','fratura maxilar'], label: 'FRATURA' },
+            { keys: ['canal mandibular','íntima proximidade','intima proximidade','nervo alveolar'], label: 'CANAL MAND.' },
+            { keys: ['implante','osseointegrado','peri-implantite'], label: 'IMPLANTE' },
+            { keys: ['atm','côndilo','articulação temporomandibular'], label: 'ATM' },
+            { keys: ['alvéolo','alveolo','alveolite','pós-exodontia'], label: 'ALVÉOLO' },
+            { keys: ['raízes residuais','raiz residual','remanescente radicular','raiz retida'], label: 'RAIZ RES.' },
+            { keys: ['cálculo','calculo','tártaro'], label: 'CÁLCULO' },
+            { keys: ['atrição','desgaste','sobrecarga oclusal'], label: 'DESGASTE' },
+            { keys: ['contenção','aparelho ortodôntico','braquete'], label: 'ORTODONTIA' },
+            { keys: ['incisivo','canino','central','lateral','anterior'], label: 'REG. ANTERIOR' },
+            { keys: ['molar','pré-molar','premolar','posterior'], label: 'REG. POSTERIOR' },
+        ];
+        for (const c of ctx) {
+            if (c.keys.some(k => lower.includes(k))) return { label: c.label, number: null };
+        }
+        return { label: 'ACHADO', number: null };
+    }
+
     function updateFindingCard(text, sevColor, sevLevel) {
         const card   = document.getElementById('finding-card');
+        const entity = document.getElementById('card-entity');
         const badge  = document.getElementById('card-severity-badge');
         const sumEl  = document.getElementById('card-summary');
         const fullEl = document.getElementById('card-full');
         const btnExp = document.getElementById('btn-expand');
         const tags   = document.getElementById('card-impact-tags');
         if (!text || text.length < 2) { card.style.display = 'none'; return; }
+
+        // Header: entidade + número
+        const { label, number } = extractCardTitle(text);
+        if (number) {
+            entity.innerHTML = `<span class="entity-number">${number}</span> · ${label}`;
+        } else {
+            entity.innerHTML = label;
+        }
+
+        // Bordas coloridas com a cor de severidade
+        card.style.borderLeftColor   = sevColor;
+        card.style.borderBottomColor = sevColor;
+
+        // Header background sutil com a cor
+        const hdr = document.getElementById('card-header');
+        hdr.style.background = `linear-gradient(90deg, ${sevColor}18 0%, transparent 100%)`;
+
+        // Badge de severidade
         const sevMap = {
             critical:   { cls: 'sev-critical',   label: '🔴 Crítico' },
             semi:       { cls: 'sev-semi',        label: '🟠 Semi-crítico' },
@@ -1015,6 +1113,8 @@ if (!DATA) {
         };
         const sm = sevMap[sevLevel] || sevMap.complement;
         badge.innerHTML = `<span class="severity-badge ${sm.cls}">${sm.label}</span>`;
+
+        // Resumo + full
         cardExpanded = false;
         const { summary, full } = makeSummary(text);
         sumEl.textContent = summary;
@@ -1024,15 +1124,17 @@ if (!DATA) {
         } else {
             fullEl.textContent = ''; fullEl.classList.remove('open'); btnExp.style.display = 'none';
         }
-        const clinicalRow    = document.getElementById('card-clinical-row');
-        const impacts        = getImpacts(text);
-        const recommends     = getRecommends(text);
-        tags.innerHTML       = impacts.map(t => `<span class="impact-tag">${t}</span>`).join('');
-        const recommendTags  = document.getElementById('card-recommend-tags');
-        recommendTags.innerHTML = recommends.map(t => `<span class="recommend-tag">${t}</span>`).join('');
+
+        // Conduta + Exame
+        const clinicalRow   = document.getElementById('card-clinical-row');
+        const impacts       = getImpacts(text);
+        const recommends    = getRecommends(text);
+        tags.innerHTML      = impacts.map(t => `<span class="impact-tag">${t}</span>`).join('');
+        document.getElementById('card-recommend-tags').innerHTML =
+            recommends.map(t => `<span class="recommend-tag">${t}</span>`).join('');
         if (impacts.length || recommends.length) clinicalRow.classList.add('visible');
         else clinicalRow.classList.remove('visible');
-        card.style.borderLeftColor = sevColor;
+
         card.style.display = 'block';
     }
 
