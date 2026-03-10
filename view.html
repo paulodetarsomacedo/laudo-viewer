@@ -142,7 +142,10 @@
         .sev-count {
             font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
             display: flex; align-items: center; gap: 4px;
+            cursor: pointer; transition: all 0.18s; user-select: none;
         }
+        .sev-count:hover { filter: brightness(1.3); transform: translateY(-1px); }
+        .sev-count.active-filter { box-shadow: 0 0 0 2px currentColor; filter: brightness(1.3); }
         .sev-count.critical   { background: rgba(229,62,62,0.15);  color: #fc8181; }
         .sev-count.semi       { background: rgba(221,107,32,0.15); color: #f6ad55; }
         .sev-count.attention  { background: rgba(214,158,46,0.15); color: #f6e05e; }
@@ -273,7 +276,7 @@
 
 <div id="app-header">
     <div id="app-title">LAUDO INTERATIVO</div>
-    <button id="btn-toggle-all-header">👁️ Ver Mapa</button>
+    <button id="btn-toggle-all-header">🔍 Visão Geral</button>
 </div>
 
 <div id="viewer-area">
@@ -305,7 +308,7 @@
     <div class="instruction-box">Toque no achado ou na imagem para destacar</div>
     <div id="findings-list">Carregando...</div>
     <div id="controls">
-        <button id="btn-toggle-all" class="btn">👁️ Ver Mapa</button>
+        <button id="btn-toggle-all" class="btn">🔍 Visão Geral</button>
         <button id="btn-reset-zoom" class="btn secondary">⟲ Reset</button>
     </div>
     <div id="signature-area">
@@ -735,13 +738,40 @@ if (!DATA) {
         ctx.setTransform(scale,0,0,scale,panX,panY);
         ctx.drawImage(img,0,0);
 
-        if (showAll) {
+        if (activeFilter) {
+            // ── MODO SPOTLIGHT: overlay escuro + só mostra achados da categoria ──
+            // Desenha overlay escuro sobre a imagem toda (no espaço da imagem)
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,0.55)';
+            ctx.fillRect(0, 0, img.naturalWidth, img.naturalHeight);
+            ctx.restore();
+
+            // Desenha spotlight (limpa escuridão) em volta das annotations filtradas
+            DATA.annotations.forEach(anno => {
+                const li = document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);
+                if (!li || li.dataset.severity !== activeFilter) return;
+                drawSpotlightClear(anno);
+            });
+
+            // Desenha as annotations filtradas por cima
+            DATA.annotations.forEach(anno => {
+                const li = document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);
+                if (!li || li.dataset.severity !== activeFilter) return;
+                drawAnnotation(anno, true);
+                // Pulse em cada um
+                const cn = getAnnoCenterNorm(anno);
+                if (cn) {
+                    const col = li.dataset.severityColor || '#00ffff';
+                    drawPulse(cn.x * img.naturalWidth, cn.y * img.naturalHeight, col);
+                }
+            });
+
+        } else if (showAll) {
             DATA.annotations.forEach(anno => drawAnnotation(anno, false));
         } else if (activeAnnotationId) {
             const anno = DATA.annotations.find(a => a.id === activeAnnotationId);
             if (anno) {
                 drawAnnotation(anno, true);
-                // Pulse no centro
                 const cn = getAnnoCenterNorm(anno);
                 if (cn) {
                     const el  = document.querySelector(`p[data-annotation-id="${anno.id}"]`);
@@ -750,6 +780,38 @@ if (!DATA) {
                 }
             }
         }
+    }
+
+    // Desenha um "furo" suave no overlay escuro ao redor de uma annotation
+    function drawSpotlightClear(anno) {
+        const cn = getAnnoCenterNorm(anno);
+        if (!cn) return;
+        const cx = cn.x * img.naturalWidth;
+        const cy = cn.y * img.naturalHeight;
+
+        // Calcula raio baseado no tamanho da annotation
+        let radius = 80 * drawingScale;
+        if (anno.points && anno.points.length > 1) {
+            const xs = anno.points.map(p => p.x * img.naturalWidth);
+            const ys = anno.points.map(p => p.y * img.naturalHeight);
+            const w = Math.max(...xs) - Math.min(...xs);
+            const h = Math.max(...ys) - Math.min(...ys);
+            radius = Math.max(Math.hypot(w, h) * 0.7, 55 * drawingScale);
+        }
+        radius = Math.max(radius, 50 * drawingScale);
+
+        ctx.save();
+        // Usar destination-out para "apagar" o overlay no círculo
+        ctx.globalCompositeOperation = 'destination-out';
+        const grad = ctx.createRadialGradient(cx, cy, radius * 0.3, cx, cy, radius);
+        grad.addColorStop(0,   'rgba(0,0,0,0.85)');
+        grad.addColorStop(0.6, 'rgba(0,0,0,0.5)');
+        grad.addColorStop(1,   'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
     }
 
     // ---- CARD ----
@@ -821,9 +883,10 @@ if (!DATA) {
     };
 
     function resetView() {
-        activeAnnotationId = null; showAll = false;
+        activeAnnotationId = null; showAll = false; activeFilter = null;
         closeCard();
         document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.sev-count').forEach(el => el.classList.remove('active-filter'));
         stopPulse(); fitImage(); render();
     }
 
@@ -868,8 +931,8 @@ if (!DATA) {
         const color = (el && el.dataset.severityColor) ? el.dataset.severityColor : (anno.color || '#00FFFF');
         const baseWidth = (anno.thickness || 4) * drawingScale;
 
-        // Quando showAll, não-ativos ficam mais suaves
-        const globalFade = (showAll && !isActive) ? 0.45 : 1.0;
+        // Quando showAll, não-ativos ficam visíveis mas sem glow
+        const globalFade = (showAll && !isActive) ? 0.82 : 1.0;
 
         ctx.save();
         ctx.globalAlpha = globalFade;
@@ -888,8 +951,8 @@ if (!DATA) {
             const cy = pts.reduce((s,p) => s + p.y, 0) / pts.length;
             const maxR = Math.max(...pts.map(p => Math.hypot(p.x-cx, p.y-cy))) * 1.1;
 
-            // ── Camada 1: glow externo difuso (só quando ativo) ───────────────
-            if (isActive) {
+            // ── Camada 1: glow externo difuso (só quando ativo e não em showAll) ───────────
+            if (isActive && !showAll) {
                 const glowPulse = (Math.sin(pulsePhase * 1.2) + 1) / 2; // 0..1
                 const glowAlpha = 0.18 + glowPulse * 0.12;
                 ctx.save();
@@ -952,8 +1015,8 @@ if (!DATA) {
                 y: p.y * img.naturalHeight
             }));
 
-            // Glow suave quando ativo
-            if (isActive) {
+            // Glow suave quando ativo e não em visão geral
+            if (isActive && !showAll) {
                 ctx.save();
                 ctx.filter = `blur(${4 * drawingScale}px)`;
                 buildSmoothPath(ctx, pts, false);
@@ -1155,11 +1218,144 @@ if (!DATA) {
     },{passive:false});
     viewer.addEventListener('touchend',()=>isDragging=false);
 
+    // ---- MODO VISÃO GERAL E FILTRO DE CATEGORIA ----
+    // activeFilter: null | 'critical' | 'semi' | 'attention' | 'complement'
+    let activeFilter = null;
+
+    // Smooth animated zoom
+    let animFrame = null;
+    function smoothZoomTo(targetScale, targetPanX, targetPanY, duration) {
+        if (animFrame) cancelAnimationFrame(animFrame);
+        const startScale = scale, startPanX = panX, startPanY = panY;
+        const startTime = performance.now();
+        function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+        function step(now) {
+            const t = Math.min((now - startTime) / duration, 1);
+            const e = ease(t);
+            scale = startScale + (targetScale - startScale) * e;
+            panX  = startPanX  + (targetPanX  - startPanX)  * e;
+            panY  = startPanY  + (targetPanY  - startPanY)  * e;
+            render();
+            if (t < 1) animFrame = requestAnimationFrame(step);
+            else animFrame = null;
+        }
+        animFrame = requestAnimationFrame(step);
+    }
+
+    // Calcula zoom que engloba um conjunto de annotations
+    function calcZoomForAnnos(annos) {
+        let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+        annos.forEach(anno => {
+            if (anno.points) {
+                anno.points.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
+            } else if (anno.start&&anno.end) {
+                minX=Math.min(minX,anno.start.x,anno.end.x);maxX=Math.max(maxX,anno.start.x,anno.end.x);
+                minY=Math.min(minY,anno.start.y,anno.end.y);maxY=Math.max(maxY,anno.start.y,anno.end.y);
+            } else if (anno.x!==undefined) {
+                const s=anno.size?(anno.size*(anno.scale||1)):0.08;
+                minX=Math.min(minX,anno.x-s/2);maxX=Math.max(maxX,anno.x+s/2);
+                minY=Math.min(minY,anno.y-s/2);maxY=Math.max(maxY,anno.y+s/2);
+            }
+        });
+        if (!isFinite(minX)) return null;
+        const pad = 0.08;
+        minX-=pad; maxX+=pad; minY-=pad; maxY+=pad;
+        minX=Math.max(0,minX); maxX=Math.min(1,maxX);
+        minY=Math.max(0,minY); maxY=Math.min(1,maxY);
+        const regW=(maxX-minX)*img.naturalWidth;
+        const regH=(maxY-minY)*img.naturalHeight;
+        const padPx = 60;
+        let ts = Math.min((canvas.width-padPx*2)/regW, (canvas.height-padPx*2)/regH);
+        const fitMin = Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight);
+        ts = Math.max(ts, fitMin);
+        const cX=((minX+maxX)/2)*img.naturalWidth;
+        const cY=((minY+maxY)/2)*img.naturalHeight;
+        return {
+            scale: ts,
+            panX: canvas.width/2 - cX*ts,
+            panY: canvas.height/2 - cY*ts
+        };
+    }
+
     function toggleAllAction(){
+        activeFilter = null;
         showAll=!showAll;activeAnnotationId=null;closeCard();
         document.querySelectorAll('.finding-item').forEach(el=>el.classList.remove('active'));
-        stopPulse();fitImage();render();
+        document.querySelectorAll('.sev-count').forEach(el=>el.classList.remove('active-filter'));
+        stopPulse();
+        const ts = calcZoomForAnnos(DATA.annotations);
+        if (ts && showAll) {
+            smoothZoomTo(ts.scale, ts.panX, ts.panY, 420);
+        } else {
+            smoothZoomTo(
+                Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight),
+                (canvas.width - img.naturalWidth * Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight)) / 2,
+                (canvas.height - img.naturalHeight * Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight)) / 2,
+                380
+            );
+        }
+        render();
     }
+
+    function activateSeverityFilter(sevLevel) {
+        // Toggle: clicar no mesmo desativa
+        if (activeFilter === sevLevel) {
+            activeFilter = null;
+            showAll = false;
+            document.querySelectorAll('.sev-count').forEach(el=>el.classList.remove('active-filter'));
+            document.querySelectorAll('.finding-item').forEach(el=>el.classList.remove('active'));
+            activeAnnotationId = null;
+            closeCard();
+            stopPulse();
+            smoothZoomTo(
+                Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight),
+                (canvas.width - img.naturalWidth * Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight)) / 2,
+                (canvas.height - img.naturalHeight * Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight)) / 2,
+                380
+            );
+            render();
+            return;
+        }
+
+        activeFilter = sevLevel;
+        showAll = false;
+        activeAnnotationId = null;
+        closeCard();
+        stopPulse();
+        document.querySelectorAll('.finding-item').forEach(el=>el.classList.remove('active'));
+        document.querySelectorAll('.sev-count').forEach(el=>el.classList.remove('active-filter'));
+        const badge = document.querySelector(`.sev-count.${sevLevel}`);
+        if (badge) badge.classList.add('active-filter');
+
+        // Coleta annotations da categoria
+        const filteredAnnos = DATA.annotations.filter(anno => {
+            const li = document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);
+            return li && li.dataset.severity === sevLevel;
+        });
+
+        // Zoom suave para cobrir a área
+        if (filteredAnnos.length > 0) {
+            if (filteredAnnos.length === 1) {
+                // Um único achado: usa zoom natural mas animado
+                const savedScale = scale, savedPanX = panX, savedPanY = panY;
+                fitImage(); // parte do fit
+                const fromScale = scale, fromPanX = panX, fromPanY = panY;
+                zoomNatural(filteredAnnos[0]);
+                const toScale = scale, toPanX = panX, toPanY = panY;
+                // restaura ponto de partida e anima
+                scale = fromScale; panX = fromPanX; panY = fromPanY;
+                smoothZoomTo(toScale, toPanX, toPanY, 480);
+            } else {
+                const ts = calcZoomForAnnos(filteredAnnos);
+                if (ts) smoothZoomTo(ts.scale, ts.panX, ts.panY, 450);
+            }
+        }
+
+        // Inicia pulso contínuo para os achados filtrados
+        startPulse();
+        render();
+    }
+
     document.getElementById('btn-toggle-all').addEventListener('click',toggleAllAction);
     document.getElementById('btn-toggle-all-header').addEventListener('click',toggleAllAction);
     document.getElementById('btn-reset-zoom').addEventListener('click',resetView);
@@ -1168,13 +1364,25 @@ if (!DATA) {
     function buildSeveritySummary(counts, total) {
         const el = document.getElementById('severity-summary');
         const parts = [];
-        if (counts.critical)   parts.push(`<span class="sev-count critical"><span class="sev-dot critical"></span>${counts.critical} crítico${counts.critical>1?'s':''}</span>`);
-        if (counts.semi)       parts.push(`<span class="sev-count semi"><span class="sev-dot semi"></span>${counts.semi} semi-crítico${counts.semi>1?'s':''}</span>`);
-        if (counts.attention)  parts.push(`<span class="sev-count attention"><span class="sev-dot attention"></span>${counts.attention} atenção</span>`);
-        if (counts.complement) parts.push(`<span class="sev-count complement"><span class="sev-dot complement"></span>${counts.complement} complementar${counts.complement>1?'es':''}</span>`);
+        const defs = [
+            { key: 'critical',   cls: 'critical',   label: (n) => `${n} crítico${n>1?'s':''}` },
+            { key: 'semi',       cls: 'semi',        label: (n) => `${n} semi-crítico${n>1?'s':''}` },
+            { key: 'attention',  cls: 'attention',   label: (n) => `${n} atenção` },
+            { key: 'complement', cls: 'complement',  label: (n) => `${n} complementar${n>1?'es':''}` },
+        ];
+        defs.forEach(d => {
+            if (!counts[d.key]) return;
+            parts.push(`<span class="sev-count ${d.cls}" data-filter="${d.key}" title="Destacar achados ${d.label(counts[d.key])}"><span class="sev-dot ${d.cls}"></span>${d.label(counts[d.key])}</span>`);
+        });
         el.innerHTML = `<span style="font-size:11px;color:#555;margin-right:4px;">${total} achados</span>` + parts.join('');
+
+        // Eventos de clique nos badges
+        el.querySelectorAll('.sev-count[data-filter]').forEach(badge => {
+            badge.addEventListener('click', () => {
+                activateSeverityFilter(badge.dataset.filter);
+            });
+        });
     }
-}
 </script>
 </body>
 </html>
