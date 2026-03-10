@@ -256,13 +256,13 @@
                 display: flex !important;
                 flex-direction: row;
                 overflow-x: auto;
-                overflow-y: hidden;
+                overflow-y: auto;
                 scroll-snap-type: x mandatory;
                 -webkit-overflow-scrolling: touch;
-                padding: 6px 10px 6px 10px;
+                padding: 6px 10px 8px 10px;
                 gap: 8px;
                 flex: 1;
-                align-items: stretch;
+                align-items: flex-start;
                 scrollbar-width: none;
             }
             #findings-list::-webkit-scrollbar { display: none; }
@@ -277,7 +277,6 @@
                 align-items: stretch !important;
                 padding: 0 !important;
                 height: auto !important;
-                align-self: flex-start !important;
             }
             .item-header { padding: 5px 10px 4px 10px; }
             .item-body { font-size: 12px; padding: 6px 10px 8px 10px; line-height: 1.45; }
@@ -746,64 +745,58 @@ function getRecommends(text) {
     return found;
 }
 
-// Extrai 6-7 palavras-chave clínicas do achado para o card de conduta
+// Extrai o achado clínico principal removendo ruído introdutório
 function makeSummary(text) {
     const clean = text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 
-    // Termos clínicos relevantes a preservar (por prioridade)
-    const CLINICAL_TERMS = [
-        'incluso','impactado','semi-incluso','reabsorção','rizólise','necrose','abscesso',
-        'fístula','cisto','fratura','periápice','periapical','furca','furcação',
-        'cárie','lesão','perda óssea','implante','canal','obturação','restauração',
-        'seio maxilar','espessamento','sinusite','peri-implantite','pericoronite',
-        'radiolúcida','radiopaca','calcificação','giroversão','dilaceração','atrição',
-        'irrompido','decíduo','erupção','sucessor','endodonticamente','tratado',
-    ];
+    // Detecta se é um caso de implante/prótese (número do dente é relevante)
+    const isImplante = /implante|osseointegrad|peri-implantite|prótese sobre implante/i.test(clean);
 
-    const lower = clean.toLowerCase();
+    // Remove prefixos de ruído: "Dente XX com ...", "Dente XX apresentando ...", etc.
+    // Mas preserva se for implante
+    let working = clean;
 
-    // Coleta os termos encontrados em ordem de aparição
-    const found = [];
-    CLINICAL_TERMS.forEach(term => {
-        const idx = lower.indexOf(term);
-        if (idx !== -1) found.push({ term, idx });
-    });
-    found.sort((a, b) => a.idx - b.idx);
-
-    // Extrai palavras únicas ao redor dos termos encontrados
-    const words = clean.split(/\s+/);
-    const selected = [];
-    const usedIdx = new Set();
-
-    found.forEach(({ term }) => {
-        const tWords = term.split(' ');
-        words.forEach((w, i) => {
-            if (usedIdx.has(i)) return;
-            if (w.toLowerCase().includes(tWords[0])) {
-                tWords.forEach((_, j) => { if (words[i+j]) { usedIdx.add(i+j); selected.push(words[i+j]); } });
-            }
-        });
-        if (selected.length >= 7) return;
-    });
-
-    // Se encontrou termos, monta frase curta; senão usa as primeiras palavras
-    if (selected.length >= 2) {
-        return { summary: selected.slice(0, 7).join(' '), full: clean };
+    if (!isImplante) {
+        // Remove "Dente XX" no início (número permanente ou decíduo)
+        working = working.replace(/^dente\s+\d{2}\s*/i, '');
+        // Remove conectores e frases de transição no início
+        working = working.replace(/^(com\s+imagem\s+|apresentando\s+|com\s+aspecto\s+|aspecto\s+|imagem\s+|achado\s+|evidencia\s+|evidência\s+|com\s+)/i, '');
+        // Remove qualificadores vagos no início
+        working = working.replace(/^(consistente\s+com\s+|sugestiva?\s+de\s+|compatível\s+com\s+|compativel\s+com\s+|sugestivo\s+de\s+)/i, '');
+        // Segunda passagem: remove mais um "com" ou "de" solto no início
+        working = working.replace(/^(com\s+|de\s+)/i, '');
     }
 
-    // Fallback: primeiras 6 palavras
-    const fallback = words.slice(0, 6).join(' ');
-    return { summary: fallback + (words.length > 6 ? '…' : ''), full: words.length > 6 ? clean : null };
+    working = working.trim();
+
+    // Agora extrai as palavras mais clínicas (até ~8 palavras)
+    // Remove stop words genéricas do início se ainda restarem
+    const NOISE_START = /^(a|o|um|uma|há|na|no|em|da|do|das|dos|que|se|ao|aos|às)\s+/i;
+    while (NOISE_START.test(working)) working = working.replace(NOISE_START, '').trim();
+
+    // Capitaliza a primeira letra
+    if (working.length > 0) working = working.charAt(0).toUpperCase() + working.slice(1);
+
+    // Limita a ~55 chars ou 8 palavras — o que vier primeiro
+    const words = working.split(/\s+/);
+    let summary;
+    if (words.length <= 8) {
+        summary = working;
+    } else {
+        // Tenta cortar num ponto semântico (após vírgula/ponto)
+        const atPunct = working.search(/[,;.]/);
+        if (atPunct > 10 && atPunct < 60) {
+            summary = working.slice(0, atPunct);
+        } else {
+            summary = words.slice(0, 8).join(' ') + '…';
+        }
+    }
+
+    return { summary };
 }
 
-let cardExpanded = false;
-window.toggleExpand = function() {
-    cardExpanded = !cardExpanded;
-    const full = document.getElementById('card-full');
-    const btn  = document.getElementById('btn-expand');
-    full.classList.toggle('open', cardExpanded);
-    btn.textContent = cardExpanded ? 'Recolher ↑' : 'Ver detalhes ↓';
-};
+
+
 
 // ============================================================
 // PULSE CANVAS
@@ -1260,10 +1253,10 @@ if (!DATA) {
         const hdr = document.getElementById('card-header-row');
         if (hdr) hdr.style.background = `linear-gradient(90deg, ${sevColor}18 0%, transparent 100%)`;
 
-        // Entidade: DENTE XX ou label semântico
+        // Entidade: "DENTE 36" ou label semântico — tudo em negrito
         const { label, number } = extractCardTitle(text);
         entity.innerHTML = number
-            ? `<strong>${number}</strong> · ${label}`
+            ? `<strong>DENTE ${number}</strong>`
             : `<strong>${label}</strong>`;
 
         // Badge de severidade
