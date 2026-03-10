@@ -331,7 +331,12 @@ const SEV_RULES = [
             'lesão extensa','rarefação','radiolúcida','radiolucida','periápice','periapice',
             'canal mandibular','íntima proximidade','intima proximidade','cisto','tumor',
             'necrose','fístula','fistula','abscesso','osteíte','osteite','fratura','dilaceração severa',
-            'reabsorção radicular','reabsorcao radicular','reabsorção interna','reabsorção externa'
+            'reabsorção radicular','reabsorcao radicular','reabsorção interna','reabsorção externa',
+            // Decíduos — críticos
+            'rarefação na região de furca','rarefação interradicular','lesão de furca','furca comprometida',
+            'reabsorção patológica','rizólise patológica','rizólise acelerada','necrose pulpar deciduo',
+            // Furca permanentes
+            'rarefação óssea na região de furca','rarefação óssea interradicular','lesão de furca em dente permanente'
         ]
     },
     {
@@ -343,7 +348,10 @@ const SEV_RULES = [
             'restauração com falha','sobrecontorno','subcontorno','remanescente radicular',
             'alvéolo','alveolo','espessamento','seio maxilar','sinusite','mucosite',
             'lesão cariosa','lesão radiolúcida','lesão radiolucida','carr','care',
-            'peri-implantite','mobilidade','lesão periapical','pericoronite'
+            'peri-implantite','mobilidade','lesão periapical','pericoronite',
+            // Decíduos — semi-críticos
+            'cárie em decíduo','carie em deciduo','cárie em dente decíduo','lesão cariosa em decíduo',
+            'rizólise','rizolyse','reabsorção fisiológica','reabsorção radicular fisiológica'
         ]
     },
     {
@@ -355,7 +363,10 @@ const SEV_RULES = [
             'arredondamento apical','pino intrarradicular','implante','contenção',
             'cálculo','calculo','perda óssea','perda ossea','reabsorção leve',
             'obturação','restauração radiopaca','tratado endodonticamente','endodonticamente',
-            'condensação','selamento','semi-irrompido','irrompido'
+            'condensação','selamento','semi-irrompido','irrompido',
+            // Decíduos — atenção
+            'decíduo','deciduo','dente de leite','dentes de leite','erupção do sucessor',
+            'rizólise em estágio','estágio de rizólise','reabsorção radicular em estágio'
         ]
     }
 ];
@@ -363,17 +374,57 @@ const SEV_RULES = [
 function classifyText(text) {
     const lower = text.toLowerCase();
     for (const rule of SEV_RULES) {
-        if (rule.words.some(w => lower.includes(w))) {
-            return rule;
-        }
+        if (rule.words.some(w => lower.includes(w))) return rule;
     }
     return { level: 'complement', label: '🟢 Complementar', color: '#38a169' };
 }
 
-const DENTES_ANTERIORES = [
-    '11','12','13','21','22','23',
-    '31','32','33','41','42','43'
+// ============================================================
+// NUMERAÇÃO DE DENTES
+// ============================================================
+const DENTES_ANTERIORES = ['11','12','13','21','22','23','31','32','33','41','42','43'];
+
+// Dentes decíduos (notação FDI): 51–55, 61–65, 71–75, 81–85
+const DENTES_DECIDUOS = [
+    '51','52','53','54','55',
+    '61','62','63','64','65',
+    '71','72','73','74','75',
+    '81','82','83','84','85'
 ];
+// Decíduos com furca (molares): 54,55,64,65,74,75,84,85
+const DECIDUOS_COM_FURCA = ['54','55','64','65','74','75','84','85'];
+// Permanentes com furca (molares e pré-molares com 2 raízes): 14,15,16,17,18,24,25,26,27,28,34,35,36,37,38,44,45,46,47,48
+const PERMANENTES_COM_FURCA = [
+    '16','17','18','26','27','28','36','37','38','46','47','48',
+    '14','15','24','25','34','35','44','45'
+];
+
+function isDentDeciduo(text) {
+    const matches = text.match(/\b([5-8][1-5])\b/g);
+    if (matches) return matches.some(n => DENTES_DECIDUOS.includes(n));
+    const lower = text.toLowerCase();
+    return lower.includes('decíduo') || lower.includes('deciduo') ||
+           lower.includes('dente de leite') || lower.includes('primário') ||
+           lower.includes('leite');
+}
+
+function isDentPermanenteComFurca(text) {
+    const matches = text.match(/\b([1-4][4-8])\b/g);
+    if (matches) return matches.some(n => PERMANENTES_COM_FURCA.includes(n));
+    return false;
+}
+
+function isDentDeciduoComFurca(text) {
+    const matches = text.match(/\b([5-8][4-5])\b/g);
+    if (matches) return matches.some(n => DECIDUOS_COM_FURCA.includes(n));
+    return false;
+}
+
+function temFurca(text) {
+    const lower = text.toLowerCase();
+    return lower.includes('furca') || lower.includes('interradicular') ||
+           lower.includes('bifurcação') || lower.includes('trifurcação');
+}
 
 function detectSobrecontornoTipo(text) {
     const lower = text.toLowerCase();
@@ -415,6 +466,13 @@ const IMPACT_RULES = [
     { words: ['tumor','lesão mista','lesão radiopaca irregular','calcificação distrófica'], tag: 'Biópsia e correlação histopatológica' },
     { words: ['atresia','desvio de septo','hipertrofia de corneto'], tag: 'Avaliação otorrinolaringológica' },
     { words: ['sobrecontorno'], tag: 'Substituição / ajuste da restauração' },
+    // Furca permanentes
+    { words: ['rarefação na região de furca','rarefação óssea na região de furca','lesão de furca','furca comprometida','rarefação interradicular','lesão de furca em dente permanente'], tag: 'Avaliação periodontal — possível exodontia' },
+    // Decíduos
+    { words: ['rizólise acelerada','reabsorção patológica','rizólise patológica'], tag: 'Exodontia do decíduo — urgência' },
+    { words: ['rarefação na região de furca','rarefação interradicular','lesão de furca'], tag: 'Exodontia do decíduo — indicação absoluta' },
+    { words: ['cárie em decíduo','carie em deciduo','lesão cariosa em decíduo','cárie em dente decíduo'], tag: 'Restauração ou pulpotomia (decíduo)' },
+    { words: ['rizólise','reabsorção fisiológica','reabsorção radicular fisiológica'], tag: 'Acompanhar erupção do sucessor permanente' },
 ];
 
 const RECOMMEND_RULES = [
@@ -441,6 +499,14 @@ const RECOMMEND_RULES = [
     { words: ['raízes residuais','raizes residuais','raiz residual','remanescente radicular','raiz retida'], tag: 'Radiografia periapical' },
     { words: ['desvio de septo','hipertrofia de corneto','atresia de coana'], tag: 'TC de seios paranasais + avaliação otorrino' },
     { words: ['sobrecarga oclusal','atrição intensa','desgaste severo'], tag: 'Avaliação clínica + modelos de estudo' },
+    // Furca permanentes
+    { words: ['rarefação na região de furca','rarefação óssea na região de furca','rarefação interradicular','lesão de furca','furca comprometida','lesão de furca em dente permanente'], tag: 'Periapical pela técnica do paralelismo' },
+    // Decíduos — rizólise
+    { words: ['rizólise','reabsorção fisiológica','reabsorção radicular fisiológica'], tag: 'Periapical ou oclusal (deciduo)' },
+    // Decíduos — cárie
+    { words: ['cárie em decíduo','carie em deciduo','lesão cariosa em decíduo','cárie em dente decíduo'], tag: 'Radiografia interproximal da região (decíduo)' },
+    // Decíduos — furca/rarefação interradicular
+    { words: ['rarefação na região de furca','rarefação interradicular','lesão de furca'], tag: 'Periapical do decíduo — confirmar extensão' },
 ];
 
 const PULPAR_WORDS = [
@@ -456,19 +522,52 @@ const TRATADO_WORDS = [
 const RESIDUAL_WORDS = [
     'raízes residuais','raizes residuais','raiz residual','remanescente radicular','raiz retida'
 ];
+// Palavras que identificam furca de dente permanente
+const FURCA_PERM_WORDS = [
+    'rarefação na região de furca','rarefação óssea na região de furca','rarefação interradicular',
+    'lesão de furca','furca comprometida','lesão de furca em dente permanente'
+];
+// Palavras que identificam decíduo
+const DECIDUO_WORDS = [
+    'decíduo','deciduo','dente de leite','dentes de leite','primário','leite',
+    'rizólise','rizolyse','reabsorção fisiológica'
+];
 
 function getImpacts(text) {
     const lower = text.toLowerCase();
     const temPulpar   = PULPAR_WORDS.some(w => lower.includes(w));
     const temTratado  = TRATADO_WORDS.some(w => lower.includes(w));
     const temResidual = RESIDUAL_WORDS.some(w => lower.includes(w));
+    const temDeciduo  = DECIDUO_WORDS.some(w => lower.includes(w)) || isDentDeciduo(text);
+    const temFurcaPerm = FURCA_PERM_WORDS.some(w => lower.includes(w)) && !temDeciduo;
+    const temFurcaDec  = temFurca(text) && temDeciduo;
+
     const found = []; const seen = new Set();
+
+    // Furca de dente permanente — conduta específica (prioritária)
+    if (temFurcaPerm) {
+        found.push('Avaliação periodontal — possível exodontia');
+        seen.add('Avaliação periodontal — possível exodontia');
+        seen.add('Avaliação e trat. periodontal');
+    }
+
+    // Furca de decíduo — conduta específica (prioritária)
+    if (temFurcaDec) {
+        found.push('Exodontia do decíduo — indicação absoluta');
+        seen.add('Exodontia do decíduo — indicação absoluta');
+    }
+
     for (const rule of IMPACT_RULES) {
         if (!rule.words.some(w => lower.includes(w))) continue;
         if (seen.has(rule.tag)) continue;
         if (rule.tag === 'Tratamento endodôntico' && temResidual) continue;
+        if (rule.tag === 'Tratamento endodôntico' && temDeciduo) continue; // decíduo não faz endo convencional
         if (rule.tag === 'Restauração' && (temPulpar || temTratado || temResidual)) continue;
         if (rule.tag === 'Tratamento endodôntico' && temTratado) continue;
+        // Pulpotomia é a conduta endodôntica para decíduos com cárie profunda
+        if (temDeciduo && temPulpar && rule.tag === 'Tratamento endodôntico') {
+            found.push('Pulpotomia ou pulpectomia (decíduo)'); seen.add(rule.tag); seen.add('Pulpotomia ou pulpectomia (decíduo)'); continue;
+        }
         found.push(rule.tag); seen.add(rule.tag);
     }
     return found;
@@ -477,14 +576,29 @@ function getImpacts(text) {
 function getRecommends(text) {
     const lower = text.toLowerCase();
     const temPulpar   = PULPAR_WORDS.some(w => lower.includes(w));
-    const temTratado  = TRATADO_WORDS.some(w => lower.includes(w));
     const temResidual = RESIDUAL_WORDS.some(w => lower.includes(w));
+    const temDeciduo  = DECIDUO_WORDS.some(w => lower.includes(w)) || isDentDeciduo(text);
+    const temFurcaPerm = FURCA_PERM_WORDS.some(w => lower.includes(w)) && !temDeciduo;
+    const temFurcaDec  = temFurca(text) && temDeciduo;
+
     const found = []; const seen = new Set();
+
+    // Furca permanente → periapical pelo paralelismo (prioritário)
+    if (temFurcaPerm) {
+        found.push('Periapical pela técnica do paralelismo');
+        seen.add('Periapical pela técnica do paralelismo');
+    }
+
+    // Furca decíduo → periapical do decíduo
+    if (temFurcaDec) {
+        found.push('Periapical do decíduo — confirmar extensão');
+        seen.add('Periapical do decíduo — confirmar extensão');
+    }
+
     const tipoSobre = detectSobrecontornoTipo(text);
     if (tipoSobre !== null) {
         if (tipoSobre === 'anterior') {
-            found.push('Radiografia periapical da região');
-            found.push('Avaliação clínica');
+            found.push('Radiografia periapical da região'); found.push('Avaliação clínica');
         } else {
             found.push('Radiografia interproximal da região');
         }
@@ -492,11 +606,14 @@ function getRecommends(text) {
         seen.add('Avaliação clínica');
         seen.add('Radiografia interproximal da região');
     }
+
     for (const rule of RECOMMEND_RULES) {
         if (!rule.words.some(w => lower.includes(w))) continue;
         if (seen.has(rule.tag)) continue;
         if (rule.tag === 'Radiografia interproximal ou periapical da região' && (temPulpar || temResidual)) continue;
         if (rule.tag === 'Radiografia periapical' && seen.has('Radiografia periapical da região')) continue;
+        // Evita duplicar recomendações de furca já adicionadas
+        if ((rule.tag === 'Periapical pela técnica do paralelismo' || rule.tag === 'Periapical do decíduo — confirmar extensão') && seen.has(rule.tag)) continue;
         found.push(rule.tag); seen.add(rule.tag);
     }
     return found;
@@ -771,7 +888,7 @@ if (!DATA) {
         // Em mobile o card já tem width = 82vw via CSS; apenas define top/left
         const cardW = card.offsetWidth  || (mobile ? vW * 0.82 : 340);
         const cardH = card.offsetHeight || (mobile ? 140 : 180);
-        const gap   = mobile ? 10 : 14;
+        const gap   = mobile ? 40 : 28;
         const pad   = mobile ? 8  : 12;
 
         // Centro da anotação em coordenadas do viewer
