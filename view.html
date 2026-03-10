@@ -225,12 +225,16 @@
             #signature-area { padding: 8px; background: #111; flex-shrink: 0; min-height: 50px; }
             #signature-img { max-width: 110px; max-height: 45px; }
             #finding-card {
-                top: 8px; bottom: auto;
+                bottom: 6px; top: auto;
                 left: 50%; transform: translateX(-50%);
                 width: 94%; max-width: 94%;
-                max-height: 38vh; overflow-y: auto;
-                padding: 9px 30px 9px 12px; font-size: 12px;
+                max-height: 30vh; overflow-y: auto;
+                padding: 8px 28px 8px 11px; font-size: 11.5px;
             }
+            /* Esconde seções menos críticas no mobile para economizar espaço */
+            #card-full { font-size: 11px; }
+            #card-clinical-row { gap: 6px; }
+            .impact-tag, .recommend-tag { font-size: 10px; padding: 2px 5px; }
         }
 
         /* =====================================================================
@@ -371,7 +375,7 @@ const IMPACT_RULES = [
     { words: ['periápice','periapice','rarefação periapical','lesão periapical','abscesso periapical','fístula','fistula','periodontite apical'], tag: 'Tratamento endodôntico' },
     { words: ['lesão cariosa','cariosa','cárie','carie','radiolucência coronária','lesão interproximal'], tag: 'Restauração' },
     { words: ['incluso','impactado','semi-incluso','semi incluso','pericoronite','não irrompido'], tag: 'Avaliação cirúrgica' },
-    { words: ['raízes residuais','raiz residual','remanescente radicular','raiz retida'], tag: 'Exodontia' },
+    { words: ['raízes residuais','raiz residual','remanescente radicular','raiz retida'], tag: 'Exodontia / cirurgia' },
     { words: ['destruição coronária','destruicao coronaria','coroa destruída','sem remanescente coronário','extensa destruição'], tag: 'Avaliar exodontia' },
     { words: ['perda óssea','perda ossea','reabsorção alveolar','reabsorção óssea','defeito ósseo','defeito angular','nível ósseo reduzido'], tag: 'Avaliação e trat. periodontal' },
     { words: ['cálculo','calculo','cálculo subgengival','cálculo supragengival','tártaro'], tag: 'Raspagem e alisamento radicular' },
@@ -415,28 +419,57 @@ const RECOMMEND_RULES = [
     { words: ['sobrecarga oclusal','atrição intensa','desgaste severo'], tag: 'Avaliação clínica + modelos de estudo' },
 ];
 
+// Palavras que indicam envolvimento pulpar — excluem "Restauração" e "Bitewing ou periapical"
+const PULPAR_WORDS = [
+    'envolvimento pulpar','comprometimento pulpar','câmara pulpar','exposição pulpar',
+    'necrose pulpar','cárie profunda','carie profunda','provável exposição','provavel exposicao',
+    'abscesso','fístula','fistula','periodontite apical','lesão periapical','periápice','periapice',
+    'rarefação periapical','rarefação óssea'
+];
+// Palavras que indicam dente já tratado — excluem "Restauração" e "Tratamento endodôntico"
+const TRATADO_WORDS = [
+    'tratado endodonticamente','endodonticamente','obturação endodôntica','obturacao endodontica',
+    'tratamento endodôntico concluído'
+];
+const RESIDUAL_WORDS = [
+    'raízes residuais','raiz residual','raizes residuais','remanescente radicular','raiz retida'
+];
+
 function getImpacts(text) {
     const lower = text.toLowerCase();
+    const temPulpar   = PULPAR_WORDS.some(w => lower.includes(w));
+    const temTratado  = TRATADO_WORDS.some(w => lower.includes(w));
+    const temResidual = RESIDUAL_WORDS.some(w => lower.includes(w));
     const found = [];
     const seen = new Set();
     for (const rule of IMPACT_RULES) {
-        if (rule.words.some(w => lower.includes(w)) && !seen.has(rule.tag)) {
-            found.push(rule.tag);
-            seen.add(rule.tag);
-        }
+        if (!rule.words.some(w => lower.includes(w))) continue;
+        if (seen.has(rule.tag)) continue;
+        // Raízes residuais: exodontia prevalece, bloqueia endodontia
+        if (rule.tag === 'Tratamento endodôntico' && temResidual) continue;
+        // Exclui "Restauração" se há envolvimento pulpar, dente tratado ou residual
+        if (rule.tag === 'Restauração' && (temPulpar || temTratado || temResidual)) continue;
+        // Exclui "Tratamento endodôntico" se dente já foi tratado
+        if (rule.tag === 'Tratamento endodôntico' && temTratado) continue;
+        found.push(rule.tag);
+        seen.add(rule.tag);
     }
     return found;
 }
 
 function getRecommends(text) {
     const lower = text.toLowerCase();
+    const temPulpar  = PULPAR_WORDS.some(w => lower.includes(w));
+    const temTratado = TRATADO_WORDS.some(w => lower.includes(w));
     const found = [];
     const seen = new Set();
     for (const rule of RECOMMEND_RULES) {
-        if (rule.words.some(w => lower.includes(w)) && !seen.has(rule.tag)) {
-            found.push(rule.tag);
-            seen.add(rule.tag);
-        }
+        if (!rule.words.some(w => lower.includes(w))) continue;
+        if (seen.has(rule.tag)) continue;
+        // Se há envolvimento pulpar, troca bitewing por periapical
+        if (rule.tag === 'Bitewing ou periapical' && temPulpar) continue;
+        found.push(rule.tag);
+        seen.add(rule.tag);
     }
     return found;
 }
