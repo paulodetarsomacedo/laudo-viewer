@@ -740,45 +740,52 @@ if (!DATA) {
 
         if (activeFilter) {
             // ── MODO SPOTLIGHT ──────────────────────────────────────────────────
-            // Estratégia: overlay escuro sobre tudo, depois recorta círculo
-            // revelando a imagem original com brilho normal dentro do círculo.
-            // Usa um canvas auxiliar para compor corretamente.
+            // Abordagem correta com canvas offscreen:
+            // 1. Canvas A = imagem escurecida (toda a cena)
+            // 2. Canvas B = imagem em zoom 2× na área do achado (lupa)
+            // 3. Compõe B sobre A com clipping circular suave
 
-            // 1. Volta ao espaço de tela (pixels do canvas) para o overlay
             ctx.setTransform(1,0,0,1,0,0);
 
-            // 2. Overlay escuro sobre toda a tela
-            ctx.save();
-            ctx.fillStyle = 'rgba(0,0,0,0.58)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.restore();
+            // ── Canvas A: imagem escurecida ──
+            const offA = document.createElement('canvas');
+            offA.width = canvas.width; offA.height = canvas.height;
+            const ctxA = offA.getContext('2d');
+            ctxA.setTransform(scale,0,0,scale,panX,panY);
+            ctxA.drawImage(img,0,0);
+            ctxA.setTransform(1,0,0,1,0,0);
+            ctxA.fillStyle = 'rgba(0,0,0,0.52)';
+            ctxA.fillRect(0,0,offA.width,offA.height);
 
-            // 3. Para cada achado filtrado: "furo" de lupa — revela imagem original
-            DATA.annotations.forEach(anno => {
+            // Desenha canvas A no canvas principal
+            ctx.drawImage(offA,0,0);
+
+            // ── Para cada achado filtrado: lupa 2× ──
+            const filteredAnnos = DATA.annotations.filter(anno => {
                 const li = document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);
-                if (!li || li.dataset.severity !== activeFilter) return;
-                drawSpotlightLupa(anno);
+                return li && li.dataset.severity === activeFilter;
             });
 
-            // 4. Volta ao espaço da imagem e desenha as annotations por cima
+            filteredAnnos.forEach(anno => drawSpotlightLupa(anno));
+
+            // ── Anotações por cima ──
             ctx.setTransform(scale,0,0,scale,panX,panY);
-            DATA.annotations.forEach(anno => {
-                const li = document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);
-                if (!li || li.dataset.severity !== activeFilter) return;
+            filteredAnnos.forEach(anno => {
                 drawAnnotation(anno, 'spotlight');
                 const cn = getAnnoCenterNorm(anno);
                 if (cn) {
-                    const col = li.dataset.severityColor || '#ffffff';
+                    const li  = document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);
+                    const col = li ? li.dataset.severityColor : '#ffffff';
                     drawPulse(cn.x * img.naturalWidth, cn.y * img.naturalHeight, col);
                 }
             });
 
         } else if (showAll) {
-            // ── VISÃO GERAL: todos os achados normais ────────────────────────────
+            // ── VISÃO GERAL: todos os achados normais ─────────────────────────
             DATA.annotations.forEach(anno => drawAnnotation(anno, false));
 
         } else if (activeAnnotationId) {
-            // ── ACHADO INDIVIDUAL ─────────────────────────────────────────────────
+            // ── ACHADO INDIVIDUAL ─────────────────────────────────────────────
             const anno = DATA.annotations.find(a => a.id === activeAnnotationId);
             if (anno) {
                 drawAnnotation(anno, true);
@@ -792,55 +799,67 @@ if (!DATA) {
         }
     }
 
-    // Spotlight tipo lupa: desenha a imagem original (sem escurecimento) dentro
-    // de um círculo suave ao redor da annotation, sobre o overlay escuro da tela.
+    // Lupa real: recorta círculo com imagem em 2× sobre a cena escurecida.
+    // Funciona 100% com canvas 2D: não usa destination-out no canvas principal.
     function drawSpotlightLupa(anno) {
         const cn = getAnnoCenterNorm(anno);
         if (!cn) return;
 
-        // Centro em pixels de TELA
-        const cxImg = cn.x * img.naturalWidth;
-        const cyImg = cn.y * img.naturalHeight;
+        // Centro da annotation em coords de tela
+        const cxImg    = cn.x * img.naturalWidth;
+        const cyImg    = cn.y * img.naturalHeight;
         const cxScreen = cxImg * scale + panX;
         const cyScreen = cyImg * scale + panY;
 
-        // Raio em pixels de tela, generoso ao redor da annotation
-        let annoRadiusScreen = 70;
+        // Raio da lupa em pixels de tela
+        let annoR = 60;
         if (anno.points && anno.points.length > 1) {
             const xs = anno.points.map(p => p.x * img.naturalWidth * scale);
             const ys = anno.points.map(p => p.y * img.naturalHeight * scale);
             const w  = Math.max(...xs) - Math.min(...xs);
             const h  = Math.max(...ys) - Math.min(...ys);
-            annoRadiusScreen = Math.hypot(w, h) * 0.55;
+            annoR = Math.hypot(w, h) * 0.5;
         }
-        const radius = Math.max(annoRadiusScreen * 2.4, 90);
+        const radius = Math.max(annoR * 2.6, 85);
 
+        // ── Canvas B: imagem em zoom 2× centrada no achado ──
+        const diam = radius * 2;
+        const offB = document.createElement('canvas');
+        offB.width = diam; offB.height = diam;
+        const ctxB = offB.getContext('2d');
+
+        // Zoom 2× = scale * 2, mas centralizado no ponto do achado
+        const zoomFactor = 2.0;
+        const zScale  = scale * zoomFactor;
+        const zPanX   = radius - cxImg * zScale;
+        const zPanY   = radius - cyImg * zScale;
+        ctxB.setTransform(zScale, 0, 0, zScale, zPanX, zPanY);
+        ctxB.drawImage(img, 0, 0);
+
+        // Clipping circular suave no canvas B usando gradiente de máscara
+        ctxB.setTransform(1,0,0,1,0,0);
+        ctxB.globalCompositeOperation = 'destination-in';
+        const mask = ctxB.createRadialGradient(radius, radius, radius * 0.68, radius, radius, radius);
+        mask.addColorStop(0,    'rgba(0,0,0,1)');
+        mask.addColorStop(0.78, 'rgba(0,0,0,1)');
+        mask.addColorStop(0.92, 'rgba(0,0,0,0.5)');
+        mask.addColorStop(1,    'rgba(0,0,0,0)');
+        ctxB.fillStyle = mask;
+        ctxB.beginPath();
+        ctxB.arc(radius, radius, radius, 0, Math.PI * 2);
+        ctxB.fill();
+
+        // Compõe B sobre o canvas principal (já tem a imagem escurecida)
         ctx.save();
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.drawImage(offB, cxScreen - radius, cyScreen - radius);
 
-        // Cria um clipping circular suave usando compositing:
-        // Desenha gradiente radial com destination-out para "furar" o overlay
-        // e revelar a imagem original já desenhada por baixo.
-        ctx.globalCompositeOperation = 'destination-out';
-        const grad = ctx.createRadialGradient(cxScreen, cyScreen, radius * 0.55, cxScreen, cyScreen, radius);
-        grad.addColorStop(0,    'rgba(0,0,0,1)');
-        grad.addColorStop(0.72, 'rgba(0,0,0,1)');
-        grad.addColorStop(0.88, 'rgba(0,0,0,0.6)');
-        grad.addColorStop(1,    'rgba(0,0,0,0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(cxScreen, cyScreen, radius, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.restore();
-
-        // Anel externo muito sutil — apenas para demarcar a borda da lupa
-        ctx.save();
-        ctx.globalCompositeOperation = 'source-over';
+        // Anel sutil na borda da lupa
         const pulseT = (Math.sin(pulsePhase * 0.7) + 1) / 2;
         ctx.beginPath();
-        ctx.arc(cxScreen, cyScreen, radius * (0.88 + pulseT * 0.04), 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(255,255,255,${0.08 + pulseT * 0.06})`;
-        ctx.lineWidth = 1.2;
+        ctx.arc(cxScreen, cyScreen, radius * 0.91, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${0.12 + pulseT * 0.08})`;
+        ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.restore();
     }
