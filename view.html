@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; }
         :root {
-            --bg-color: #000;
+            --bg-color: #001940;
             --panel-bg: #111;
             --text-color: #eee;
             --accent: #007bff;
@@ -53,12 +53,9 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.9);
             border-left: 5px solid var(--accent);
             font-size: 14px; line-height: 1.5;
-            max-width: 420px; min-width: 260px;
-            max-height: 45vh; overflow-y: auto;
-            transition: opacity 0.3s ease;
-        }
-        @media (min-width: 769px) {
-            #finding-card { bottom: 30px; left: 30px; }
+            max-width: 380px; min-width: 240px;
+            max-height: 42vh; overflow-y: auto;
+            transition: opacity 0.2s ease;
         }
         .close-card {
             position: absolute; top: 8px; right: 10px;
@@ -228,19 +225,9 @@
             #signature-area { padding: 8px; background: #111; flex-shrink: 0; min-height: 50px; }
             #signature-img { max-width: 110px; max-height: 45px; }
             #finding-card {
-                position: fixed;
-                bottom: 0; top: auto;
-                left: 0; right: 0;
-                transform: none;
-                width: 100%; max-width: 100%;
-                max-height: 38vh; overflow-y: auto;
-                padding: 10px 32px 12px 13px;
                 font-size: 11.5px;
-                border-radius: 14px 14px 0 0;
-                border-left: none;
-                border-top: 4px solid var(--accent);
-                box-shadow: 0 -6px 30px rgba(0,0,0,0.85);
-                z-index: 200;
+                padding: 8px 28px 8px 11px;
+                min-width: 0;
             }
             #card-full { font-size: 11px; }
             #card-clinical-row { gap: 6px; }
@@ -896,7 +883,54 @@ if (!DATA) {
         }
 
         card.style.borderLeftColor = sevColor;
+        card.style.borderTopColor  = sevColor;
         card.style.display = 'block';
+    }
+
+    // Posiciona o card: mobile → topo do viewer (anotação está em baixo)
+    //                   desktop → abaixo ou acima da anotação
+    function positionCardNearAnno(anno) {
+        const card = document.getElementById('finding-card');
+        if (!card || card.style.display === 'none') return;
+
+        const viewerEl = document.getElementById('viewer-area');
+        const viewerW  = viewerEl.offsetWidth;
+        const viewerH  = viewerEl.offsetHeight;
+        const isMobile = window.innerWidth <= 768;
+        const margin   = 10;
+
+        // Largura do card: no mobile ocupa quase tudo, desktop limitado
+        const cardW = isMobile ? viewerW - margin * 2 : Math.min(360, viewerW - margin * 2);
+        card.style.width    = cardW + 'px';
+        card.style.maxWidth = cardW + 'px';
+        card.style.maxHeight = Math.round(viewerH * 0.40) + 'px';
+        card.style.bottom   = 'auto';
+        card.style.right    = 'auto';
+        card.style.transform = 'none';
+
+        if (isMobile) {
+            // Mobile: card no topo do viewer, centralizado
+            card.style.top  = margin + 'px';
+            card.style.left = margin + 'px';
+        } else {
+            // Desktop: calcula posição relativa à anotação
+            const cn = getAnnoCenterNorm(anno);
+            if (!cn) { card.style.top = margin + 'px'; card.style.left = margin + 'px'; return; }
+            const cyScreen = cn.y * img.naturalHeight * scale + panY;
+            const cxScreen = cn.x * img.naturalWidth  * scale + panX;
+            const cardH    = Math.min(card.scrollHeight || 180, viewerH * 0.40);
+            const gap      = 16;
+
+            // Abaixo se couber, senão acima
+            let top = (viewerH - cyScreen - gap >= cardH + margin)
+                ? cyScreen + gap
+                : Math.max(margin, cyScreen - gap - cardH);
+
+            let left = cxScreen - cardW / 2;
+            left = Math.max(margin, Math.min(left, viewerW - cardW - margin));
+            card.style.top  = top  + 'px';
+            card.style.left = left + 'px';
+        }
     }
 
     window.closeCard = function() {
@@ -1159,7 +1193,10 @@ if (!DATA) {
                 const sevLevel = item.dataset.severity || 'complement';
                 const cardText = item.innerText.replace(/\n/g,' ').trim();
                 updateFindingCard(cardText, sevColor, sevLevel);
-                zoomNatural(anno);
+                const target = calcZoomNatural(anno);
+                smoothZoomTo(target.scale, target.panX, target.panY, 380, () => {
+                    positionCardNearAnno(anno);
+                });
                 startPulse();
             }
         }
@@ -1167,7 +1204,7 @@ if (!DATA) {
     });
 
     // ---- ZOOM NATURAL ----
-    function zoomNatural(anno) {
+    function calcZoomNatural(anno) {
         let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
         if (anno.points) {
             anno.points.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
@@ -1190,9 +1227,17 @@ if (!DATA) {
         tScale=Math.max(tScale,Math.min(canvas.width/img.naturalWidth,canvas.height/img.naturalHeight));
         const cX=((minX+maxX)/2)*img.naturalWidth;
         const cY=((minY+maxY)/2)*img.naturalHeight;
-        scale=tScale; panX=(canvas.width/2)-(cX*scale);
-        const ratioY=landscape?0.47:(window.innerWidth<=768?0.35:0.5);
-        panY=(canvas.height*ratioY)-(cY*scale);
+        const tPanX = canvas.width/2 - cX*tScale;
+        // Mobile portrait: anotação fica em 68% da altura → card aparece acima com espaço
+        // Desktop/landscape: centralizado
+        const isMobilePortrait = window.innerWidth <= 768 && !landscape;
+        const ratioY = landscape ? 0.47 : isMobilePortrait ? 0.68 : 0.50;
+        const tPanY  = canvas.height*ratioY - cY*tScale;
+        return { scale: tScale, panX: tPanX, panY: tPanY };
+    }
+    function zoomNatural(anno) {
+        const t = calcZoomNatural(anno);
+        scale = t.scale; panX = t.panX; panY = t.panY;
     }
 
     // ---- MOUSE / TOUCH ----
@@ -1249,7 +1294,7 @@ if (!DATA) {
 
     // Smooth animated zoom
     let animFrame = null;
-    function smoothZoomTo(targetScale, targetPanX, targetPanY, duration) {
+    function smoothZoomTo(targetScale, targetPanX, targetPanY, duration, onComplete) {
         if (animFrame) cancelAnimationFrame(animFrame);
         const startScale = scale, startPanX = panX, startPanY = panY;
         const startTime = performance.now();
@@ -1262,7 +1307,7 @@ if (!DATA) {
             panY  = startPanY  + (targetPanY  - startPanY)  * e;
             render();
             if (t < 1) animFrame = requestAnimationFrame(step);
-            else animFrame = null;
+            else { animFrame = null; if (onComplete) onComplete(); }
         }
         animFrame = requestAnimationFrame(step);
     }
