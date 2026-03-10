@@ -197,11 +197,13 @@
         .item-entity-label strong {
             font-size: 12px; letter-spacing: 0.2px; margin-right: 2px; font-weight: 900;
         }
-        /* Corpo do texto — mostra TODO o conteúdo */
+        /* Corpo do texto — mostra TODO o conteúdo, line-height uniforme */
         .item-body {
             padding: 7px 10px 9px 10px;
-            font-size: 13px; line-height: 1.5; color: #bbb;
+            font-size: 13px; line-height: 1.45; color: #bbb;
         }
+        /* Garante que tags internas não criem espaço extra */
+        .item-body p, .item-body br, .item-body span { display: inline; margin: 0; padding: 0; }
 
         #controls {
             padding: 12px 15px; border-top: 1px solid #222;
@@ -249,7 +251,7 @@
             #sidebar-header { display: block; padding: 8px 12px; flex-shrink: 0; }
             #sidebar-header h2 { font-size: 17px; margin-bottom: 4px; }
             #controls { display: none; }
-            .instruction-box { padding: 6px 12px 8px; font-size: 11px; flex-shrink: 0; }
+            .instruction-box { padding: 7px 12px 10px; font-size: 11px; flex-shrink: 0; border-bottom: 1px solid #1e1e1e; }
 
             /* ── CARROSSEL portrait ── */
             #findings-list {
@@ -259,7 +261,7 @@
                 overflow-y: auto;
                 scroll-snap-type: x mandatory;
                 -webkit-overflow-scrolling: touch;
-                padding: 4px 10px 6px 10px;
+                padding: 8px 10px 8px 10px;
                 gap: 8px;
                 flex: 1;
                 min-height: 0;
@@ -908,12 +910,22 @@ if (!DATA) {
             ? `<strong>DENTE ${number}</strong>`
             : `<strong>${resolvedLabel}</strong>`;
 
+        // Normaliza o HTML do achado: remove tags que criam espaço duplo
+        const cleanHTML = originalHTML
+            .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, ' ')   // <br><br> → espaço
+            .replace(/<br\s*\/?>/gi, ' ')                  // <br> restante → espaço
+            .replace(/<\/p>\s*<p[^>]*>/gi, ' ')            // </p><p> → espaço
+            .replace(/<p[^>]*>/gi, '')                     // <p> abre → remove
+            .replace(/<\/p>/gi, '')                        // </p> fecha → remove
+            .replace(/\s{2,}/g, ' ')                       // espaços múltiplos → único
+            .trim();
+
         p.innerHTML =
             `<div class="item-header" style="background:${sev.color}14">` +
                 `<span class="sev-dot" style="background:${sev.color};width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0"></span>` +
                 `<span class="item-entity-label" style="color:${sev.color}">${headerLabel}</span>` +
             `</div>` +
-            `<div class="item-body">${originalHTML}</div>`;
+            `<div class="item-body">${cleanHTML}</div>`;
     });
     buildSeveritySummary(sevCounts, items.length);
 
