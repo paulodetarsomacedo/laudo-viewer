@@ -227,17 +227,17 @@
 
             /* Card mobile: compacto, posicionado via JS */
             #finding-card {
-                width: 82vw;
-                max-height: 36vh;
-                font-size: 11px;
-                line-height: 1.4;
-                padding: 8px 28px 8px 10px;
-                border-radius: 10px;
+                width: 72vw;
+                max-height: 28vh;
+                font-size: 10.5px;
+                line-height: 1.35;
+                padding: 7px 26px 7px 9px;
+                border-radius: 9px;
                 bottom: auto; left: auto;
             }
-            #card-full { font-size: 10.5px; }
-            #card-clinical-row { gap: 5px; margin-top: 7px; padding-top: 7px; }
-            .impact-tag, .recommend-tag { font-size: 9.5px; padding: 2px 4px; }
+            #card-full { font-size: 10px; }
+            #card-clinical-row { gap: 4px; margin-top: 6px; padding-top: 6px; }
+            .impact-tag, .recommend-tag { font-size: 9px; padding: 1px 4px; }
             #card-impact strong, #card-recommend strong { font-size: 8px; }
         }
 
@@ -685,6 +685,17 @@ function getAnnoCenterNorm(anno) {
         return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 };
     }
     if (anno.start && anno.end) return { x: (anno.start.x + anno.end.x) / 2, y: (anno.start.y + anno.end.y) / 2 };
+    if (anno.type && anno.size !== undefined) {
+        // Setas: spotlight centrado na PONTA (s/2, 0) no espaço local da seta.
+        // anno.x/y são o pivot (centro); size é relativo a naturalWidth, já normalizado.
+        // A ponta fica a (size * scale / 2) do pivot, na direção de rotation.
+        const halfLen = (anno.size * (anno.scale || 1)) / 2;
+        const rot     = anno.rotation || 0;
+        return {
+            x: anno.x + halfLen * Math.cos(rot),
+            y: anno.y + halfLen * Math.sin(rot)
+        };
+    }
     if (anno.x !== undefined) return { x: anno.x, y: anno.y };
     return null;
 }
