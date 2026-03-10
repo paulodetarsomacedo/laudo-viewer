@@ -740,45 +740,25 @@ if (!DATA) {
 
         if (activeFilter) {
             // ── MODO SPOTLIGHT ──────────────────────────────────────────────────
-            // Abordagem correta com canvas offscreen:
-            // 1. Canvas A = imagem escurecida (toda a cena)
-            // 2. Canvas B = imagem em zoom 2× na área do achado (lupa)
-            // 3. Compõe B sobre A com clipping circular suave
-
             ctx.setTransform(1,0,0,1,0,0);
 
-            // ── Canvas A: imagem escurecida ──
+            // Canvas A: imagem escurecida
             const offA = document.createElement('canvas');
             offA.width = canvas.width; offA.height = canvas.height;
             const ctxA = offA.getContext('2d');
             ctxA.setTransform(scale,0,0,scale,panX,panY);
             ctxA.drawImage(img,0,0);
             ctxA.setTransform(1,0,0,1,0,0);
-            ctxA.fillStyle = 'rgba(0,0,0,0.30)';
+            ctxA.fillStyle = 'rgba(0,0,0,0.62)';
             ctxA.fillRect(0,0,offA.width,offA.height);
-
-            // Desenha canvas A no canvas principal
             ctx.drawImage(offA,0,0);
 
-            // ── Para cada achado filtrado: lupa 2× ──
+            // Círculo spotlight para cada achado filtrado (sem anotações)
             const filteredAnnos = DATA.annotations.filter(anno => {
                 const li = document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);
                 return li && li.dataset.severity === activeFilter;
             });
-
             filteredAnnos.forEach(anno => drawSpotlightLupa(anno));
-
-            // ── Anotações por cima ──
-            ctx.setTransform(scale,0,0,scale,panX,panY);
-            filteredAnnos.forEach(anno => {
-                drawAnnotation(anno, 'spotlight');
-                const cn = getAnnoCenterNorm(anno);
-                if (cn) {
-                    const li  = document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);
-                    const col = li ? li.dataset.severityColor : '#ffffff';
-                    drawPulse(cn.x * img.naturalWidth, cn.y * img.naturalHeight, col);
-                }
-            });
 
         } else if (showAll) {
             // ── VISÃO GERAL: todos os achados normais ─────────────────────────
@@ -799,7 +779,7 @@ if (!DATA) {
         }
     }
 
-    // Spotlight: overlay leve no fundo, círculo revela imagem original sem zoom
+    // Spotlight: fundo escuro, círculo menor com zoom 1.4× na região do achado
     function drawSpotlightLupa(anno) {
         const cn = getAnnoCenterNorm(anno);
         if (!cn) return;
@@ -809,37 +789,41 @@ if (!DATA) {
         const cxScreen = cxImg * scale + panX;
         const cyScreen = cyImg * scale + panY;
 
-        let annoR = 60;
+        // Raio menor — proporcional à annotation mas mais compacto
+        let annoR = 45;
         if (anno.points && anno.points.length > 1) {
             const xs = anno.points.map(p => p.x * img.naturalWidth * scale);
             const ys = anno.points.map(p => p.y * img.naturalHeight * scale);
             const w  = Math.max(...xs) - Math.min(...xs);
             const h  = Math.max(...ys) - Math.min(...ys);
-            annoR = Math.hypot(w, h) * 0.5;
+            annoR = Math.hypot(w, h) * 0.45;
         }
-        const radius = Math.max(annoR * 2.6, 85);
+        const radius = Math.max(annoR * 1.9, 65);
 
         ctx.save();
         ctx.setTransform(1,0,0,1,0,0);
 
-        // Clip circular — revela a imagem original (sem zoom) dentro do círculo
+        // Clip circular
         ctx.beginPath();
         ctx.arc(cxScreen, cyScreen, radius, 0, Math.PI * 2);
         ctx.clip();
 
-        // Redesenha a imagem original com scale/pan normais (sem zoom)
-        ctx.setTransform(scale, 0, 0, scale, panX, panY);
+        // Zoom 1.4× centralizado no achado
+        const zScale = scale * 1.4;
+        const zPanX  = cxScreen - cxImg * zScale;
+        const zPanY  = cyScreen - cyImg * zScale;
+        ctx.setTransform(zScale, 0, 0, zScale, zPanX, zPanY);
         ctx.drawImage(img, 0, 0);
 
         ctx.restore();
 
-        // Anel branco sutil na borda
+        // Anel branco sutil pulsante
         ctx.save();
         ctx.setTransform(1,0,0,1,0,0);
         const pulseT = (Math.sin(pulsePhase * 0.7) + 1) / 2;
         ctx.beginPath();
         ctx.arc(cxScreen, cyScreen, radius, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(255,255,255,${0.15 + pulseT * 0.08})`;
+        ctx.strokeStyle = `rgba(255,255,255,${0.20 + pulseT * 0.10})`;
         ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.restore();
