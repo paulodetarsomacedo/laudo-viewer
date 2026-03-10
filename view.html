@@ -739,21 +739,29 @@ if (!DATA) {
         ctx.drawImage(img,0,0);
 
         if (activeFilter) {
-            // ── MODO SPOTLIGHT ─────────────────────────────────────────────────
-            // 1. Overlay escuro semi-transparente sobre toda a imagem
+            // ── MODO SPOTLIGHT ──────────────────────────────────────────────────
+            // Estratégia: overlay escuro sobre tudo, depois recorta círculo
+            // revelando a imagem original com brilho normal dentro do círculo.
+            // Usa um canvas auxiliar para compor corretamente.
+
+            // 1. Volta ao espaço de tela (pixels do canvas) para o overlay
+            ctx.setTransform(1,0,0,1,0,0);
+
+            // 2. Overlay escuro sobre toda a tela
             ctx.save();
-            ctx.fillStyle = 'rgba(0,0,0,0.60)';
-            ctx.fillRect(0, 0, img.naturalWidth, img.naturalHeight);
+            ctx.fillStyle = 'rgba(0,0,0,0.58)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.restore();
 
-            // 2. Para cada achado filtrado: spotlight luminoso (brightening)
+            // 3. Para cada achado filtrado: "furo" de lupa — revela imagem original
             DATA.annotations.forEach(anno => {
                 const li = document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);
                 if (!li || li.dataset.severity !== activeFilter) return;
-                drawSpotlightBright(anno, li.dataset.severityColor || '#ffffff');
+                drawSpotlightLupa(anno);
             });
 
-            // 3. Desenha as annotations filtradas por cima, sem efeitos extras
+            // 4. Volta ao espaço da imagem e desenha as annotations por cima
+            ctx.setTransform(scale,0,0,scale,panX,panY);
             DATA.annotations.forEach(anno => {
                 const li = document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);
                 if (!li || li.dataset.severity !== activeFilter) return;
@@ -766,11 +774,11 @@ if (!DATA) {
             });
 
         } else if (showAll) {
-            // ── VISÃO GERAL: todos os achados normais, sem escurecimento ────────
+            // ── VISÃO GERAL: todos os achados normais ────────────────────────────
             DATA.annotations.forEach(anno => drawAnnotation(anno, false));
 
         } else if (activeAnnotationId) {
-            // ── ACHADO INDIVIDUAL ────────────────────────────────────────────────
+            // ── ACHADO INDIVIDUAL ─────────────────────────────────────────────────
             const anno = DATA.annotations.find(a => a.id === activeAnnotationId);
             if (anno) {
                 drawAnnotation(anno, true);
@@ -784,60 +792,56 @@ if (!DATA) {
         }
     }
 
-    // Spotlight LUMINOSO: círculo maior que ilumina/clareia a região
-    function drawSpotlightBright(anno, color) {
+    // Spotlight tipo lupa: desenha a imagem original (sem escurecimento) dentro
+    // de um círculo suave ao redor da annotation, sobre o overlay escuro da tela.
+    function drawSpotlightLupa(anno) {
         const cn = getAnnoCenterNorm(anno);
         if (!cn) return;
-        const cx = cn.x * img.naturalWidth;
-        const cy = cn.y * img.naturalHeight;
 
-        // Raio baseado no tamanho da annotation + margem generosa
-        let annoRadius = 60 * drawingScale;
+        // Centro em pixels de TELA
+        const cxImg = cn.x * img.naturalWidth;
+        const cyImg = cn.y * img.naturalHeight;
+        const cxScreen = cxImg * scale + panX;
+        const cyScreen = cyImg * scale + panY;
+
+        // Raio em pixels de tela, generoso ao redor da annotation
+        let annoRadiusScreen = 70;
         if (anno.points && anno.points.length > 1) {
-            const xs = anno.points.map(p => p.x * img.naturalWidth);
-            const ys = anno.points.map(p => p.y * img.naturalHeight);
+            const xs = anno.points.map(p => p.x * img.naturalWidth * scale);
+            const ys = anno.points.map(p => p.y * img.naturalHeight * scale);
             const w  = Math.max(...xs) - Math.min(...xs);
             const h  = Math.max(...ys) - Math.min(...ys);
-            annoRadius = Math.hypot(w, h) * 0.55;
+            annoRadiusScreen = Math.hypot(w, h) * 0.55;
         }
-        const radius = Math.max(annoRadius * 2.2, 90 * drawingScale);
+        const radius = Math.max(annoRadiusScreen * 2.4, 90);
 
         ctx.save();
 
-        // Camada 1: "apaga" o overlay escuro (destination-out) na área do spotlight
+        // Cria um clipping circular suave usando compositing:
+        // Desenha gradiente radial com destination-out para "furar" o overlay
+        // e revelar a imagem original já desenhada por baixo.
         ctx.globalCompositeOperation = 'destination-out';
-        const clearGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-        clearGrad.addColorStop(0,   'rgba(0,0,0,1.0)');
-        clearGrad.addColorStop(0.5, 'rgba(0,0,0,0.85)');
-        clearGrad.addColorStop(0.85,'rgba(0,0,0,0.3)');
-        clearGrad.addColorStop(1,   'rgba(0,0,0,0)');
-        ctx.fillStyle = clearGrad;
+        const grad = ctx.createRadialGradient(cxScreen, cyScreen, radius * 0.55, cxScreen, cyScreen, radius);
+        grad.addColorStop(0,    'rgba(0,0,0,1)');
+        grad.addColorStop(0.72, 'rgba(0,0,0,1)');
+        grad.addColorStop(0.88, 'rgba(0,0,0,0.6)');
+        grad.addColorStop(1,    'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.arc(cxScreen, cyScreen, radius, 0, Math.PI * 2);
         ctx.fill();
 
-        // Camada 2: halo de brilho colorido sobre a área iluminada
+        ctx.restore();
+
+        // Anel externo muito sutil — apenas para demarcar a borda da lupa
+        ctx.save();
         ctx.globalCompositeOperation = 'source-over';
-        const r = parseInt(color.slice(1,3),16)||200;
-        const g = parseInt(color.slice(3,5),16)||200;
-        const b = parseInt(color.slice(5,7),16)||200;
-        const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 0.9);
-        glowGrad.addColorStop(0,    `rgba(${r},${g},${b},0.12)`);
-        glowGrad.addColorStop(0.45, `rgba(${r},${g},${b},0.06)`);
-        glowGrad.addColorStop(1,    `rgba(${r},${g},${b},0)`);
-        ctx.fillStyle = glowGrad;
+        const pulseT = (Math.sin(pulsePhase * 0.7) + 1) / 2;
         ctx.beginPath();
-        ctx.arc(cx, cy, radius * 0.9, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Camada 3: anel externo delicado para demarcar o spotlight
-        const pulseT = (Math.sin(pulsePhase * 0.8) + 1) / 2;
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius * (0.9 + pulseT * 0.06), 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(${r},${g},${b},${0.18 + pulseT * 0.10})`;
-        ctx.lineWidth = 1.5 * drawingScale;
+        ctx.arc(cxScreen, cyScreen, radius * (0.88 + pulseT * 0.04), 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${0.08 + pulseT * 0.06})`;
+        ctx.lineWidth = 1.2;
         ctx.stroke();
-
         ctx.restore();
     }
 
