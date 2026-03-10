@@ -799,13 +799,13 @@ if (!DATA) {
         }
     }
 
-    // Lupa real: recorta círculo com imagem em 2× sobre a cena escurecida.
-    // Funciona 100% com canvas 2D: não usa destination-out no canvas principal.
+    // Lupa real: clip circular no canvas principal, redesenha a imagem em 2×
+    // dentro do clip. Sem canvas offscreen, sem compositing de máscara.
     function drawSpotlightLupa(anno) {
         const cn = getAnnoCenterNorm(anno);
         if (!cn) return;
 
-        // Centro da annotation em coords de tela
+        // Centro da annotation em coords de TELA
         const cxImg    = cn.x * img.naturalWidth;
         const cyImg    = cn.y * img.naturalHeight;
         const cxScreen = cxImg * scale + panX;
@@ -822,44 +822,31 @@ if (!DATA) {
         }
         const radius = Math.max(annoR * 2.6, 85);
 
-        // ── Canvas B: imagem em zoom 2× centrada no achado ──
-        const diam = radius * 2;
-        const offB = document.createElement('canvas');
-        offB.width = diam; offB.height = diam;
-        const ctxB = offB.getContext('2d');
-
-        // Zoom 2× = scale * 2, mas centralizado no ponto do achado
-        const zoomFactor = 2.0;
-        const zScale  = scale * zoomFactor;
-        const zPanX   = radius - cxImg * zScale;
-        const zPanY   = radius - cyImg * zScale;
-        ctxB.setTransform(zScale, 0, 0, zScale, zPanX, zPanY);
-        ctxB.drawImage(img, 0, 0);
-
-        // Clipping circular suave no canvas B usando gradiente de máscara
-        ctxB.setTransform(1,0,0,1,0,0);
-        ctxB.globalCompositeOperation = 'destination-in';
-        const mask = ctxB.createRadialGradient(radius, radius, radius * 0.68, radius, radius, radius);
-        mask.addColorStop(0,    'rgba(0,0,0,1)');
-        mask.addColorStop(0.78, 'rgba(0,0,0,1)');
-        mask.addColorStop(0.92, 'rgba(0,0,0,0.5)');
-        mask.addColorStop(1,    'rgba(0,0,0,0)');
-        ctxB.fillStyle = mask;
-        ctxB.beginPath();
-        ctxB.arc(radius, radius, radius, 0, Math.PI * 2);
-        ctxB.fill();
-
-        // Compõe B sobre o canvas principal (já tem a imagem escurecida)
         ctx.save();
         ctx.setTransform(1,0,0,1,0,0);
-        ctx.drawImage(offB, cxScreen - radius, cyScreen - radius);
 
-        // Anel sutil na borda da lupa
+        // Clip circular — tudo desenhado a partir daqui fica restrito ao círculo
+        ctx.beginPath();
+        ctx.arc(cxScreen, cyScreen, radius * 0.88, 0, Math.PI * 2);
+        ctx.clip();
+
+        // Redesenha a imagem em zoom 2× dentro do clip, centralizada no achado
+        const zScale = scale * 2.0;
+        const zPanX  = cxScreen - cxImg * zScale;
+        const zPanY  = cyScreen - cyImg * zScale;
+        ctx.setTransform(zScale, 0, 0, zScale, zPanX, zPanY);
+        ctx.drawImage(img, 0, 0);
+
+        ctx.restore();
+
+        // Anel branco sutil na borda da lupa (fora do clip, no espaço de tela)
+        ctx.save();
+        ctx.setTransform(1,0,0,1,0,0);
         const pulseT = (Math.sin(pulsePhase * 0.7) + 1) / 2;
         ctx.beginPath();
-        ctx.arc(cxScreen, cyScreen, radius * 0.91, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(255,255,255,${0.12 + pulseT * 0.08})`;
-        ctx.lineWidth = 1.5;
+        ctx.arc(cxScreen, cyScreen, radius * 0.88, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${0.18 + pulseT * 0.10})`;
+        ctx.lineWidth = 1.8;
         ctx.stroke();
         ctx.restore();
     }
