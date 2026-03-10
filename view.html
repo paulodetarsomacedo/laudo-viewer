@@ -53,9 +53,12 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.9);
             border-left: 5px solid var(--accent);
             font-size: 14px; line-height: 1.5;
-            max-width: 380px; min-width: 240px;
-            max-height: 42vh; overflow-y: auto;
-            transition: opacity 0.2s ease;
+            max-width: 420px; min-width: 260px;
+            max-height: 45vh; overflow-y: auto;
+            transition: opacity 0.3s ease;
+        }
+        @media (min-width: 769px) {
+            #finding-card { bottom: 30px; left: 30px; }
         }
         .close-card {
             position: absolute; top: 8px; right: 10px;
@@ -225,9 +228,19 @@
             #signature-area { padding: 8px; background: #111; flex-shrink: 0; min-height: 50px; }
             #signature-img { max-width: 110px; max-height: 45px; }
             #finding-card {
+                position: fixed;
+                bottom: 0; top: auto;
+                left: 0; right: 0;
+                transform: none;
+                width: 100%; max-width: 100%;
+                max-height: 38vh; overflow-y: auto;
+                padding: 10px 32px 12px 13px;
                 font-size: 11.5px;
-                padding: 8px 28px 8px 11px;
-                min-width: 0;
+                border-radius: 14px 14px 0 0;
+                border-left: none;
+                border-top: 4px solid var(--accent);
+                box-shadow: 0 -6px 30px rgba(0,0,0,0.85);
+                z-index: 200;
             }
             #card-full { font-size: 11px; }
             #card-clinical-row { gap: 6px; }
@@ -883,51 +896,7 @@ if (!DATA) {
         }
 
         card.style.borderLeftColor = sevColor;
-        card.style.borderTopColor  = sevColor;
         card.style.display = 'block';
-    }
-
-    // Posiciona o card próximo à anotação — abaixo se couber, senão acima
-    function positionCardNearAnno(anno) {
-        const card = document.getElementById('finding-card');
-        if (!card || card.style.display === 'none') return;
-
-        const cn = getAnnoCenterNorm(anno);
-        if (!cn) return;
-
-        const viewerH = document.getElementById('viewer-area').offsetHeight;
-        const viewerW = document.getElementById('viewer-area').offsetWidth;
-
-        // Centro da anotação em px de tela (relativo ao viewer)
-        const cyScreen = cn.y * img.naturalHeight * scale + panY;
-        const cxScreen = cn.x * img.naturalWidth  * scale + panX;
-
-        // Limita tamanho do card
-        const maxCardH = Math.round(viewerH * 0.38);
-        const cardW    = Math.min(360, viewerW - 24);
-        card.style.maxHeight = maxCardH + 'px';
-        card.style.width     = cardW + 'px';
-        card.style.maxWidth  = cardW + 'px';
-        card.style.transform = 'none';
-        card.style.right     = 'auto';
-        card.style.bottom    = 'auto';
-
-        // Posição horizontal: centrado na anotação, dentro do viewer
-        const margin = 12;
-        let left = cxScreen - cardW / 2;
-        left = Math.max(margin, Math.min(left, viewerW - cardW - margin));
-        card.style.left = left + 'px';
-
-        // Posição vertical: abaixo da anotação se couber, senão acima
-        const gap      = 18;
-        const cardH    = Math.min(card.scrollHeight, maxCardH);
-        const spaceBelow = viewerH - cyScreen - gap;
-        if (spaceBelow >= cardH + margin) {
-            card.style.top = (cyScreen + gap) + 'px';
-        } else {
-            const topAbove = cyScreen - gap - cardH;
-            card.style.top = Math.max(margin, topAbove) + 'px';
-        }
     }
 
     window.closeCard = function() {
@@ -1190,10 +1159,7 @@ if (!DATA) {
                 const sevLevel = item.dataset.severity || 'complement';
                 const cardText = item.innerText.replace(/\n/g,' ').trim();
                 updateFindingCard(cardText, sevColor, sevLevel);
-                const target = calcZoomNatural(anno);
-                smoothZoomTo(target.scale, target.panX, target.panY, 380, () => {
-                    positionCardNearAnno(anno);
-                });
+                zoomNatural(anno);
                 startPulse();
             }
         }
@@ -1201,7 +1167,7 @@ if (!DATA) {
     });
 
     // ---- ZOOM NATURAL ----
-    function calcZoomNatural(anno) {
+    function zoomNatural(anno) {
         let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
         if (anno.points) {
             anno.points.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
@@ -1224,14 +1190,9 @@ if (!DATA) {
         tScale=Math.max(tScale,Math.min(canvas.width/img.naturalWidth,canvas.height/img.naturalHeight));
         const cX=((minX+maxX)/2)*img.naturalWidth;
         const cY=((minY+maxY)/2)*img.naturalHeight;
-        const tPanX = canvas.width/2 - cX*tScale;
-        const ratioY = landscape?0.47:(window.innerWidth<=768?0.35:0.5);
-        const tPanY  = canvas.height*ratioY - cY*tScale;
-        return { scale: tScale, panX: tPanX, panY: tPanY };
-    }
-    function zoomNatural(anno) {
-        const t = calcZoomNatural(anno);
-        scale = t.scale; panX = t.panX; panY = t.panY;
+        scale=tScale; panX=(canvas.width/2)-(cX*scale);
+        const ratioY=landscape?0.47:(window.innerWidth<=768?0.35:0.5);
+        panY=(canvas.height*ratioY)-(cY*scale);
     }
 
     // ---- MOUSE / TOUCH ----
@@ -1288,7 +1249,7 @@ if (!DATA) {
 
     // Smooth animated zoom
     let animFrame = null;
-    function smoothZoomTo(targetScale, targetPanX, targetPanY, duration, onComplete) {
+    function smoothZoomTo(targetScale, targetPanX, targetPanY, duration) {
         if (animFrame) cancelAnimationFrame(animFrame);
         const startScale = scale, startPanX = panX, startPanY = panY;
         const startTime = performance.now();
@@ -1301,7 +1262,7 @@ if (!DATA) {
             panY  = startPanY  + (targetPanY  - startPanY)  * e;
             render();
             if (t < 1) animFrame = requestAnimationFrame(step);
-            else { animFrame = null; if (onComplete) onComplete(); }
+            else animFrame = null;
         }
         animFrame = requestAnimationFrame(step);
     }
