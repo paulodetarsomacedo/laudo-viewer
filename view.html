@@ -246,12 +246,14 @@
                 display: block; padding: 7px 11px; font-size: 11px;
                 background: var(--accent); color: white; border: none; border-radius: 5px; font-weight: bold;
             }
-            #viewer-area { height: 55%; width: 100%; order: 1; border-bottom: 2px solid var(--accent); }
-            #sidebar { height: 45%; width: 100%; order: 2; border-left: none; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
-            #sidebar-header { display: block; padding: 8px 12px; flex-shrink: 0; }
-            #sidebar-header h2 { font-size: 17px; margin-bottom: 4px; }
+            #viewer-area { height: 52%; width: 100%; order: 1; border-bottom: 2px solid var(--accent); }
+            #sidebar { height: 48%; width: 100%; order: 2; border-left: none; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+            #sidebar-header { display: block; padding: 6px 12px 5px; flex-shrink: 0; }
+            #sidebar-header h2 { font-size: 15px; margin-bottom: 3px; }
+            #severity-summary { gap: 5px; flex-wrap: wrap; }
+            .sev-count { font-size: 10px; padding: 1px 7px; }
             #controls { display: none; }
-            .instruction-box { padding: 7px 12px 10px; font-size: 11px; flex-shrink: 0; border-bottom: 1px solid #1e1e1e; }
+            .instruction-box { padding: 4px 12px 5px; font-size: 10.5px; flex-shrink: 0; color: #555; border-bottom: none; }
 
             /* ── CARROSSEL portrait ── */
             #findings-list {
@@ -261,7 +263,7 @@
                 overflow-y: auto;
                 scroll-snap-type: x mandatory;
                 -webkit-overflow-scrolling: touch;
-                padding: 8px 10px 8px 10px;
+                padding: 5px 10px 5px 10px;
                 gap: 8px;
                 flex: 1;
                 min-height: 0;
@@ -270,25 +272,29 @@
             }
             #findings-list::-webkit-scrollbar { display: none; }
             .finding-item {
-                flex: 0 0 72vw !important;
-                width: 72vw !important;
+                flex: 0 0 78vw !important;
+                width: 78vw !important;
                 margin-bottom: 0 !important;
                 scroll-snap-align: center;
-                font-size: 12px;
                 display: flex !important;
                 flex-direction: column !important;
                 align-items: stretch !important;
                 padding: 0 !important;
                 height: auto !important;
             }
-            .item-header { padding: 5px 10px 4px 10px; }
-            .item-body { font-size: 12px; padding: 6px 10px 8px 10px; line-height: 1.45; }
+            .item-header { padding: 4px 10px 3px 10px; }
+            .item-body {
+                font-size: 12px; padding: 5px 10px 7px 10px;
+                line-height: 1.4 !important;
+            }
+            /* Força line-height uniforme em qualquer tag interna */
+            .item-body * { line-height: 1.4 !important; display: inline !important; margin: 0 !important; padding: 0 !important; }
             /* Navegação carrossel */
             #carousel-nav {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                padding: 3px 10px 5px;
+                padding: 3px 10px 4px;
                 flex-shrink: 0;
                 gap: 8px;
             }
@@ -310,15 +316,9 @@
             }
             .carousel-btn:active { background: #2a2a2a; color: #fff; }
             .carousel-btn:disabled { opacity: 0.25; pointer-events: none; }
-            #carousel-counter {
-                font-size: 11px;
-                color: #555;
-                text-align: center;
-                flex: 1;
-                white-space: nowrap;
-            }
-            #signature-area { padding: 5px 8px; background: #111; flex-shrink: 0; min-height: 0; }
-            #signature-img { max-width: 90px; max-height: 36px; }
+            #carousel-counter { font-size: 11px; color: #555; text-align: center; flex: 1; white-space: nowrap; }
+            #signature-area { padding: 3px 8px 4px; background: #111; flex-shrink: 0; min-height: 0; }
+            #signature-img { max-width: 80px; max-height: 30px; }
 
             /* Card mobile: canto superior esquerdo do viewer, bem compacto */
             #finding-card {
