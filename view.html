@@ -764,7 +764,7 @@ function makeSummary(text) {
         // Remove "Dente XX" no início (número permanente ou decíduo)
         working = working.replace(/^dente\s+\d{2}\s*/i, '');
         // Remove conectores e frases de transição no início
-        working = working.replace(/^(com\s+imagem\s+|apresentando\s+|com\s+aspecto\s+|aspecto\s+|imagem\s+|achado\s+|evidencia\s+|evidência\s+|com\s+)/i, '');
+        working = working.replace(/^(com\s+imagem\s+|apresentando\s+|com\s+aspecto\s+|aspecto\s+|imagem\s+|achado\s+|evidencia\s+|evidência\s+|observa-se\s+|observa\s+se\s+|nota-se\s+|nota\s+se\s+|verifica-se\s+|com\s+)/i, '');
         // Remove qualificadores vagos no início
         working = working.replace(/^(consistente\s+com\s+|sugestiva?\s+de\s+|compatível\s+com\s+|compativel\s+com\s+|sugestivo\s+de\s+)/i, '');
         // Segunda passagem: remove mais um "com" ou "de" solto no início
