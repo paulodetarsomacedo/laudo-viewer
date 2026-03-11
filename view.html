@@ -1045,7 +1045,40 @@ if (!DATA) {
         if (triggerClick) item.click();
     }
 
-    carouselPrev.addEventListener('click', () => {
+    // Sincroniza a lista de achados com o spotlight ativo:
+    // destaca (active) o card correspondente e, no portrait, rola o carrossel até ele.
+    function syncListToSpotlight() {
+        if (!activeFilter) return;
+        const filteredAnnos = DATA.annotations.filter(anno => {
+            const li = document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);
+            return li && li.dataset.severity === activeFilter;
+        });
+        if (!filteredAnnos.length) return;
+        const focusIdx = ((spotlightIndex % filteredAnnos.length) + filteredAnnos.length) % filteredAnnos.length;
+        const focusAnno = filteredAnnos[focusIdx];
+        const targetLi  = document.querySelector(`.finding-item[data-annotation-id="${focusAnno.id}"]`);
+        if (!targetLi) return;
+
+        // Destaca na lista
+        document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
+        targetLi.classList.add('active');
+
+        if (isMobilePortraitNow()) {
+            // No carrossel: rola até o card sem disparar click (evita loop)
+            const idx = allItems.indexOf(targetLi);
+            if (idx !== -1) {
+                carouselIndex = idx;
+                targetLi.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                updateCarouselCounter();
+                updateCarouselButtons();
+            }
+        } else {
+            // Desktop/landscape: scroll suave na sidebar
+            targetLi.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+
         scrollCarouselTo(carouselIndex - 1, true);
     });
     carouselNext.addEventListener('click', () => {
@@ -1624,6 +1657,7 @@ if (!DATA) {
             });
             if (filteredAnnos.length > 1) {
                 spotlightIndex = (spotlightIndex + 1) % filteredAnnos.length;
+                syncListToSpotlight();
                 render();
                 return;
             }
@@ -1745,6 +1779,8 @@ if (!DATA) {
             }
         }
         startPulse(); render();
+        // Pequeno delay para o render completar antes de sincronizar o scroll
+        setTimeout(syncListToSpotlight, 80);
     }
 
     document.getElementById('btn-toggle-all').addEventListener('click',toggleAllAction);
