@@ -753,46 +753,118 @@ function getRecommends(text) {
 function makeSummary(text) {
     const clean = text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 
-    // Detecta se é um caso de implante/prótese (número do dente é relevante)
+    // Detecta se é implante/prótese — número do dente é clinicamente relevante aqui
     const isImplante = /implante|osseointegrad|peri-implantite|prótese sobre implante/i.test(clean);
 
-    // Remove prefixos de ruído: "Dente XX com ...", "Dente XX apresentando ...", etc.
-    // Mas preserva se for implante
+    // ── Termos clínicos de alto valor que DEVEM ser preservados e priorizados ──
+    // Se o texto contiver algum desses, o resumo começa nele (não antes)
+    const ANCHOR_TERMS = [
+        // Reabsorção / perda estrutural
+        'reabsorção radicular externa', 'reabsorção radicular interna', 'reabsorção radicular',
+        'reabsorção óssea', 'reabsorção',
+        // Rarefação / lesão óssea
+        'rarefação óssea periapical', 'rarefação óssea interradicular', 'rarefação óssea',
+        'rarefação periapical', 'rarefação',
+        // Cárie / lesão cariosa
+        'lesão cariosa recorrente', 'lesão cariosa secundária', 'lesão cariosa extensa',
+        'lesão cariosa profunda', 'lesão cariosa', 'cárie profunda', 'cárie extensa',
+        'cárie com exposição pulpar', 'cárie',
+        // Lesão de furca
+        'lesão de furca', 'comprometimento de furca', 'envolvimento de furca',
+        'rarefação na região de furca', 'rarefação interradicular',
+        // Espaço pericementário / periápice
+        'aumento do espaço pericementário', 'espessamento do espaço pericementário',
+        'espaço pericementário', 'lesão periapical', 'abscesso periapical',
+        // Lesões gerais
+        'lesão radiolúcida', 'lesão radiopaca', 'lesão mista', 'lesão cística',
+        'lesão óssea', 'lesão',
+        // Outros achados relevantes
+        'perda óssea alveolar', 'perda óssea', 'defeito ósseo angular',
+        'incluso', 'impactado', 'semi-incluso',
+        'necrose pulpar', 'necrose', 'abscesso', 'fístula',
+        'cisto dentígero', 'cisto radicular', 'cisto', 'tumor',
+        'fratura radicular', 'fratura coronária', 'fratura',
+        'pericoronite', 'peri-implantite',
+        'rizólise patológica', 'rizólise acelerada', 'rizólise fisiológica', 'rizólise',
+        'osteíte condensante', 'esclerose óssea',
+        'espessamento mucoso', 'velamento sinusal', 'pseudocisto sinusal',
+        'calcificação pulpar', 'calcificação',
+        'dilaceração radicular', 'dilaceração',
+        'giroversão', 'atrição', 'desgaste oclusal',
+        'tratamento endodôntico', 'obturação inadequada', 'sobreobturação', 'subobturação',
+        'implante',
+    ];
+
     let working = clean;
 
     if (!isImplante) {
-        // Remove "Dente XX" no início (número permanente ou decíduo)
+        // 1. Remove "Dente XX" no início
         working = working.replace(/^dente\s+\d{2}\s*/i, '');
-        // Remove conectores e frases de transição no início
-        working = working.replace(/^(com\s+imagem\s+|apresentando\s+|com\s+aspecto\s+|aspecto\s+|imagem\s+|achado\s+|evidencia\s+|evidência\s+|observa-se\s+|observa\s+se\s+|nota-se\s+|nota\s+se\s+|verifica-se\s+|com\s+)/i, '');
-        // Remove qualificadores vagos no início
-        working = working.replace(/^(consistente\s+com\s+|sugestiva?\s+de\s+|compatível\s+com\s+|compativel\s+com\s+|sugestivo\s+de\s+)/i, '');
-        // Segunda passagem: remove mais um "com" ou "de" solto no início
-        working = working.replace(/^(com\s+|de\s+)/i, '');
+
+        // 2. Remove qualquer prefixo introdutório (uma ou mais passagens)
+        const INTRO_PATTERNS = [
+            /^(observa-se\s+|observa\s+se\s+)/i,
+            /^(nota-se\s+|nota\s+se\s+)/i,
+            /^(verifica-se\s+|verifica\s+se\s+)/i,
+            /^(evidencia-se\s+|evidencia\s+se\s+)/i,
+            /^(apresentando\s+)/i,
+            /^(exibindo\s+)/i,
+            /^(evidencia\s+|evidência\s+)/i,
+            /^(achado\s+)/i,
+            /^(presença\s+de\s+)/i,
+            /^(com\s+imagem\s+)/i,
+            /^(com\s+aspecto\s+)/i,
+            /^(com\s+área\s+)/i,
+            /^(área\s+de\s+)/i,
+            /^(imagem\s+)/i,
+            /^(aspecto\s+)/i,
+        ];
+        // Múltiplas passagens para encadeamento (ex: "observa-se presença de")
+        for (let pass = 0; pass < 4; pass++) {
+            const before = working;
+            INTRO_PATTERNS.forEach(p => { working = working.replace(p, ''); });
+            // Remove qualificadores vagos
+            working = working.replace(/^(consistente\s+com\s+)/i, '');
+            working = working.replace(/^(sugestiv[oa]\s+de\s+)/i, '');
+            working = working.replace(/^(compatível\s+com\s+|compativel\s+com\s+)/i, '');
+            working = working.replace(/^(com\s+)/i, '');
+            working = working.replace(/^(de\s+)/i, '');
+            working = working.trim();
+            if (working === before) break;
+        }
     }
 
-    working = working.trim();
+    // 3. Tenta ancorar no primeiro termo clínico de alto valor
+    const lower = working.toLowerCase();
+    for (const term of ANCHOR_TERMS) {
+        const idx = lower.indexOf(term.toLowerCase());
+        if (idx !== -1 && idx < working.length * 0.55) {
+            // Só reposiciona se o termo estiver na primeira metade
+            // (evita cortar achados curtos onde já começa bem)
+            if (idx > 8) working = working.slice(idx);
+            break;
+        }
+    }
 
-    // Agora extrai as palavras mais clínicas (até ~8 palavras)
-    // Remove stop words genéricas do início se ainda restarem
-    const NOISE_START = /^(a|o|um|uma|há|na|no|em|da|do|das|dos|que|se|ao|aos|às)\s+/i;
+    // 4. Remove stop words soltas no início
+    working = working.trim();
+    const NOISE_START = /^(a|o|um|uma|há|na|no|em|da|do|das|dos|que|se|ao|aos|às|e\s)\s*/i;
     while (NOISE_START.test(working)) working = working.replace(NOISE_START, '').trim();
 
-    // Capitaliza a primeira letra
+    // 5. Capitaliza
     if (working.length > 0) working = working.charAt(0).toUpperCase() + working.slice(1);
 
-    // Limita a ~55 chars ou 8 palavras — o que vier primeiro
+    // 6. Corta num ponto semântico (vírgula, ponto) ou em 9 palavras
     const words = working.split(/\s+/);
     let summary;
-    if (words.length <= 8) {
+    if (words.length <= 9) {
         summary = working;
     } else {
-        // Tenta cortar num ponto semântico (após vírgula/ponto)
         const atPunct = working.search(/[,;.]/);
-        if (atPunct > 10 && atPunct < 60) {
+        if (atPunct > 8 && atPunct < 65) {
             summary = working.slice(0, atPunct);
         } else {
-            summary = words.slice(0, 8).join(' ') + '…';
+            summary = words.slice(0, 9).join(' ') + '…';
         }
     }
 
