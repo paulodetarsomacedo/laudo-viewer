@@ -63,42 +63,136 @@ canvas { display:block; }
 .btn.secondary { background:#2a2a2a; }
 #signature-area { padding:16px;text-align:center;border-top:1px solid #222;background:#111;flex-shrink:0;display:flex;justify-content:center; }
 #signature-img { max-width:150px;height:auto;filter:brightness(0) invert(1);opacity:0.8; }
+/* sidebar-top: desktop oculto */
+#sidebar-top { display:none; }
+
 /* PORTRAIT */
 @media (max-width:768px) and (orientation:portrait) {
-    body { flex-direction:column; }
-    #app-header { position:relative;top:0;left:0;transform:none;width:100%;border-radius:0;border:none;border-bottom:1px solid #222;background:#111;justify-content:space-between;padding:10px 15px; }
-    #app-title { font-size:12px;letter-spacing:1px; }
-    #btn-toggle-all-header { display:block;padding:7px 11px;font-size:11px;background:var(--accent);color:white;border:none;border-radius:5px;font-weight:bold; }
-    #viewer-area { height:52%;width:100%;order:1;border-bottom:2px solid var(--accent); }
-    #sidebar { height:48%;width:100%;order:2;border-left:none;display:flex;flex-direction:column;overflow:hidden;min-height:0; }
-    #sidebar-header { display:block;padding:6px 12px 5px;flex-shrink:0; }
-    #sidebar-header h2 { font-size:15px;margin-bottom:3px; }
-    #severity-summary { gap:5px;flex-wrap:wrap; }
-    .sev-count { font-size:10px;padding:3px 8px; }
-    #controls { display:none; }
-    .instruction-box { padding:4px 12px 5px;font-size:10px;flex-shrink:0;color:#444;border-bottom:none; }
-    #findings-list { display:flex!important;flex-direction:row;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:5px 10px;gap:8px;flex:1;min-height:0;align-items:flex-start;scrollbar-width:none; }
+    body { flex-direction:column; overflow:hidden; }
+    #app-header { display:none; }
+
+    /* sidebar-top: título + categorias + instrução — ACIMA do viewer */
+    #sidebar-top {
+        display:flex; flex-direction:column; flex-shrink:0;
+        width:100%; order:0; background:#111;
+        border-bottom:1px solid #1a1a1a; z-index:10;
+    }
+    /* sidebar-top contém um #sidebar-header duplicado: estiliza-o */
+    #sidebar-top #sidebar-header {
+        padding:8px 13px 6px; border-bottom:none;
+    }
+    #sidebar-top #sidebar-header h2 { font-size:15px;margin:0 0 5px 0; }
+    #sidebar-top #severity-summary-top { display:flex;gap:5px;flex-wrap:wrap;margin-top:5px; }
+    #sidebar-top .sev-count { font-size:10px;padding:3px 8px; }
+    #sidebar-top .instruction-box {
+        padding:5px 13px 7px; font-size:10.5px; color:#555;
+        background:#111; border-top:1px solid #1a1a1a; border-bottom:none;
+    }
+
+    /* VIEWER — entre header e cards */
+    #viewer-area {
+        order:1; width:100%; flex-shrink:0;
+        height:44vh; min-height:110px;
+        border-bottom:2px solid var(--accent);
+    }
+
+    /* SIDEBAR (parte inferior: só lista + nav + assinatura) */
+    #sidebar {
+        order:2; width:100%; border-left:none;
+        display:flex; flex-direction:column;
+        overflow:hidden; min-height:0; flex:1;
+        background:var(--panel-bg);
+    }
+    /* Oculta o sidebar-header duplicado dentro do sidebar no portrait */
+    #sidebar > #sidebar-header,
+    #sidebar > .instruction-box { display:none; }
+
+    /* CARROSSEL — modo normal */
+    #findings-list {
+        display:flex!important; flex-direction:row;
+        overflow-x:auto; overflow-y:hidden;
+        scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+        padding:6px 10px; gap:8px;
+        flex:1; min-height:0; align-items:flex-start;
+        scrollbar-width:none;
+    }
     #findings-list::-webkit-scrollbar { display:none; }
-    .finding-item { flex:0 0 78vw!important;width:78vw!important;margin-bottom:0!important;scroll-snap-align:center;display:flex!important;flex-direction:column!important;align-items:stretch!important;padding:0!important;height:auto!important; }
-    .item-header { padding:4px 10px 3px 10px; }
-    .item-body { font-size:12px;padding:5px 10px 7px 10px;line-height:1.4!important; }
-    .item-body * { line-height:1.4!important;display:inline!important;margin:0!important;padding:0!important; }
-    #carousel-nav { display:flex;align-items:center;justify-content:space-between;padding:3px 10px 4px;flex-shrink:0;gap:8px; }
-    .carousel-btn { background:#1e1e1e;border:1px solid #333;color:#aaa;border-radius:20px;padding:4px 11px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all 0.18s;white-space:nowrap;flex-shrink:0; }
+    .finding-item {
+        flex:0 0 82vw!important; width:82vw!important;
+        margin-bottom:0!important; scroll-snap-align:center;
+        display:flex!important; flex-direction:column!important;
+        align-items:stretch!important; padding:0!important; height:auto!important;
+        transition:box-shadow 0.25s, transform 0.25s;
+    }
+    .item-header { padding:5px 10px 4px 10px; }
+    .item-body { font-size:12.5px;padding:6px 10px 8px 10px;line-height:1.45!important; }
+    .item-body * { line-height:1.45!important;display:inline!important;margin:0!important;padding:0!important; }
+
+    /* ── MODO FOCO: toda área inferior = 1 card grande ── */
+    #sidebar.portrait-focus #findings-list {
+        flex-direction:column!important;
+        overflow-x:hidden!important; overflow-y:auto!important;
+        scroll-snap-type:none!important;
+        padding:0!important; gap:0!important; align-items:stretch!important;
+    }
+    #sidebar.portrait-focus .finding-item { display:none!important; }
+    #sidebar.portrait-focus .finding-item.active {
+        display:flex!important; flex-direction:column!important;
+        flex:1!important; width:100%!important;
+        margin:0!important; border-radius:0!important;
+        border-left-width:5px!important; border-bottom-width:3px!important;
+        transform:none!important; background:#181818!important;
+    }
+    #sidebar.portrait-focus .finding-item.active .item-header {
+        padding:13px 15px 11px!important;
+        border-bottom:1px solid rgba(255,255,255,0.09)!important;
+    }
+    #sidebar.portrait-focus .finding-item.active .item-entity-label {
+        font-size:10px!important; letter-spacing:1.5px!important;
+    }
+    #sidebar.portrait-focus .finding-item.active .item-entity-label strong {
+        font-size:22px!important; display:block!important; margin-bottom:2px!important;
+    }
+    #sidebar.portrait-focus .finding-item.active .item-body {
+        font-size:15px!important; line-height:1.65!important;
+        padding:14px 16px 18px!important; color:#ddd!important;
+        flex:1; overflow-y:auto;
+    }
+    #sidebar.portrait-focus .finding-item.active .item-body * {
+        line-height:1.65!important; display:inline!important;
+        font-size:15px!important;
+    }
+
+    /* Botão "← Todos os achados" */
+    #btn-back-list {
+        display:none; align-items:center; justify-content:flex-start;
+        gap:7px; padding:8px 14px; flex-shrink:0;
+        background:#161616; border:none; border-bottom:1px solid #222;
+        color:#5a8fd4; font-size:12px; font-weight:600; cursor:pointer;
+        width:100%; text-align:left; letter-spacing:0.3px;
+    }
+    #sidebar.portrait-focus #btn-back-list { display:flex; }
+
+    /* Nav carrossel */
+    #carousel-nav {
+        display:flex; align-items:center; justify-content:space-between;
+        padding:5px 12px 6px; flex-shrink:0; gap:8px;
+        background:#161616; border-top:1px solid #222;
+    }
+    .carousel-btn {
+        background:#1e1e1e; border:1px solid #333; color:#aaa;
+        border-radius:20px; padding:5px 13px; font-size:11px; font-weight:600;
+        cursor:pointer; display:flex; align-items:center; gap:5px;
+        transition:all 0.18s; white-space:nowrap; flex-shrink:0;
+    }
     .carousel-btn:active { background:#2a2a2a;color:#fff; }
     .carousel-btn:disabled { opacity:0.25;pointer-events:none; }
     #carousel-counter { font-size:11px;color:#555;text-align:center;flex:1;white-space:nowrap; }
-    #signature-area { padding:3px 8px 4px;background:#111;flex-shrink:0;min-height:0; }
-    #signature-img { max-width:80px;max-height:30px; }
-    #finding-card { width:58vw;max-height:42vh;font-size:10px;line-height:1.35;border-radius:10px;overflow-y:auto; }
-    #card-sev-band { padding:3px 10px 2px;font-size:8px; }
-    #card-header-row { padding:7px 28px 6px 10px; }
-    #card-entity-label { font-size:9px;letter-spacing:1.2px; }
-    #card-entity-label strong { font-size:13px; }
-    #card-body { padding:7px 22px 8px 10px; }
-    #card-clinical-row { gap:4px; }
-    .impact-tag,.recommend-tag { font-size:9px;padding:2px 5px; }
-    #card-impact strong,#card-recommend strong { font-size:7.5px; }
+
+    #controls { display:none; }
+    #signature-area { padding:4px 10px 5px;background:#111;flex-shrink:0;min-height:0;border-top:1px solid #1a1a1a; }
+    #signature-img { max-width:80px;max-height:26px; }
+    #finding-card { display:none!important; }
 }
 /* LANDSCAPE */
 @media (max-width:900px) and (orientation:landscape) {
@@ -132,6 +226,13 @@ canvas { display:block; }
     <div id="app-title">LAUDO INTERATIVO</div>
     <button id="btn-toggle-all-header">&#128269; Visão Geral</button>
 </div>
+<div id="sidebar-top">
+    <div id="sidebar-header">
+        <h2>Achados Radiográficos</h2>
+        <div id="severity-summary-top"></div>
+    </div>
+    <div class="instruction-box">Toque nas categorias para destacar achados na imagem — ou toque diretamente nas anotações.</div>
+</div>
 <div id="viewer-area">
     <div id="finding-card">
         <button class="close-card" onclick="closeCard()">×</button>
@@ -151,7 +252,8 @@ canvas { display:block; }
         <h2>Achados Radiográficos</h2>
         <div id="severity-summary"></div>
     </div>
-    <div class="instruction-box">Toque nos botões acima para explorar achados por categoria — ou toque diretamente nas anotações da imagem para ver detalhes clínicos.</div>
+    <div class="instruction-box">Toque nos botões acima para explorar por categoria — ou toque diretamente nas anotações da imagem.</div>
+    <button id="btn-back-list">&#8592; Todos os achados</button>
     <div id="findings-list">Carregando...</div>
     <div id="carousel-nav" style="display:none;">
         <button class="carousel-btn" id="carousel-prev">◀ Anterior</button>
@@ -575,7 +677,6 @@ if(!DATA){
             ctx.save();ctx.setTransform(1,0,0,1,0,0);
             const pt=(Math.sin(pulsePhase*0.7)+1)/2;
             ctx.beginPath();ctx.arc(cxS,cyS,radius,0,Math.PI*2);ctx.strokeStyle=`rgba(255,255,255,${0.28+pt*0.14})`;ctx.lineWidth=2;ctx.stroke();
-            ctx.beginPath();ctx.arc(cxS,cyS,radius+9,0,Math.PI*2);ctx.strokeStyle=`${col}66`;ctx.lineWidth=1.5;ctx.setLineDash([5,7]);ctx.stroke();ctx.setLineDash([]);
             ctx.restore();
         }else{
             const dR=Math.max(annoR*0.9,28);
@@ -598,60 +699,113 @@ if(!DATA){
         const color=(el&&el.dataset.severityColor)?el.dataset.severityColor:(anno.color||'#00FFFF');
         const baseWidth=(anno.thickness||4)*drawingScale;
         const isZoom=isActive===true;
-        // FIX #5: visão geral mais espessa e visível
-        const strokeW=isZoom?baseWidth*0.6:baseWidth*1.4;
-        const strokeAlpha=isZoom?0.95:0.92;
-        const fillOp=isZoom?0.07:0.16;
+        const strokeW=isZoom?baseWidth*0.55:baseWidth*1.5;
+        const fillOp=isZoom?0.08:0.18;
+
         ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
+
         if(anno.points&&anno.fillColor){
             const pts=anno.points.map(p=>({x:p.x*img.naturalWidth,y:p.y*img.naturalHeight}));
             const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length,cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
-            const maxR=Math.max(...pts.map(p=>Math.hypot(p.x-cx,p.y-cy)))*1.1;
+            const maxR=Math.max(...pts.map(p=>Math.hypot(p.x-cx,p.y-cy)))*1.2;
+
+            // Fill com gradiente suave
             buildSmoothPath(ctx,pts,true);
             const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,maxR);
-            grad.addColorStop(0,hexAlpha(color,fillOp*1.5));grad.addColorStop(0.6,hexAlpha(color,fillOp));grad.addColorStop(1,hexAlpha(color,0));
+            grad.addColorStop(0,hexAlpha(color,fillOp*1.6));
+            grad.addColorStop(0.55,hexAlpha(color,fillOp));
+            grad.addColorStop(1,hexAlpha(color,0));
             ctx.fillStyle=grad;ctx.fill();
-            // Sombra
-            buildSmoothPath(ctx,pts,true);ctx.strokeStyle='rgba(0,0,0,0.5)';ctx.lineWidth=(isZoom?strokeW+1.5:strokeW+3)*drawingScale;ctx.stroke();
-            // Contorno principal
-            buildSmoothPath(ctx,pts,true);ctx.strokeStyle=hexAlpha(color,strokeAlpha);ctx.lineWidth=strokeW;ctx.stroke();
-            // Brilho extra visão geral
-            if(!isZoom){buildSmoothPath(ctx,pts,true);ctx.strokeStyle=hexAlpha(color,0.35);ctx.lineWidth=strokeW*0.3;ctx.stroke();}
-            // Dash zoom
-            if(isZoom){const dL=6*drawingScale,dG=10*drawingScale,dO=(pulsePhase*10)%(dL+dG);buildSmoothPath(ctx,pts,true);ctx.setLineDash([dL,dG]);ctx.lineDashOffset=-dO;ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=strokeW*0.5;ctx.stroke();ctx.setLineDash([]);ctx.lineDashOffset=0;}
+
+            // Pass 1: sombra espessa (dá profundidade / separação da imagem)
+            buildSmoothPath(ctx,pts,true);
+            ctx.strokeStyle='rgba(0,0,0,0.65)';
+            ctx.lineWidth=strokeW+(isZoom?2:4.5)*drawingScale;
+            ctx.stroke();
+
+            // Pass 2: contorno colorido principal — opaco e limpo
+            buildSmoothPath(ctx,pts,true);
+            ctx.strokeStyle=hexAlpha(color,0.97);
+            ctx.lineWidth=strokeW;
+            ctx.stroke();
+
+            // Pass 3: brilho interno fino (visão geral — dá brilho, melhora legibilidade)
+            if(!isZoom){
+                buildSmoothPath(ctx,pts,true);
+                ctx.strokeStyle=hexAlpha(color,0.45);
+                ctx.lineWidth=strokeW*0.28;
+                ctx.stroke();
+            }
+
+            // Zoom: tracejado animado sutil
+            if(isZoom){
+                const dL=7*drawingScale,dG=11*drawingScale,dO=(pulsePhase*9)%(dL+dG);
+                buildSmoothPath(ctx,pts,true);
+                ctx.setLineDash([dL,dG]);ctx.lineDashOffset=-dO;
+                ctx.strokeStyle='rgba(255,255,255,0.22)';ctx.lineWidth=strokeW*0.45;
+                ctx.stroke();ctx.setLineDash([]);ctx.lineDashOffset=0;
+            }
+
         }else if(anno.points){
             const pts=anno.points.map(p=>({x:p.x*img.naturalWidth,y:p.y*img.naturalHeight}));
-            buildSmoothPath(ctx,pts,false);ctx.strokeStyle='rgba(0,0,0,0.5)';ctx.lineWidth=strokeW+(isZoom?1.2:3)*drawingScale;ctx.stroke();
-            buildSmoothPath(ctx,pts,false);ctx.strokeStyle=hexAlpha(color,strokeAlpha);ctx.lineWidth=strokeW;ctx.stroke();
+            buildSmoothPath(ctx,pts,false);
+            ctx.strokeStyle='rgba(0,0,0,0.65)';
+            ctx.lineWidth=strokeW+(isZoom?2:4.5)*drawingScale;
+            ctx.stroke();
+            buildSmoothPath(ctx,pts,false);
+            ctx.strokeStyle=hexAlpha(color,0.97);
+            ctx.lineWidth=strokeW;
+            ctx.stroke();
+
         }else if(anno.type&&anno.size){
             const x=anno.x*img.naturalWidth,y=anno.y*img.naturalHeight,s=anno.size*img.naturalWidth;
             let hL=s*0.3,sW=s*0.1;
             ctx.translate(x,y);ctx.rotate(anno.rotation);ctx.scale(anno.scale,anno.scale);ctx.beginPath();
             if(anno.type==='normal'){
-                ctx.moveTo(-s/2+hL,0);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/2);ctx.moveTo(s/2,0);ctx.lineTo(s/2-hL,hL/2);
-                if(!isZoom){ctx.strokeStyle='rgba(0,0,0,0.6)';ctx.lineWidth=sW*1.8;ctx.lineCap='round';ctx.stroke();ctx.beginPath();ctx.moveTo(-s/2+hL,0);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/2);ctx.moveTo(s/2,0);ctx.lineTo(s/2-hL,hL/2);}
-                ctx.fillStyle=color;ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=sW*(isZoom?1:1.3);ctx.lineCap='round';ctx.stroke();
+                // Sombra
+                ctx.strokeStyle='rgba(0,0,0,0.65)';ctx.lineWidth=sW*(isZoom?1.4:2.2);ctx.lineCap='round';
+                ctx.moveTo(-s/2+hL,0);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/2);ctx.moveTo(s/2,0);ctx.lineTo(s/2-hL,hL/2);ctx.stroke();
+                ctx.beginPath();ctx.moveTo(-s/2+hL,0);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/2);ctx.moveTo(s/2,0);ctx.lineTo(s/2-hL,hL/2);
+                ctx.fillStyle=color;ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=sW*(isZoom?1:1.5);ctx.lineCap='round';ctx.stroke();
             }else if(anno.type==='outline'){
                 hL=s*0.4;sW=s*0.15;
-                ctx.moveTo(-s/2,-sW/2);ctx.lineTo(-s/2,sW/2);ctx.lineTo(s/2-hL,sW/2);ctx.lineTo(s/2-hL,hL/2);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/2);ctx.lineTo(s/2-hL,-sW/2);ctx.closePath();
-                ctx.strokeStyle=color;ctx.lineWidth=isZoom?2.5*drawingScale:3.5*drawingScale;ctx.lineJoin='miter';ctx.stroke();
+                ctx.moveTo(-s/2,-sW/2);ctx.lineTo(-s/2,sW/2);ctx.lineTo(s/2-hL,sW/2);ctx.lineTo(s/2-hL,hL/2);
+                ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/2);ctx.lineTo(s/2-hL,-sW/2);ctx.closePath();
+                ctx.strokeStyle='rgba(0,0,0,0.65)';ctx.lineWidth=isZoom?3*drawingScale:5*drawingScale;ctx.lineJoin='miter';ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(-s/2,-sW/2);ctx.lineTo(-s/2,sW/2);ctx.lineTo(s/2-hL,sW/2);ctx.lineTo(s/2-hL,hL/2);
+                ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/2);ctx.lineTo(s/2-hL,-sW/2);ctx.closePath();
+                ctx.strokeStyle=color;ctx.lineWidth=isZoom?2*drawingScale:3.5*drawingScale;ctx.lineJoin='miter';ctx.stroke();
             }else if(anno.type==='complex'){
                 hL=s*0.4;sW=s*0.2;
-                ctx.moveTo(-s/2,-sW/2);ctx.lineTo(-s/2,sW/2);ctx.lineTo(s/2-hL,sW/2);ctx.lineTo(s/2-hL,hL/1.5);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/1.5);ctx.lineTo(s/2-hL,-sW/2);ctx.closePath();
-                ctx.fillStyle=color;ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=(isZoom?0.8:1.5)*drawingScale;ctx.lineJoin='miter';ctx.stroke();
+                ctx.moveTo(-s/2,-sW/2);ctx.lineTo(-s/2,sW/2);ctx.lineTo(s/2-hL,sW/2);ctx.lineTo(s/2-hL,hL/1.5);
+                ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/1.5);ctx.lineTo(s/2-hL,-sW/2);ctx.closePath();
+                ctx.fillStyle=color;ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=(isZoom?0.8:1.8)*drawingScale;ctx.lineJoin='miter';ctx.stroke();
             }
         }else if(anno.text&&anno.x!==undefined){
             const x=anno.x*img.naturalWidth,y=anno.y*img.naturalHeight;
-            const fs=(parseInt(anno.font)||24)*drawingScale*(isZoom?1:1.1);
+            const fs=(parseInt(anno.font)||24)*drawingScale*(isZoom?1:1.15);
             ctx.font=`bold ${fs}px Arial`;ctx.textAlign='center';
-            ctx.lineWidth=(isZoom?4:5.5)*drawingScale;ctx.strokeStyle='rgba(0,0,0,0.75)';ctx.strokeText(anno.text,x,y);
+            // Sombra tripla para legibilidade perfeita
+            ctx.lineWidth=(isZoom?4.5:6.5)*drawingScale;ctx.strokeStyle='rgba(0,0,0,0.85)';ctx.strokeText(anno.text,x,y);
+            ctx.lineWidth=(isZoom?2.5:4)*drawingScale;ctx.strokeStyle='rgba(0,0,0,0.5)';ctx.strokeText(anno.text,x,y);
             ctx.fillStyle=color;ctx.fillText(anno.text,x,y);
         }else if(anno.start&&anno.end){
             const p1={x:anno.start.x*img.naturalWidth,y:anno.start.y*img.naturalHeight};
             const p2={x:anno.end.x*img.naturalWidth,y:anno.end.y*img.naturalHeight};
-            if(!isZoom){ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.strokeStyle='rgba(0,0,0,0.55)';ctx.lineWidth=baseWidth*1.4;ctx.stroke();}
-            ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.strokeStyle=color;ctx.lineWidth=baseWidth*(isZoom?0.7:1.0);ctx.stroke();
-            if(anno.text){const fs=20*drawingScale*(isZoom?1:1.1);ctx.font=`bold ${fs}px Arial`;ctx.textAlign='center';const mx=(p1.x+p2.x)/2,my=(p1.y+p2.y)/2;ctx.lineWidth=(isZoom?3.5:5)*drawingScale;ctx.strokeStyle='rgba(0,0,0,0.7)';ctx.strokeText(anno.text,mx,my-10);ctx.fillStyle=color;ctx.fillText(anno.text,mx,my-10);}
+            const lw=baseWidth*(isZoom?0.7:1.2);
+            // Sombra
+            ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
+            ctx.strokeStyle='rgba(0,0,0,0.65)';ctx.lineWidth=lw+(isZoom?1.5:3.5)*drawingScale;ctx.stroke();
+            // Linha principal
+            ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
+            ctx.strokeStyle=hexAlpha(color,0.97);ctx.lineWidth=lw;ctx.stroke();
+            if(anno.text){
+                const fs=20*drawingScale*(isZoom?1:1.15);ctx.font=`bold ${fs}px Arial`;ctx.textAlign='center';
+                const mx=(p1.x+p2.x)/2,my=(p1.y+p2.y)/2;
+                ctx.lineWidth=(isZoom?4:6)*drawingScale;ctx.strokeStyle='rgba(0,0,0,0.85)';ctx.strokeText(anno.text,mx,my-10);
+                ctx.fillStyle=color;ctx.fillText(anno.text,mx,my-10);
+            }
         }
         ctx.restore();
     }
@@ -688,11 +842,34 @@ if(!DATA){
                 const cardText=(bodyEl?bodyEl.innerText:item.innerText).replace(/\n/g,' ').trim();
                 updateFindingCard(cardText,sevColor,sevLevel,id);
                 zoomNatural(anno);
-                if(isMobilePortrait())requestAnimationFrame(()=>positionCard(anno));
+                if(isMobilePortrait()){
+                    // Entra no modo foco: card grande ocupa toda área inferior
+                    enterPortraitFocus();
+                }else{
+                    requestAnimationFrame(()=>positionCard(anno));
+                }
                 startPulse();
             }
         }
         render();
+    });
+
+    // ── PORTRAIT FOCUS MODE ──
+    function enterPortraitFocus(){
+        document.getElementById('sidebar').classList.add('portrait-focus');
+        carouselNav.style.display='none';
+    }
+    function exitPortraitFocus(){
+        document.getElementById('sidebar').classList.remove('portrait-focus');
+        if(isMobilePortraitNow()) setupCarousel();
+    }
+    document.getElementById('btn-back-list').addEventListener('click',()=>{
+        exitPortraitFocus();
+        // Volta ao estado neutro
+        activeAnnotationId=null;showAll=false;activeFilter=null;
+        document.querySelectorAll('.finding-item').forEach(el=>{el.classList.remove('active','spotlight-active');el.style.boxShadow='';});
+        document.querySelectorAll('.sev-count').forEach(el=>el.classList.remove('active-filter'));
+        closeCard();stopPulse();fitImage();render();
     });
     function positionCard(anno){
         const card=document.getElementById('finding-card');
@@ -714,6 +891,7 @@ if(!DATA){
         activeAnnotationId=null;showAll=false;activeFilter=null;closeCard();
         document.querySelectorAll('.finding-item').forEach(el=>{el.classList.remove('active','spotlight-active');el.style.boxShadow='';});
         document.querySelectorAll('.sev-count').forEach(el=>el.classList.remove('active-filter'));
+        exitPortraitFocus();
         stopPulse();fitImage();render();
     }
     viewer.addEventListener('mousedown',e=>{isDragging=true;startX=e.clientX-panX;startY=e.clientY-panY;startClickX=e.clientX;startClickY=e.clientY;});
@@ -773,6 +951,7 @@ if(!DATA){
         smoothZoomTo(fitS,fitPX,fitPY,420);render();
     }
     function activateSeverityFilter(sevLevel){
+        exitPortraitFocus();
         if(activeFilter===sevLevel){
             activeFilter=null;showAll=false;
             document.querySelectorAll('.sev-count').forEach(el=>el.classList.remove('active-filter'));
@@ -799,16 +978,20 @@ if(!DATA){
     document.getElementById('btn-toggle-all-header').addEventListener('click',toggleAllAction);
     document.getElementById('btn-reset-zoom').addEventListener('click',resetView);
     function buildSeveritySummary(counts,total){
-        const el=document.getElementById('severity-summary');
         const defs=[{key:'critical',cls:'critical'},{key:'semi',cls:'semi'},{key:'attention',cls:'attention'},{key:'complement',cls:'complement'}];
-        const parts=[];
-        defs.forEach(d=>{
-            if(!counts[d.key])return;
-            const n=counts[d.key],lbl=SEV_LABELS[d.key].short;
-            parts.push(`<span class="sev-count ${d.cls}" data-filter="${d.key}"><span class="sev-dot ${d.cls}"></span><span>${n} · ${lbl}</span></span>`);
-        });
-        el.innerHTML=`<span style="font-size:11px;color:#555;margin-right:2px;">${total} achados</span>`+parts.join('');
-        el.querySelectorAll('.sev-count[data-filter]').forEach(badge=>{badge.addEventListener('click',()=>activateSeverityFilter(badge.dataset.filter));});
+        const buildParts=(targetId)=>{
+            const el=document.getElementById(targetId);if(!el)return;
+            const parts=[];
+            defs.forEach(d=>{
+                if(!counts[d.key])return;
+                const n=counts[d.key],lbl=SEV_LABELS[d.key].short;
+                parts.push(`<span class="sev-count ${d.cls}" data-filter="${d.key}"><span class="sev-dot ${d.cls}"></span><span>${n} · ${lbl}</span></span>`);
+            });
+            el.innerHTML=`<span style="font-size:11px;color:#555;margin-right:2px;">${total} achados</span>`+parts.join('');
+            el.querySelectorAll('.sev-count[data-filter]').forEach(badge=>{badge.addEventListener('click',()=>activateSeverityFilter(badge.dataset.filter));});
+        };
+        buildParts('severity-summary');
+        buildParts('severity-summary-top');
     }
 }
 </script>
