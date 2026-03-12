@@ -83,63 +83,65 @@ canvas { display:block; }
     /* Linha 1: LAUDO INTERATIVO + botão Visão Geral */
     #sidebar-top-bar {
         display:flex; align-items:center; justify-content:space-between;
-        padding:7px 13px 5px; gap:8px;
+        padding:5px 12px 3px; gap:8px;
     }
     #sidebar-top-bar .laudo-title {
-        font-size:11px; font-weight:800; letter-spacing:2px;
-        text-transform:uppercase; color:rgba(255,255,255,0.7);
+        font-size:10px; font-weight:800; letter-spacing:1.8px;
+        text-transform:uppercase; color:rgba(255,255,255,0.5);
     }
     #btn-toggle-all-top {
-        background:rgba(0,123,255,0.18); color:#5a9fd4;
-        border:1px solid rgba(0,123,255,0.3); border-radius:14px;
-        padding:4px 11px; font-size:10px; font-weight:700;
-        cursor:pointer; letter-spacing:0.5px; white-space:nowrap;
-        transition:all 0.18s;
+        background:rgba(0,123,255,0.15); color:#5a9fd4;
+        border:1px solid rgba(0,123,255,0.28); border-radius:12px;
+        padding:3px 10px; font-size:10px; font-weight:700;
+        cursor:pointer; white-space:nowrap; transition:all 0.18s;
     }
-    #btn-toggle-all-top:active { background:rgba(0,123,255,0.35); }
+    #btn-toggle-all-top:active { background:rgba(0,123,255,0.32); }
 
     /* Linha 2: "Achados Radiográficos" + contagem inline à direita + categorias */
     #sidebar-top #sidebar-header {
-        padding:0 13px 7px; border-bottom:none; background:transparent;
+        padding:0 12px 5px; border-bottom:none; background:transparent;
     }
     #sidebar-top #sidebar-header .header-title-row {
-        display:flex; align-items:baseline; gap:8px; margin-bottom:5px;
+        display:flex; align-items:baseline; gap:7px; margin-bottom:4px;
     }
     #sidebar-top #sidebar-header h2 {
-        font-size:14px; margin:0; color:var(--accent); white-space:nowrap;
+        font-size:13px; margin:0; color:var(--accent); white-space:nowrap;
     }
     #sidebar-top #sidebar-header .achados-count {
         font-size:10px; color:#555; font-weight:500; white-space:nowrap;
     }
+    /* Pílulas numa linha única sem "N achados" duplicado */
     #sidebar-top #severity-summary-top {
-        display:flex; gap:5px; flex-wrap:wrap;
+        display:flex; gap:4px; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
     }
-    #sidebar-top .sev-count { font-size:10px; padding:3px 8px; }
+    #sidebar-top #severity-summary-top::-webkit-scrollbar { display:none; }
+    #sidebar-top #severity-summary-top > span:first-child { display:none; }
+    #sidebar-top .sev-count { font-size:9.5px; padding:2px 7px; flex-shrink:0; }
 
-    /* Linha 3: instrução */
-    #sidebar-top .instruction-box {
-        padding:4px 13px 6px; font-size:10px; color:#4a4a4a;
-        background:transparent; border-top:1px solid #1a1a1a; border-bottom:none;
-        line-height:1.5;
-    }
+    /* Instrução — removida para compactar */
+    #sidebar-top .instruction-box { display:none; }
 
-    /* VIEWER */
+    /* VIEWER — maior, mais espaço para anotações */
     #viewer-area {
         order:1; width:100%; flex-shrink:0;
-        height:43vh; min-height:110px;
+        height:52vh; min-height:140px;
         border-bottom:2px solid var(--accent);
     }
 
-    /* Card de conduta: VISÍVEL no viewer portrait (posicionado no topo) */
+    /* Card de conduta: pequeno, JS posiciona longe da anotação */
     #finding-card {
-        display:none; /* JS controla */
-        top:8px!important; left:8px!important;
-        bottom:auto!important; right:auto!important;
-        width:calc(100% - 16px)!important;
-        max-width:360px!important;
-        max-height:38vh!important;
-        font-size:11px!important;
+        display:none;
+        width:50vw!important; max-width:210px!important;
+        max-height:30vh!important;
+        font-size:10.5px!important; border-radius:10px!important;
     }
+    #card-sev-band { font-size:8px!important; padding:3px 9px 2px!important; }
+    #card-header-row { padding:7px 24px 5px 9px!important; }
+    #card-entity-label { font-size:8.5px!important; }
+    #card-entity-label strong { font-size:13px!important; }
+    #card-body { padding:5px 8px 7px!important; }
+    .impact-tag, .recommend-tag { font-size:9px!important; padding:2px 5px!important; }
+    #card-clinical-row { gap:5px!important; }
 
     /* SIDEBAR (parte inferior) */
     #sidebar {
@@ -929,15 +931,25 @@ if(!DATA){
     function positionCard(anno){
         const card=document.getElementById('finding-card');
         if(!card||card.style.display==='none')return;
+        const vW=viewer.offsetWidth,vH=viewer.offsetHeight;
+        const pad=10;
         if(isMobilePortrait()){
-            // No portrait: card fixo no topo-esquerda do viewer
-            card.style.left='8px'; card.style.top='8px';
+            // Calcula centro da anotação na tela
+            const cn=getAnnoCenterNorm(anno);
+            const annoScreenX=cn?(cn.x*img.naturalWidth*scale+panX):(vW/2);
+            const annoScreenY=cn?(cn.y*img.naturalHeight*scale+panY):(vH/2);
+            // Posiciona o card no canto oposto à anotação
+            const cardW=card.offsetWidth||Math.min(vW*0.5,210);
+            const cardH=card.offsetHeight||120;
+            const left=(annoScreenX>vW/2)?pad:(vW-cardW-pad);
+            const top=(annoScreenY>vH/2)?pad:(vH-cardH-pad);
+            card.style.left=left+'px'; card.style.top=top+'px';
             card.style.bottom='auto'; card.style.right='auto';
+            card.style.maxHeight=(vH*0.45)+'px';
             return;
         }
         const cn=getAnnoCenterNorm(anno);if(!cn)return;
-        const vW=viewer.offsetWidth,vH=viewer.offsetHeight;
-        const cardW=card.offsetWidth||vW*0.58,cardH=card.offsetHeight||130,pad=10;
+        const cardW=card.offsetWidth||vW*0.4,cardH=card.offsetHeight||130;
         const cy=cn.y*img.naturalHeight*scale+panY,cx=cn.x*img.naturalWidth*scale+panX;
         card.style.left=((cx<vW/2)?(vW-cardW-pad):pad)+'px';
         card.style.top=((cy<vH/2)?(vH-cardH-pad):pad)+'px';
@@ -1040,24 +1052,35 @@ if(!DATA){
     document.getElementById('btn-reset-zoom').addEventListener('click',resetView);
     function buildSeveritySummary(counts,total){
         const defs=[{key:'critical',cls:'critical'},{key:'semi',cls:'semi'},{key:'attention',cls:'attention'},{key:'complement',cls:'complement'}];
-        const buildParts=(targetId)=>{
-            const el=document.getElementById(targetId);if(!el)return;
+        // Sidebar desktop: com prefixo "N achados"
+        const elMain=document.getElementById('severity-summary');
+        if(elMain){
             const parts=[];
             defs.forEach(d=>{
                 if(!counts[d.key])return;
                 const n=counts[d.key],lbl=SEV_LABELS[d.key].short;
                 parts.push(`<span class="sev-count ${d.cls}" data-filter="${d.key}"><span class="sev-dot ${d.cls}"></span><span>${n} · ${lbl}</span></span>`);
             });
-            el.innerHTML=`<span style="font-size:11px;color:#555;margin-right:2px;">${total} achados</span>`+parts.join('');
-            el.querySelectorAll('.sev-count[data-filter]').forEach(badge=>{badge.addEventListener('click',()=>activateSeverityFilter(badge.dataset.filter));});
-        };
-        buildParts('severity-summary');
-        buildParts('severity-summary-top');
-        // Contagem inline no título portrait
+            elMain.innerHTML=`<span style="font-size:11px;color:#555;margin-right:2px;">${total} achados</span>`+parts.join('');
+            elMain.querySelectorAll('.sev-count[data-filter]').forEach(badge=>{badge.addEventListener('click',()=>activateSeverityFilter(badge.dataset.filter));});
+        }
+        // Portrait top: só as pílulas, sem "N achados" (já aparece no título)
+        const elTop=document.getElementById('severity-summary-top');
+        if(elTop){
+            const parts=[];
+            defs.forEach(d=>{
+                if(!counts[d.key])return;
+                const n=counts[d.key],lbl=SEV_LABELS[d.key].short;
+                parts.push(`<span class="sev-count ${d.cls}" data-filter="${d.key}"><span class="sev-dot ${d.cls}"></span><span>${n} · ${lbl}</span></span>`);
+            });
+            elTop.innerHTML=parts.join('');
+            elTop.querySelectorAll('.sev-count[data-filter]').forEach(badge=>{badge.addEventListener('click',()=>activateSeverityFilter(badge.dataset.filter));});
+        }
+        // Contagem no título portrait
         const countEl=document.getElementById('achados-count-top');
         if(countEl)countEl.textContent=total+' achados';
     }
-    // Botão Visão Geral do portrait top
+    // Botão Visão Geral portrait
     const btnTopAll=document.getElementById('btn-toggle-all-top');
     if(btnTopAll)btnTopAll.addEventListener('click',toggleAllAction);
 }
