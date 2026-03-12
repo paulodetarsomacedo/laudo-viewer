@@ -69,45 +69,89 @@ canvas { display:block; }
 /* PORTRAIT */
 @media (max-width:768px) and (orientation:portrait) {
     body { flex-direction:column; overflow:hidden; }
+
+    /* Desktop app-header: oculto (substituído pelo sidebar-top) */
     #app-header { display:none; }
 
-    /* sidebar-top: título + categorias + instrução — ACIMA do viewer */
+    /* ── SIDEBAR-TOP: barra completa ACIMA do viewer ── */
     #sidebar-top {
         display:flex; flex-direction:column; flex-shrink:0;
-        width:100%; order:0; background:#111;
-        border-bottom:1px solid #1a1a1a; z-index:10;
-    }
-    /* sidebar-top contém um #sidebar-header duplicado: estiliza-o */
-    #sidebar-top #sidebar-header {
-        padding:8px 13px 6px; border-bottom:none;
-    }
-    #sidebar-top #sidebar-header h2 { font-size:15px;margin:0 0 5px 0; }
-    #sidebar-top #severity-summary-top { display:flex;gap:5px;flex-wrap:wrap;margin-top:5px; }
-    #sidebar-top .sev-count { font-size:10px;padding:3px 8px; }
-    #sidebar-top .instruction-box {
-        padding:5px 13px 7px; font-size:10.5px; color:#555;
-        background:#111; border-top:1px solid #1a1a1a; border-bottom:none;
+        width:100%; background:#0d0d0d;
+        border-bottom:1px solid #1e1e1e; z-index:10;
     }
 
-    /* VIEWER — entre header e cards */
+    /* Linha 1: LAUDO INTERATIVO + botão Visão Geral */
+    #sidebar-top-bar {
+        display:flex; align-items:center; justify-content:space-between;
+        padding:7px 13px 5px; gap:8px;
+    }
+    #sidebar-top-bar .laudo-title {
+        font-size:11px; font-weight:800; letter-spacing:2px;
+        text-transform:uppercase; color:rgba(255,255,255,0.7);
+    }
+    #btn-toggle-all-top {
+        background:rgba(0,123,255,0.18); color:#5a9fd4;
+        border:1px solid rgba(0,123,255,0.3); border-radius:14px;
+        padding:4px 11px; font-size:10px; font-weight:700;
+        cursor:pointer; letter-spacing:0.5px; white-space:nowrap;
+        transition:all 0.18s;
+    }
+    #btn-toggle-all-top:active { background:rgba(0,123,255,0.35); }
+
+    /* Linha 2: "Achados Radiográficos" + contagem inline à direita + categorias */
+    #sidebar-top #sidebar-header {
+        padding:0 13px 7px; border-bottom:none; background:transparent;
+    }
+    #sidebar-top #sidebar-header .header-title-row {
+        display:flex; align-items:baseline; gap:8px; margin-bottom:5px;
+    }
+    #sidebar-top #sidebar-header h2 {
+        font-size:14px; margin:0; color:var(--accent); white-space:nowrap;
+    }
+    #sidebar-top #sidebar-header .achados-count {
+        font-size:10px; color:#555; font-weight:500; white-space:nowrap;
+    }
+    #sidebar-top #severity-summary-top {
+        display:flex; gap:5px; flex-wrap:wrap;
+    }
+    #sidebar-top .sev-count { font-size:10px; padding:3px 8px; }
+
+    /* Linha 3: instrução */
+    #sidebar-top .instruction-box {
+        padding:4px 13px 6px; font-size:10px; color:#4a4a4a;
+        background:transparent; border-top:1px solid #1a1a1a; border-bottom:none;
+        line-height:1.5;
+    }
+
+    /* VIEWER */
     #viewer-area {
         order:1; width:100%; flex-shrink:0;
-        height:44vh; min-height:110px;
+        height:43vh; min-height:110px;
         border-bottom:2px solid var(--accent);
     }
 
-    /* SIDEBAR (parte inferior: só lista + nav + assinatura) */
+    /* Card de conduta: VISÍVEL no viewer portrait (posicionado no topo) */
+    #finding-card {
+        display:none; /* JS controla */
+        top:8px!important; left:8px!important;
+        bottom:auto!important; right:auto!important;
+        width:calc(100% - 16px)!important;
+        max-width:360px!important;
+        max-height:38vh!important;
+        font-size:11px!important;
+    }
+
+    /* SIDEBAR (parte inferior) */
     #sidebar {
         order:2; width:100%; border-left:none;
         display:flex; flex-direction:column;
         overflow:hidden; min-height:0; flex:1;
         background:var(--panel-bg);
     }
-    /* Oculta o sidebar-header duplicado dentro do sidebar no portrait */
     #sidebar > #sidebar-header,
     #sidebar > .instruction-box { display:none; }
 
-    /* CARROSSEL — modo normal */
+    /* CARROSSEL */
     #findings-list {
         display:flex!important; flex-direction:row;
         overflow-x:auto; overflow-y:hidden;
@@ -190,9 +234,8 @@ canvas { display:block; }
     #carousel-counter { font-size:11px;color:#555;text-align:center;flex:1;white-space:nowrap; }
 
     #controls { display:none; }
-    #signature-area { padding:4px 10px 5px;background:#111;flex-shrink:0;min-height:0;border-top:1px solid #1a1a1a; }
+    #signature-area { padding:4px 10px 5px;background:#0d0d0d;flex-shrink:0;min-height:0;border-top:1px solid #1a1a1a; }
     #signature-img { max-width:80px;max-height:26px; }
-    #finding-card { display:none!important; }
 }
 /* LANDSCAPE */
 @media (max-width:900px) and (orientation:landscape) {
@@ -227,11 +270,21 @@ canvas { display:block; }
     <button id="btn-toggle-all-header">&#128269; Visão Geral</button>
 </div>
 <div id="sidebar-top">
+    <!-- Linha 1: LAUDO INTERATIVO + Visão Geral -->
+    <div id="sidebar-top-bar">
+        <span class="laudo-title">&#128269; Laudo Interativo</span>
+        <button id="btn-toggle-all-top">Visão Geral</button>
+    </div>
+    <!-- Linha 2: título + contagem + categorias -->
     <div id="sidebar-header">
-        <h2>Achados Radiográficos</h2>
+        <div class="header-title-row">
+            <h2>Achados Radiográficos</h2>
+            <span class="achados-count" id="achados-count-top"></span>
+        </div>
         <div id="severity-summary-top"></div>
     </div>
-    <div class="instruction-box">Toque nas categorias para destacar achados na imagem — ou toque diretamente nas anotações.</div>
+    <!-- Linha 3: instrução -->
+    <div class="instruction-box">Toque nas categorias para destacar achados — ou toque diretamente nas anotações.</div>
 </div>
 <div id="viewer-area">
     <div id="finding-card">
@@ -845,6 +898,8 @@ if(!DATA){
                 if(isMobilePortrait()){
                     // Entra no modo foco: card grande ocupa toda área inferior
                     enterPortraitFocus();
+                    // Mostra o card de conduta no viewer também
+                    requestAnimationFrame(()=>positionCard(anno));
                 }else{
                     requestAnimationFrame(()=>positionCard(anno));
                 }
@@ -874,6 +929,12 @@ if(!DATA){
     function positionCard(anno){
         const card=document.getElementById('finding-card');
         if(!card||card.style.display==='none')return;
+        if(isMobilePortrait()){
+            // No portrait: card fixo no topo-esquerda do viewer
+            card.style.left='8px'; card.style.top='8px';
+            card.style.bottom='auto'; card.style.right='auto';
+            return;
+        }
         const cn=getAnnoCenterNorm(anno);if(!cn)return;
         const vW=viewer.offsetWidth,vH=viewer.offsetHeight;
         const cardW=card.offsetWidth||vW*0.58,cardH=card.offsetHeight||130,pad=10;
@@ -992,7 +1053,13 @@ if(!DATA){
         };
         buildParts('severity-summary');
         buildParts('severity-summary-top');
+        // Contagem inline no título portrait
+        const countEl=document.getElementById('achados-count-top');
+        if(countEl)countEl.textContent=total+' achados';
     }
+    // Botão Visão Geral do portrait top
+    const btnTopAll=document.getElementById('btn-toggle-all-top');
+    if(btnTopAll)btnTopAll.addEventListener('click',toggleAllAction);
 }
 </script>
 </body>
