@@ -50,7 +50,7 @@ body {
     display: flex; 
     align-items: center; 
     justify-content: space-between;
-    padding: 10px 15px 5px 15px; 
+    padding: 6px 15px 2px 15px; /* Reduzido para encaixar o titulo premium sem roubar espaço */
 }
 
 .laudo-title { 
@@ -59,6 +59,14 @@ body {
     text-transform: uppercase; 
     letter-spacing: 1.5px; 
     color: #bbb; 
+}
+
+.premium-subtitle {
+    font-size: 13px;
+    font-weight: 900;
+    color: #3b82f6; /* Azul Médico Premium */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 #btn-visao-geral {
@@ -81,7 +89,7 @@ body {
     overflow-x: auto; 
     overflow-y: hidden; 
     scroll-snap-type: x mandatory;
-    padding: 10px 15px 12px 15px; 
+    padding: 4px 15px 4px 15px; /* Compactado para salvar espaço */
     gap: 12px; 
     scrollbar-width: none; /* Firefox */
     -webkit-overflow-scrolling: touch;
@@ -163,6 +171,40 @@ body {
     padding: 0;
 }
 
+/* NAV MENU - Espaço pequeno embaixo dos cards */
+#carousel-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    padding-bottom: 5px;
+}
+.nav-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #bbb;
+    border-radius: 12px;
+    width: 32px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 10px;
+    transition: all 0.2s;
+}
+.nav-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+}
+#nav-counter {
+    font-size: 11px;
+    color: #888;
+    font-weight: 700;
+    width: 45px;
+    text-align: center;
+}
+
 /* VIEWER AREA */
 #viewer-area { 
     flex: 1; 
@@ -177,7 +219,7 @@ body {
 #viewer-area:active { cursor: grabbing; }
 canvas { display: block; }
 
-/* BOTTOM ACTION AREA (COMPACTADO) */
+/* BOTTOM ACTION AREA */
 #bottom-area {
     flex-shrink: 0; 
     background: #111; 
@@ -200,7 +242,6 @@ canvas { display: block; }
 }
 #action-card:hover { background: #1c1c1c; }
 
-/* Layout Grid para o Action Card */
 .ac-grid {
     display: flex;
     gap: 12px;
@@ -242,7 +283,6 @@ canvas { display: block; }
     justify-content: center;
 }
 
-/* Tipografia das Tags de Conduta */
 .diag-tag { 
     display: inline-block; 
     font-size: 11.5px; 
@@ -298,13 +338,25 @@ canvas { display: block; }
 <div id="app-layout">
     <div id="top-area">
         <div id="app-header-row">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <span class="laudo-title">&#128269; Laudo Interativo</span>
-                <span id="achados-count" style="font-size:10px; color:#666; font-weight:700;"></span>
+            <div style="display:flex; flex-direction:column; gap:2px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="laudo-title">&#128269; Laudo Interativo</span>
+                    <span id="achados-count" style="font-size:10px; color:#666; font-weight:700;"></span>
+                </div>
+                <!-- NOVO TÍTULO AZUL PREMIUM -->
+                <span class="premium-subtitle">Achados Radiográficos</span>
             </div>
             <button id="btn-visao-geral">Visão Geral</button>
         </div>
+        
         <div id="findings-list">Carregando...</div>
+        
+        <!-- NOVO MENU DE NAVEGAÇÃO COMPACTO -->
+        <div id="carousel-nav">
+            <button id="nav-prev" class="nav-btn">◀</button>
+            <span id="nav-counter">0 / 0</span>
+            <button id="nav-next" class="nav-btn">▶</button>
+        </div>
     </div>
     
     <div id="viewer-area">
@@ -313,7 +365,6 @@ canvas { display: block; }
     
     <div id="bottom-area">
         <div id="action-card">
-            <!-- Linha 1: Hipótese e Exame Lado a Lado -->
             <div class="ac-grid">
                 <div id="ac-diagnostic" class="ac-item">
                     <strong>🔬 Hipótese Diagnóstica</strong> 
@@ -324,7 +375,6 @@ canvas { display: block; }
                     <div class="ac-content"></div>
                 </div>
             </div>
-            <!-- Linha 2: Conduta Centralizada na Base -->
             <div id="ac-impact" class="ac-item full-width center">
                 <strong>💡 Conduta Provável</strong> 
                 <div class="ac-content"></div>
@@ -678,7 +728,34 @@ if(!DATA){
         });
     });
 
-    // Horizontal Scroll with Mouse Wheel
+    // CONTROLE DO NAV MENU CAROUSEL
+    const btnPrev = document.getElementById('nav-prev');
+    const btnNext = document.getElementById('nav-next');
+    const navCounter = document.getElementById('nav-counter');
+    
+    function updateNavMenu() {
+        const total = items.length;
+        if(total === 0) { navCounter.textContent = "0 / 0"; return; }
+        const cardWidth = 260 + 12; 
+        const scrollLeft = listEl.scrollLeft;
+        let index = Math.round(scrollLeft / cardWidth) + 1;
+        index = Math.max(1, Math.min(index, total));
+        
+        navCounter.textContent = `${index} / ${total}`;
+        
+        btnPrev.style.opacity = index <= 1 ? "0.3" : "1";
+        btnPrev.style.pointerEvents = index <= 1 ? "none" : "auto";
+        btnNext.style.opacity = index >= total ? "0.3" : "1";
+        btnNext.style.pointerEvents = index >= total ? "none" : "auto";
+    }
+
+    listEl.addEventListener('scroll', updateNavMenu);
+    window.addEventListener('resize', updateNavMenu);
+    setTimeout(updateNavMenu, 100);
+
+    btnPrev.addEventListener('click', () => { listEl.scrollBy({ left: -(260+12), behavior: 'smooth' }); });
+    btnNext.addEventListener('click', () => { listEl.scrollBy({ left: (260+12), behavior: 'smooth' }); });
+
     listEl.addEventListener('wheel', (e) => {
         if (e.deltaY !== 0) {
             e.preventDefault();
