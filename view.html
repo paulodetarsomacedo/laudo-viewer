@@ -251,7 +251,7 @@ canvas { display: block; }
     font-size: 11px;
     line-height: 1.3;
     flex: 1; 
-    min-width: 0;
+    min-width: 0; /* Essencial para que as tags não quebrem o grid */
 }
 .ac-item.full-width {
     flex: none;
@@ -278,6 +278,7 @@ canvas { display: block; }
     flex-wrap: wrap;
     gap: 4px;
     align-items: center;
+    width: 100%;
 }
 .ac-item.center .ac-content {
     justify-content: center;
@@ -290,14 +291,24 @@ canvas { display: block; }
     font-weight: 700; 
     letter-spacing: 0.2px;
     line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
+
+/* O Segredo de 1 linha: nowrap + ellipsis em bloco contido */
 .impact-tag, .recommend-tag { 
     display: inline-block; 
     border-radius: 4px; 
-    padding: 2px 6px; 
-    font-size: 10px; 
+    padding: 4px 7px; 
+    font-size: 10.5px; 
     line-height: 1.2;
     margin: 0; 
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .impact-tag { 
     background: rgba(100,116,139,0.15); 
@@ -334,7 +345,6 @@ canvas { display: block; }
 
 /* ==========================================================
    LAYOUT RESPONSIVO (DESKTOP E MOBILE LANDSCAPE)
-   Transforma em Grid: Coluna Vertical Esquerda e Viewer Direita
 ========================================================== */
 @media (min-width: 900px), (orientation: landscape) {
     #app-layout {
@@ -345,18 +355,18 @@ canvas { display: block; }
     
     #top-area {
         grid-column: 1 / 2;
-        grid-row: 1 / 3; /* Ocupa a altura inteira */
+        grid-row: 1 / 3; 
         border-right: 1px solid #222;
         border-bottom: none;
     }
     
     #findings-list {
-        flex-direction: column; /* Coloca os cards em vertical */
+        flex-direction: column; 
         overflow-y: auto;
         overflow-x: hidden;
-        scroll-snap-type: none; /* Desativa o snap na vertical */
+        scroll-snap-type: none; 
         padding: 15px;
-        flex: 1; /* Permite rolar até o fim da tela */
+        flex: 1; 
     }
     
     .finding-item {
@@ -365,7 +375,7 @@ canvas { display: block; }
     }
     
     #carousel-nav {
-        display: none !important; /* Esconde botões direcionais no modo vertical */
+        display: none !important; 
     }
     
     #viewer-area {
@@ -383,7 +393,6 @@ canvas { display: block; }
 <body>
 
 <div id="app-layout">
-    <!-- COLUNA ESQUERDA (Em Desktop) / TOPO (Em Portrait) -->
     <div id="top-area">
         <div id="app-header-row">
             <div style="display:flex; flex-direction:column; gap:2px;">
@@ -405,12 +414,10 @@ canvas { display: block; }
         </div>
     </div>
     
-    <!-- ÁREA DA IMAGEM -->
     <div id="viewer-area">
         <canvas id="canvas"></canvas>
     </div>
     
-    <!-- CARD INFERIOR E ASSINATURA -->
     <div id="bottom-area">
         <div id="action-card">
             <div class="ac-grid">
@@ -708,7 +715,7 @@ function updateFindingActionCard(text, sevColor, annoId) {
 }
 
 // ============================================================
-// CORE / CANVAS RENDERING
+// CORE / CANVAS RENDERING & SAFETY FIXES
 // ============================================================
 let pulseAnim=null, pulsePhase=0;
 function startPulse(){ stopPulse(); pulsePhase=0; function step(){ pulsePhase+=0.05; render(); pulseAnim=requestAnimationFrame(step); } pulseAnim=requestAnimationFrame(step); }
@@ -720,6 +727,35 @@ function getAnnoCenterNorm(anno){
     if(anno.type&&anno.size!==undefined){const hl=(anno.size*(anno.scale||1))/2,rot=anno.rotation||0;return{x:anno.x+hl*Math.cos(rot),y:anno.y+hl*Math.sin(rot)};}
     if(anno.x!==undefined)return{x:anno.x,y:anno.y};
     return null;
+}
+
+// Proteção Robusta de Cores (Permite que RGB e nomes não-hexadecimais renderizem perfeitamente)
+function parseColor(c) {
+    if (!c) return { r: 0, g: 255, b: 255 };
+    if (c.startsWith('#')) {
+        let hex = c.length === 4 ? '#' + c[1]+c[1]+c[2]+c[2]+c[3]+c[3] : c;
+        return { 
+            r: parseInt(hex.slice(1,3), 16) || 0, 
+            g: parseInt(hex.slice(3,5), 16) || 255, 
+            b: parseInt(hex.slice(5,7), 16) || 255 
+        };
+    }
+    if (c.startsWith('rgb')) {
+        const m = c.match(/\d+/g);
+        if(m && m.length >= 3) return { r: parseInt(m[0]), g: parseInt(m[1]), b: parseInt(m[2]) };
+    }
+    return { r: 255, g: 215, b: 0 }; 
+}
+
+function hexAlpha(colorStr, alpha) {
+    const {r, g, b} = parseColor(colorStr);
+    return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function boostColor(colorStr) {
+    const {r, g, b} = parseColor(colorStr);
+    const boost = c => Math.min(255, Math.round(c * 1.25 + 20));
+    return `rgb(${boost(r)},${boost(g)},${boost(b)})`;
 }
 
 // Inicialização Unificada 
@@ -809,7 +845,6 @@ if(!DATA){
     btnPrev.addEventListener('click', () => { listEl.scrollBy({ left: -(260+12), behavior: 'smooth' }); });
     btnNext.addEventListener('click', () => { listEl.scrollBy({ left: (260+12), behavior: 'smooth' }); });
 
-    // Permite rolar horizontal com a rodinha do mouse apenas se o layout estiver em linha
     listEl.addEventListener('wheel', (e) => {
         const isHorizontal = window.getComputedStyle(listEl).flexDirection === 'row';
         if (isHorizontal && e.deltaY !== 0) {
@@ -920,7 +955,7 @@ if(!DATA){
                 q.push({x: a.x*0.75 + b.x*0.25, y: a.y*0.75 + b.y*0.25});
                 q.push({x: a.x*0.25 + b.x*0.75, y: a.y*0.25 + b.y*0.75});
             }
-            if(closed) p = q; else p = [p[0], ...q, p[n-1]];
+            if(closed) p = q; else p =[p[0], ...q, p[n-1]];
         }
         return p;
     }
@@ -930,15 +965,6 @@ if(!DATA){
         c.beginPath(); c.moveTo(refined[0].x, refined[0].y);
         for(let i=1; i<refined.length; i++) c.lineTo(refined[i].x, refined[i].y);
         if(closed) c.closePath();
-    }
-    function hexAlpha(hex, alpha) {
-        const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
-        return `rgba(${r},${g},${b},${alpha})`;
-    }
-    function boostColor(hex) {
-        const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
-        const boost = c => Math.min(255, Math.round(c * 1.25 + 20));
-        return `rgb(${boost(r)},${boost(g)},${boost(b)})`;
     }
 
     function drawAnnotation(anno, isActive, isSuperZoom) {
