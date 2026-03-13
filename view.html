@@ -193,7 +193,7 @@ canvas { display: block; }
 
 #action-card {
     background: #181818; 
-    padding: 10px 12px; /* Reduzido o padding vertical e horizontal */
+    padding: 10px 12px; 
     border-left: 5px solid transparent; 
     cursor: pointer; 
     transition: background 0.2s;
@@ -204,12 +204,12 @@ canvas { display: block; }
 .ac-grid {
     display: flex;
     gap: 12px;
-    margin-bottom: 8px; /* Reduzido */
+    margin-bottom: 8px; 
 }
 .ac-item {
     font-size: 11px;
     line-height: 1.3;
-    flex: 1; /* Divide as colunas igualmente */
+    flex: 1; 
     min-width: 0;
 }
 .ac-item.full-width {
@@ -225,7 +225,7 @@ canvas { display: block; }
 }
 .ac-item strong { 
     display: block; 
-    font-size: 8.5px; /* Fonte levemente menor */
+    font-size: 8.5px; 
     text-transform: uppercase; 
     color: #777; 
     margin-bottom: 3px; 
@@ -257,7 +257,7 @@ canvas { display: block; }
     padding: 2px 6px; 
     font-size: 10px; 
     line-height: 1.2;
-    margin: 0; /* Removido o margin pq a .ac-content usa flex gap */
+    margin: 0; 
 }
 .impact-tag { 
     background: rgba(100,116,139,0.15); 
@@ -282,12 +282,12 @@ canvas { display: block; }
 
 #signature-area { 
     text-align: center; 
-    padding: 6px; /* Bem mais enxuto */
+    padding: 6px; 
     background: #0a0a0a; 
     border-top: 1px solid #1a1a1a; 
 }
 #signature-img { 
-    max-height: 25px; /* Reduzido para economizar área de imagem */
+    max-height: 25px; 
     filter: brightness(0) invert(1); 
     opacity: 0.7; 
 }
@@ -375,7 +375,7 @@ const DIAGNOSTIC_BANK =[
     { words:['cálculo', 'calculo', 'tártaro'], diag: 'Cálculo Dental' },
     { words:['incluso', 'impactado', 'semi-incluso', 'pericoronite'], diag: 'Dente Incluso / Impactado' },
     { words:['seio maxilar', 'espessamento', 'sinusite', 'mucosite', 'velamento'], diag: 'Alteração Sinusal (Espessamento / Mucosite)' },
-    { words: ['canal mandibular', 'íntima proximidade', 'nervo alveolar'], diag: 'Proximidade com Nervo Alveolar Inferior' },
+    { words:['canal mandibular', 'íntima proximidade', 'nervo alveolar'], diag: 'Proximidade com Nervo Alveolar Inferior' },
     { words:['peri-implantite', 'perda óssea peri-implantar'], diag: 'Peri-implantite' },
     { words: ['implante', 'osseointegrado'], diag: 'Implante Osseointegrado' },
     { words:['cisto', 'lesão cística', 'dentígero', 'folicular'], diag: 'Lesão de Aspecto Cístico' },
@@ -390,7 +390,7 @@ const DIAGNOSTIC_BANK =[
     { words:['calcificação pulpar', 'esclerose pulpar'], diag: 'Calcificação Pulpar' },
     { words:['atm', 'côndilo', 'articulação'], diag: 'Alteração em ATM' },
     { words:['alvéolo', 'alveolo', 'pós-exodontia', 'alveolite'], diag: 'Alvéolo em Reparação' },
-    { words: ['contenção', 'aparelho', 'braquete'], diag: 'Dispositivo Ortodôntico' }
+    { words:['contenção', 'aparelho', 'braquete'], diag: 'Dispositivo Ortodôntico' }
 ];
 
 function getDiagnosticHypothesis(text) {
@@ -596,13 +596,13 @@ function updateFindingActionCard(text, sevColor, annoId) {
     const impactEl = document.querySelector('#ac-impact');
     if (impacts.length) {
         impactEl.querySelector('.ac-content').innerHTML = impacts.map(t=>`<span class="impact-tag">${t}</span>`).join('');
-        impactEl.style.display = 'flex'; // Exibe o flex centralizado
+        impactEl.style.display = 'flex'; 
     } else { impactEl.style.display = 'none'; }
     
     const recEl = document.querySelector('#ac-recommend');
     if (recommends.length) {
         recEl.querySelector('.ac-content').innerHTML = recommends.map(t=>`<span class="recommend-tag">${t}</span>`).join('');
-        recEl.style.display = 'block';
+        recEl.style.display = 'flex';
     } else { recEl.style.display = 'none'; }
     
     document.getElementById('action-card').style.borderLeftColor = sevColor;
@@ -678,7 +678,7 @@ if(!DATA){
         });
     });
 
-    // Horizontal Scroll with Mouse Wheel (Desktop UX)
+    // Horizontal Scroll with Mouse Wheel
     listEl.addEventListener('wheel', (e) => {
         if (e.deltaY !== 0) {
             e.preventDefault();
@@ -722,7 +722,6 @@ if(!DATA){
         ctx.clearRect(0,0,canvas.width,canvas.height);
         
         if (activeAnnotationId && !superZoomMode) {
-            // SPOTLIGHT OVERLAY
             ctx.setTransform(scale,0,0,scale,panX,panY);
             ctx.drawImage(img,0,0);
             
@@ -736,7 +735,6 @@ if(!DATA){
             if (anno) drawSpotlightLupa(anno);
         } 
         else if (activeAnnotationId && superZoomMode) {
-            // SUPER ZOOM
             ctx.setTransform(scale,0,0,scale,panX,panY);
             ctx.drawImage(img,0,0);
             
@@ -744,7 +742,6 @@ if(!DATA){
             if (anno) drawAnnotation(anno, true, true);
         }
         else if (showAll) {
-            // SHOW ALL
             ctx.setTransform(scale,0,0,scale,panX,panY);
             ctx.drawImage(img,0,0);
             DATA.annotations.forEach(anno => drawAnnotation(anno, false, false));
@@ -766,13 +763,11 @@ if(!DATA){
         ctx.save(); ctx.setTransform(1,0,0,1,0,0);
         ctx.beginPath(); ctx.arc(cxS, cyS, radius, 0, Math.PI * 2); ctx.clip();
         
-        // Image insight loupe
         const zS = scale * 1.4; 
         ctx.setTransform(zS,0,0,zS, cxS - cxImg * zS, cyS - cyImg * zS); 
         ctx.drawImage(img, 0, 0); 
         ctx.restore();
         
-        // Ring
         ctx.save(); ctx.setTransform(1,0,0,1,0,0);
         const pt = (Math.sin(pulsePhase * 0.7) + 1) / 2;
         ctx.beginPath(); ctx.arc(cxS, cyS, radius, 0, Math.PI * 2);
@@ -874,14 +869,47 @@ if(!DATA){
         } else if (anno.type && anno.size) {
             const x = anno.x * img.naturalWidth, y = anno.y * img.naturalHeight, s = anno.size * img.naturalWidth;
             let hL = s * 0.3, sW = s * 0.1;
-            ctx.translate(x, y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
-            if(anno.type==='normal'){
+            ctx.translate(x, y); ctx.rotate(anno.rotation); ctx.scale(anno.scale || 1, anno.scale || 1);
+            if(anno.type === 'normal'){
                 ctx.beginPath(); ctx.moveTo(-s/2+hL,0); ctx.lineTo(s/2,0); ctx.lineTo(s/2-hL,-hL/2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-hL,hL/2);
                 ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=sW*(isSuperZoom?1:2.8); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(-s/2+hL,0); ctx.lineTo(s/2,0); ctx.lineTo(s/2-hL,-hL/2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-hL,hL/2);
                 ctx.strokeStyle=hexAlpha(color,0.4); ctx.lineWidth=sW*(isSuperZoom?0.8:2.2); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(-s/2+hL,0); ctx.lineTo(s/2,0); ctx.lineTo(s/2-hL,-hL/2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-hL,hL/2);
                 ctx.fillStyle=lineCol; ctx.fill(); ctx.strokeStyle=lineCol; ctx.lineWidth=sW*(isSuperZoom?0.5:1.6); ctx.stroke();
+            } else if(anno.type === 'outline'){
+                hL=s*0.4; sW=s*0.15;
+                const arrowPath=()=>{ctx.beginPath();ctx.moveTo(-s/2,-sW/2);ctx.lineTo(-s/2,sW/2);ctx.lineTo(s/2-hL,sW/2);ctx.lineTo(s/2-hL,hL/2);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/2);ctx.lineTo(s/2-hL,-sW/2);ctx.closePath();};
+                arrowPath(); ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=isSuperZoom?2*drawingScale:(isActive?4:6)*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
+                arrowPath(); ctx.strokeStyle=hexAlpha(color,0.4); ctx.lineWidth=isSuperZoom?1.5*drawingScale:(isActive?3:5)*drawingScale; ctx.stroke();
+                arrowPath(); ctx.strokeStyle=lineCol; ctx.lineWidth=isSuperZoom?1*drawingScale:(isActive?2:3.5)*drawingScale; ctx.stroke();
+            } else if(anno.type === 'complex'){
+                hL=s*0.4; sW=s*0.2;
+                ctx.beginPath();ctx.moveTo(-s/2,-sW/2);ctx.lineTo(-s/2,sW/2);ctx.lineTo(s/2-hL,sW/2);ctx.lineTo(s/2-hL,hL/1.5);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/1.5);ctx.lineTo(s/2-hL,-sW/2);ctx.closePath();
+                ctx.fillStyle=lineCol; ctx.fill(); ctx.strokeStyle=lineCol; ctx.lineWidth=(isSuperZoom?0.5:(isActive?1:2))*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
+            }
+        } else if (anno.text && anno.x !== undefined) {
+            const x=anno.x*img.naturalWidth, y=anno.y*img.naturalHeight;
+            const fs=(parseInt(anno.font)||24)*drawingScale*(isActive?1:1.15)*(isSuperZoom?0.8:1);
+            ctx.font=`bold ${fs}px Arial`; ctx.textAlign='center';
+            ctx.lineWidth=(isSuperZoom?2:(isActive?5:7))*drawingScale; ctx.strokeStyle='rgba(0,0,0,0.9)'; ctx.strokeText(anno.text,x,y);
+            ctx.lineWidth=(isSuperZoom?1:(isActive?3:4.5))*drawingScale; ctx.strokeStyle=hexAlpha(color,0.4); ctx.strokeText(anno.text,x,y);
+            ctx.fillStyle=lineCol; ctx.fillText(anno.text,x,y);
+        } else if (anno.start && anno.end) {
+            const p1={x:anno.start.x*img.naturalWidth, y:anno.start.y*img.naturalHeight};
+            const p2={x:anno.end.x*img.naturalWidth, y:anno.end.y*img.naturalHeight};
+            const lw=baseWidth*(isSuperZoom?0.3:(isActive?0.7:1.3));
+            ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
+            ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=lw+(isSuperZoom?1:(isActive?2:5))*drawingScale; ctx.stroke();
+            ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
+            ctx.strokeStyle=hexAlpha(color,0.4); ctx.lineWidth=lw+(isSuperZoom?0.5:(isActive?1:2.5))*drawingScale; ctx.stroke();
+            ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
+            ctx.strokeStyle=lineCol; ctx.lineWidth=lw; ctx.stroke();
+            if(anno.text){
+                const fs=20*drawingScale*(isActive?1:1.15)*(isSuperZoom?0.8:1); ctx.font=`bold ${fs}px Arial`; ctx.textAlign='center';
+                const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+                ctx.lineWidth=(isSuperZoom?2:(isActive?5:7))*drawingScale; ctx.strokeStyle='rgba(0,0,0,0.9)'; ctx.strokeText(anno.text,mx,my-10);
+                ctx.fillStyle=lineCol; ctx.fillText(anno.text,mx,my-10);
             }
         }
         ctx.restore();
