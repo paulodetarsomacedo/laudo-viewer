@@ -5,353 +5,370 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Laudo Interativo</title>
 <style>
-* { box-sizing:border-box; }
-:root { --bg-color:#000;--panel-bg:#111;--text-color:#eee;--accent:#007bff;--c-critical:#e53e3e;--c-semicritical:#dd6b20;--c-attention:#d69e2e;--c-complementar:#38a169; }
-body { margin:0;padding:0;background:var(--bg-color);color:var(--text-color);font-family:'Segoe UI',sans-serif;height:100vh;height:100dvh;display:flex;overflow:hidden; }
-#app-header { position:absolute;top:20px;left:50%;transform:translateX(-50%);background-color:rgba(0,0,0,0.75);color:rgba(255,255,255,0.95);padding:8px 20px;border-radius:30px;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;z-index:50;border:1px solid rgba(255,255,255,0.15);backdrop-filter:blur(5px);box-shadow:0 4px 10px rgba(0,0,0,0.3);display:flex;align-items:center;gap:15px; }
-#btn-toggle-all-header { display:none; }
-#viewer-area { flex:1;position:relative;overflow:hidden;cursor:grab;background:#000;display:flex;align-items:center;justify-content:center; }
-#viewer-area:active { cursor:grabbing; }
-canvas { display:block; }
-/* CARD FLUTUANTE */
-#finding-card { position:absolute;display:none;z-index:60;background:rgba(10,10,14,0.98);color:#fff;backdrop-filter:blur(20px);padding:0;border-radius:14px;box-shadow:0 16px 50px rgba(0,0,0,0.98),0 0 0 1px rgba(255,255,255,0.06);border-left:4px solid var(--accent);border-bottom:3px solid var(--accent);font-size:13px;line-height:1.5;width:310px;max-height:44vh;overflow-y:auto;bottom:24px;left:24px;transition:border-color 0.25s,box-shadow 0.25s; }
-#card-sev-band { padding:4px 13px 3px;font-size:9px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;border-radius:14px 14px 0 0;display:flex;align-items:center;gap:5px; }
-#card-header-row { display:flex;align-items:center;padding:10px 38px 9px 13px;border-bottom:1px solid rgba(255,255,255,0.08);gap:8px;flex-shrink:0; }
-#card-entity-label { font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1.8px;color:#fff;opacity:0.95;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-#card-entity-label strong { font-size:20px;letter-spacing:0.5px;margin-right:2px;font-weight:900;display:block;line-height:1.1; }
-#card-body { padding:10px 34px 13px 13px; }
-.close-card { position:absolute;top:8px;right:9px;background:none;border:none;color:#444;font-size:20px;cursor:pointer;padding:0;line-height:1;transition:color 0.2s; }
-.close-card:hover { color:#fff; }
-#card-clinical-row { display:none;gap:10px; }
-#card-clinical-row.visible { display:flex; }
-#card-impact, #card-recommend { flex:1;min-width:0;font-size:11px;line-height:1.5; }
-#card-impact strong { display:block;margin-bottom:5px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#64748b; }
-#card-recommend strong { display:block;margin-bottom:5px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#4a6741; }
-.impact-tag { display:inline-block;background:rgba(100,116,139,0.15);border:1px solid rgba(100,116,139,0.3);border-radius:5px;padding:3px 7px;margin:2px 2px 2px 0;font-size:10.5px;color:#94a3b8;white-space:normal;word-break:break-word;line-height:1.4; }
-.recommend-tag { display:inline-block;background:rgba(56,161,105,0.1);border:1px solid rgba(56,161,105,0.25);border-radius:5px;padding:3px 7px;margin:2px 2px 2px 0;font-size:10.5px;color:#68d391;white-space:normal;word-break:break-word;line-height:1.4; }
-/* SIDEBAR */
-#sidebar { width:360px;background:var(--panel-bg);display:flex;flex-direction:column;border-left:1px solid #222;z-index:20;box-shadow:-5px 0 15px rgba(0,0,0,0.5); }
-#sidebar-header { padding:12px 15px 10px;background:#161616;border-bottom:1px solid #222;flex-shrink:0; }
-#sidebar-header h2 { margin:0 0 5px 0;color:var(--accent);font-size:17px; }
-#severity-summary { display:flex;gap:6px;flex-wrap:wrap;margin-top:6px; }
-.sev-count { font-size:11.5px;font-weight:700;padding:4px 10px 4px 8px;border-radius:20px;display:flex;align-items:center;gap:5px;cursor:pointer;transition:all 0.2s;user-select:none;border:1px solid transparent; }
-.sev-count:hover { filter:brightness(1.35);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,0.5); }
-.sev-count.active-filter { box-shadow:0 0 0 2px currentColor,0 3px 12px rgba(0,0,0,0.6);filter:brightness(1.3);transform:translateY(-1px); }
-.sev-count.critical   { background:rgba(229,62,62,0.18);color:#fc8181;border-color:rgba(229,62,62,0.25); }
-.sev-count.semi       { background:rgba(221,107,32,0.18);color:#f6ad55;border-color:rgba(221,107,32,0.25); }
-.sev-count.attention  { background:rgba(214,158,46,0.18);color:#f6e05e;border-color:rgba(214,158,46,0.25); }
-.sev-count.complement { background:rgba(56,161,105,0.18);color:#68d391;border-color:rgba(56,161,105,0.25); }
-.sev-dot { width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0; }
-.sev-dot.critical   { background:var(--c-critical);box-shadow:0 0 5px var(--c-critical); }
-.sev-dot.semi       { background:var(--c-semicritical);box-shadow:0 0 5px var(--c-semicritical); }
-.sev-dot.attention  { background:var(--c-attention);box-shadow:0 0 5px var(--c-attention); }
-.sev-dot.complement { background:var(--c-complementar);box-shadow:0 0 5px var(--c-complementar); }
-.instruction-box { background:#161616;color:#555;font-size:11px;padding:8px 15px 9px;border-bottom:1px solid #1a1a1a;flex-shrink:0;line-height:1.55; }
-#findings-list { flex:1;overflow-y:auto;padding:12px; }
-.finding-item { background:#1a1a1a;margin-bottom:8px;padding:0;border-radius:8px;cursor:pointer;border-left:4px solid transparent;border-bottom:2px solid transparent;transition:all 0.2s;font-size:13px;line-height:1.4;color:#bbb; }
-.finding-item:hover { background:#222;color:#fff;transform:translateX(2px); }
-.finding-item.active { background:#252525;color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,0.1),0 4px 20px rgba(0,0,0,0.6);transform:translateX(3px) scale(1.005); }
-.finding-item.spotlight-active { transform:translateX(4px) scale(1.025) !important;background:#2b2b2b !important; }
-.item-header { display:flex;align-items:center;gap:7px;padding:5px 10px 4px 10px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0; }
-.item-entity-label { font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1.4px;line-height:1;opacity:0.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-.item-entity-label strong { font-size:12px;letter-spacing:0.2px;margin-right:2px;font-weight:900; }
-.item-body { padding:7px 10px 9px 10px;font-size:13px;line-height:1.45;color:#bbb; }
-.item-body p,.item-body br,.item-body span { display:inline;margin:0;padding:0; }
-#controls { padding:12px 15px;border-top:1px solid #222;background:#161616;display:flex;gap:8px;flex-direction:column;flex-shrink:0; }
-.btn { background:var(--accent);color:white;border:none;padding:11px;border-radius:6px;font-weight:bold;cursor:pointer;transition:opacity 0.2s; }
-.btn:hover { opacity:0.85; }
-.btn.secondary { background:#2a2a2a; }
-#signature-area { padding:16px;text-align:center;border-top:1px solid #222;background:#111;flex-shrink:0;display:flex;justify-content:center; }
-#signature-img { max-width:150px;height:auto;filter:brightness(0) invert(1);opacity:0.8; }
-/* sidebar-top: desktop oculto */
-#sidebar-top { display:none; }
-
-/* PORTRAIT */
-@media (max-width:768px) and (orientation:portrait) {
-    body { flex-direction:column; overflow:hidden; }
-
-    /* Desktop app-header: oculto (substituído pelo sidebar-top) */
-    #app-header { display:none; }
-
-    /* ── SIDEBAR-TOP: barra completa ACIMA do viewer ── */
-    #sidebar-top {
-        display:flex; flex-direction:column; flex-shrink:0;
-        width:100%; background:#0d0d0d;
-        border-bottom:1px solid #1e1e1e; z-index:10;
-    }
-
-    /* Linha 1: LAUDO INTERATIVO + botão Visão Geral */
-    #sidebar-top-bar {
-        display:flex; align-items:center; justify-content:space-between;
-        padding:5px 12px 3px; gap:8px;
-    }
-    #sidebar-top-bar .laudo-title {
-        font-size:10px; font-weight:800; letter-spacing:1.8px;
-        text-transform:uppercase; color:rgba(255,255,255,0.5);
-    }
-    #btn-toggle-all-top {
-        background:rgba(0,123,255,0.15); color:#5a9fd4;
-        border:1px solid rgba(0,123,255,0.28); border-radius:12px;
-        padding:3px 10px; font-size:10px; font-weight:700;
-        cursor:pointer; white-space:nowrap; transition:all 0.18s;
-    }
-    #btn-toggle-all-top:active { background:rgba(0,123,255,0.32); }
-
-    /* Linha 2: "Achados Radiográficos" + contagem inline à direita + categorias */
-    #sidebar-top #sidebar-header {
-        padding:0 12px 7px; border-bottom:none; background:transparent;
-    }
-    #sidebar-top #sidebar-header .header-title-row {
-        display:flex; align-items:baseline; gap:7px; margin-bottom:4px;
-    }
-    #sidebar-top #sidebar-header h2 {
-        font-size:13px; margin:0; color:var(--accent); white-space:nowrap;
-    }
-    #sidebar-top #sidebar-header .achados-count {
-        font-size:10px; color:#555; font-weight:500; white-space:nowrap;
-    }
-    /* Pílulas: até 2 linhas, compactas */
-    #sidebar-top #severity-summary-top {
-        display:flex; gap:4px; flex-wrap:wrap; overflow:visible;
-    }
-    #sidebar-top .sev-count { font-size:9.5px; padding:2px 7px; flex-shrink:0; }
-
-    /* Instrução — removida para compactar */
-    #sidebar-top .instruction-box { display:none; }
-
-    /* VIEWER — maior, mais espaço para anotações */
-    #viewer-area {
-        order:1; width:100%; flex-shrink:0;
-        height:52vh; min-height:140px;
-        border-bottom:2px solid var(--accent);
-    }
-
-    /* Card de conduta: pequeno, JS posiciona longe da anotação */
-    #finding-card {
-        display:none;
-        width:50vw!important; max-width:210px!important;
-        max-height:30vh!important;
-        font-size:10.5px!important; border-radius:10px!important;
-    }
-    #card-sev-band { font-size:8px!important; padding:3px 9px 2px!important; }
-    #card-header-row { padding:7px 24px 5px 9px!important; }
-    #card-entity-label { font-size:8.5px!important; }
-    #card-entity-label strong { font-size:13px!important; }
-    #card-body { padding:5px 8px 7px!important; }
-    .impact-tag, .recommend-tag { font-size:9px!important; padding:2px 5px!important; }
-    #card-clinical-row { gap:5px!important; }
-
-    /* SIDEBAR (parte inferior) */
-    #sidebar {
-        order:2; width:100%; border-left:none;
-        display:flex; flex-direction:column;
-        overflow:hidden; min-height:0; flex:1;
-        background:var(--panel-bg);
-    }
-    #sidebar > #sidebar-header,
-    #sidebar > .instruction-box { display:none; }
-
-    /* CARROSSEL */
-    #findings-list {
-        display:flex!important; flex-direction:row;
-        overflow-x:auto; overflow-y:hidden;
-        scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
-        padding:6px 10px; gap:8px;
-        flex:1; min-height:0; align-items:flex-start;
-        scrollbar-width:none;
-    }
-    #findings-list::-webkit-scrollbar { display:none; }
-    .finding-item {
-        flex:0 0 82vw!important; width:82vw!important;
-        margin-bottom:0!important; scroll-snap-align:center;
-        display:flex!important; flex-direction:column!important;
-        align-items:stretch!important; padding:0!important; height:auto!important;
-        transition:box-shadow 0.25s, transform 0.25s;
-    }
-    .item-header { padding:5px 10px 4px 10px; }
-    .item-body { font-size:12.5px;padding:6px 10px 8px 10px;line-height:1.45!important; }
-    .item-body * { line-height:1.45!important;display:inline!important;margin:0!important;padding:0!important; }
-
-    /* ── MODO FOCO: toda área inferior = 1 card grande ── */
-    #sidebar.portrait-focus #findings-list {
-        flex-direction:column!important;
-        overflow-x:hidden!important; overflow-y:auto!important;
-        scroll-snap-type:none!important;
-        padding:0!important; gap:0!important; align-items:stretch!important;
-    }
-    #sidebar.portrait-focus .finding-item { display:none!important; }
-    #sidebar.portrait-focus .finding-item.active {
-        display:flex!important; flex-direction:column!important;
-        flex:1!important; width:100%!important;
-        margin:0!important; border-radius:0!important;
-        border-left-width:5px!important; border-bottom-width:3px!important;
-        transform:none!important; background:#181818!important;
-    }
-    #sidebar.portrait-focus .finding-item.active .item-header {
-        padding:13px 15px 11px!important;
-        border-bottom:1px solid rgba(255,255,255,0.09)!important;
-    }
-    #sidebar.portrait-focus .finding-item.active .item-entity-label {
-        font-size:10px!important; letter-spacing:1.5px!important;
-    }
-    #sidebar.portrait-focus .finding-item.active .item-entity-label strong {
-        font-size:22px!important; display:block!important; margin-bottom:2px!important;
-    }
-    #sidebar.portrait-focus .finding-item.active .item-body {
-        font-size:15px!important; line-height:1.65!important;
-        padding:14px 16px 18px!important; color:#ddd!important;
-        flex:1; overflow-y:auto;
-    }
-    #sidebar.portrait-focus .finding-item.active .item-body * {
-        line-height:1.65!important; display:inline!important;
-        font-size:15px!important;
-    }
-
-    /* Botão "← Todos os achados" */
-    #btn-back-list {
-        display:none; align-items:center; justify-content:flex-start;
-        gap:7px; padding:8px 14px; flex-shrink:0;
-        background:#161616; border:none; border-bottom:1px solid #222;
-        color:#5a8fd4; font-size:12px; font-weight:600; cursor:pointer;
-        width:100%; text-align:left; letter-spacing:0.3px;
-    }
-    #sidebar.portrait-focus #btn-back-list { display:flex; }
-
-    /* Nav carrossel */
-    #carousel-nav {
-        display:flex; align-items:center; justify-content:space-between;
-        padding:5px 12px 6px; flex-shrink:0; gap:8px;
-        background:#161616; border-top:1px solid #222;
-    }
-    .carousel-btn {
-        background:#1e1e1e; border:1px solid #333; color:#aaa;
-        border-radius:20px; padding:5px 13px; font-size:11px; font-weight:600;
-        cursor:pointer; display:flex; align-items:center; gap:5px;
-        transition:all 0.18s; white-space:nowrap; flex-shrink:0;
-    }
-    .carousel-btn:active { background:#2a2a2a;color:#fff; }
-    .carousel-btn:disabled { opacity:0.25;pointer-events:none; }
-    #carousel-counter { font-size:11px;color:#555;text-align:center;flex:1;white-space:nowrap; }
-
-    #controls { display:none; }
-    #signature-area { padding:4px 10px 5px;background:#0d0d0d;flex-shrink:0;min-height:0;border-top:1px solid #1a1a1a; }
-    #signature-img { max-width:80px;max-height:26px; }
+* { box-sizing: border-box; }
+:root { 
+    --bg-color: #000; 
+    --text-color: #eee; 
+    --accent: #007bff; 
+    --c-critical: #e53e3e; 
+    --c-semicritical: #dd6b20; 
+    --c-attention: #d69e2e; 
+    --c-complementar: #38a169; 
 }
-/* LANDSCAPE */
-@media (max-width:900px) and (orientation:landscape) {
-    body { flex-direction:row;height:100vh;height:100dvh; }
-    #app-header { display:none; }
-    #viewer-area { flex:0 0 63%;height:100%;border-bottom:none;border-right:2px solid var(--accent); }
-    #sidebar { flex:0 0 37%;width:auto;height:100%;border-left:none;display:flex;flex-direction:column;overflow:hidden; }
-    #sidebar-header { display:block;padding:6px 10px;flex-shrink:0; }
-    #sidebar-header h2 { font-size:12px;margin:0 0 3px 0; }
-    .instruction-box { display:none; }
-    #findings-list { flex:1;overflow-y:auto;overflow-x:hidden;padding:5px 7px; }
-    .finding-item { font-size:11px;margin-bottom:4px;border-radius:5px;line-height:1.3; }
-    .item-header { padding:4px 8px 3px 8px;font-size:10px; }
-    .item-body { font-size:11px;padding:5px 8px 6px 8px; }
-    #controls { display:flex;flex-direction:row;gap:5px;padding:5px 7px;flex-shrink:0; }
-    .btn { padding:6px 4px;font-size:10px;flex:1;border-radius:5px; }
-    #signature-area { padding:4px 7px;min-height:36px;flex-shrink:0; }
-    #signature-img { max-width:75px;max-height:28px; }
-    #finding-card { top:8px;bottom:auto;left:8px;right:auto;width:240px;font-size:11px;max-height:44vh;overflow-y:auto;border-radius:10px; }
-    #card-sev-band { font-size:8px;padding:3px 10px 2px; }
-    #card-header-row { padding:8px 28px 7px 10px; }
-    #card-entity-label { font-size:9.5px; }
-    #card-entity-label strong { font-size:14px; }
-    #card-body { padding:8px 22px 9px 10px; }
-    .impact-tag,.recommend-tag { font-size:10px; }
+
+body { 
+    margin: 0; 
+    padding: 0; 
+    background: var(--bg-color); 
+    color: var(--text-color); 
+    font-family: 'Segoe UI', sans-serif; 
+}
+
+/* LAYOUT PRINCIPAL */
+#app-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    width: 100vw;
+    overflow: hidden;
+    background: #000;
+}
+
+/* TOP AREA: HEADER & CAROUSEL */
+#top-area {
+    flex-shrink: 0;
+    background: #111;
+    border-bottom: 1px solid #222;
+    display: flex;
+    flex-direction: column;
+    z-index: 20;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+#app-header-row {
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    padding: 10px 15px 5px 15px; 
+}
+
+.laudo-title { 
+    font-size: 13px; 
+    font-weight: 800; 
+    text-transform: uppercase; 
+    letter-spacing: 1.5px; 
+    color: #bbb; 
+}
+
+#btn-visao-geral {
+    background: rgba(0, 123, 255, 0.15); 
+    color: #5a9fd4; 
+    border: 1px solid rgba(0, 123, 255, 0.28);
+    border-radius: 12px; 
+    padding: 4px 12px; 
+    font-size: 11px; 
+    font-weight: 700; 
+    cursor: pointer;
+    transition: all 0.2s;
+}
+#btn-visao-geral:active { background: rgba(0, 123, 255, 0.3); }
+
+/* CAROUSEL */
+#findings-list {
+    display: flex; 
+    flex-direction: row; 
+    overflow-x: auto; 
+    overflow-y: hidden; 
+    scroll-snap-type: x mandatory;
+    padding: 10px 15px 12px 15px; 
+    gap: 12px; 
+    scrollbar-width: none; /* Firefox */
+    -webkit-overflow-scrolling: touch;
+}
+#findings-list::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
+
+.finding-item {
+    flex: 0 0 260px; 
+    width: 260px; 
+    scroll-snap-align: center;
+    background: #181818; 
+    border-radius: 10px; 
+    cursor: pointer;
+    display: flex; 
+    flex-direction: column; 
+    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    border-top: 1px solid #2a2a2a;
+    border-bottom: 1px solid #2a2a2a;
+    border-left: 4px solid transparent; /* Será injetado via JS */
+    border-right: 4px solid transparent; /* Será injetado via JS */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.finding-item:hover {
+    background: #1e1e1e;
+}
+.finding-item.active {
+    background: #222; 
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+}
+
+.item-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    padding: 8px 12px; 
+    border-radius: 10px 10px 0 0;
+}
+.item-entity-label { 
+    font-size: 11px; 
+    font-weight: 900; 
+    letter-spacing: 0.5px; 
+}
+.item-category-label {
+    font-size: 9px; 
+    font-weight: 800; 
+    padding: 3px 6px; 
+    border-radius: 5px;
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+}
+.item-body { 
+    padding: 10px 12px; 
+    font-size: 12px; 
+    color: #ccc; 
+    line-height: 1.5; 
+    display: flex;
+    flex-direction: column;
+}
+.item-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.item-text.expanded {
+    -webkit-line-clamp: unset;
+}
+.btn-ver-mais {
+    align-self: flex-end;
+    font-size: 10px;
+    font-weight: 700;
+    color: #6daaf0;
+    margin-top: 6px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+/* VIEWER AREA */
+#viewer-area { 
+    flex: 1; 
+    position: relative; 
+    overflow: hidden; 
+    background: #000; 
+    cursor: grab; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#viewer-area:active { cursor: grabbing; }
+canvas { display: block; }
+
+/* BOTTOM ACTION AREA */
+#bottom-area {
+    flex-shrink: 0; 
+    background: #111; 
+    border-top: 1px solid #222;
+    z-index: 20; 
+    display: none; 
+    flex-direction: column;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
+}
+#bottom-area.visible { 
+    display: flex; 
+}
+
+#action-card {
+    background: #181818; 
+    padding: 15px 18px; 
+    border-left: 5px solid transparent; 
+    cursor: pointer; 
+    transition: background 0.2s;
+}
+#action-card:hover { background: #1c1c1c; }
+
+.ac-row { margin-bottom: 10px; font-size: 12px; line-height: 1.5; }
+.ac-row:last-of-type { margin-bottom: 0; }
+.ac-row strong { 
+    display: block; 
+    font-size: 9.5px; 
+    text-transform: uppercase; 
+    color: #777; 
+    margin-bottom: 5px; 
+    letter-spacing: 1.2px; 
+}
+
+.diag-tag { 
+    display: inline-block; 
+    font-size: 14px; 
+    color: #fff; 
+    font-weight: 700; 
+    letter-spacing: 0.3px;
+}
+.impact-tag { 
+    display: inline-block; 
+    background: rgba(100,116,139,0.15); 
+    border: 1px solid rgba(100,116,139,0.3); 
+    border-radius: 5px; 
+    padding: 3px 7px; 
+    margin: 2px 4px 2px 0; 
+    font-size: 11px; 
+    color: #94a3b8; 
+}
+.recommend-tag { 
+    display: inline-block; 
+    background: rgba(56,161,105,0.1); 
+    border: 1px solid rgba(56,161,105,0.25); 
+    border-radius: 5px; 
+    padding: 3px 7px; 
+    margin: 2px 4px 2px 0; 
+    font-size: 11px; 
+    color: #68d391; 
+}
+
+#zoom-instruction {
+    font-size: 9.5px; 
+    color: #555; 
+    text-align: center; 
+    margin-top: 10px; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+
+#signature-area { 
+    text-align: center; 
+    padding: 10px; 
+    background: #0a0a0a; 
+    border-top: 1px solid #1a1a1a; 
+}
+#signature-img { 
+    max-height: 35px; 
+    filter: brightness(0) invert(1); 
+    opacity: 0.7; 
 }
 </style>
 </head>
 <body>
-<div id="app-header">
-    <div id="app-title">LAUDO INTERATIVO</div>
-    <button id="btn-toggle-all-header">&#128269; Visão Geral</button>
-</div>
-<div id="sidebar-top">
-    <!-- Linha 1: LAUDO INTERATIVO + Visão Geral -->
-    <div id="sidebar-top-bar">
-        <span class="laudo-title">&#128269; Laudo Interativo</span>
-        <button id="btn-toggle-all-top">Visão Geral</button>
-    </div>
-    <!-- Linha 2: título + contagem + categorias -->
-    <div id="sidebar-header">
-        <div class="header-title-row">
-            <h2>Achados Radiográficos</h2>
-            <span class="achados-count" id="achados-count-top"></span>
-        </div>
-        <div id="severity-summary-top"></div>
-    </div>
-    <!-- Linha 3: instrução -->
-    <div class="instruction-box">Toque nas categorias para destacar achados — ou toque diretamente nas anotações.</div>
-</div>
-<div id="viewer-area">
-    <div id="finding-card">
-        <button class="close-card" onclick="closeCard()">×</button>
-        <div id="card-sev-band"></div>
-        <div id="card-header-row"><div id="card-entity-label">—</div></div>
-        <div id="card-body">
-            <div id="card-clinical-row">
-                <div id="card-impact"><strong>💡 Conduta provável</strong><div id="card-impact-tags"></div></div>
-                <div id="card-recommend"><strong>🔬 Exame sugerido</strong><div id="card-recommend-tags"></div></div>
+
+<div id="app-layout">
+    <div id="top-area">
+        <div id="app-header-row">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span class="laudo-title">&#128269; Laudo Interativo</span>
+                <span id="achados-count" style="font-size:10px; color:#666; font-weight:700;"></span>
             </div>
+            <button id="btn-visao-geral">Visão Geral</button>
+        </div>
+        <div id="findings-list">Carregando...</div>
+    </div>
+    
+    <div id="viewer-area">
+        <canvas id="canvas"></canvas>
+    </div>
+    
+    <div id="bottom-area">
+        <div id="action-card">
+            <div id="ac-diagnostic" class="ac-row"><strong>🔬 Hipótese Diagnóstica</strong> <span></span></div>
+            <div id="ac-recommend" class="ac-row"><strong>📸 Exame Sugerido</strong> <span></span></div>
+            <div id="ac-impact" class="ac-row"><strong>💡 Conduta Provável</strong> <span></span></div>
+            <div id="zoom-instruction">Toque neste card para super zoom no achado</div>
+        </div>
+        <div id="signature-area">
+            <img id="signature-img" src="assinatura.png" alt="Assinatura" onerror="this.style.display='none'">
         </div>
     </div>
-    <canvas id="canvas"></canvas>
 </div>
-<div id="sidebar">
-    <div id="sidebar-header">
-        <h2>Achados Radiográficos</h2>
-        <div id="severity-summary"></div>
-    </div>
-    <div class="instruction-box">Toque nos botões acima para explorar por categoria — ou toque diretamente nas anotações da imagem.</div>
-    <button id="btn-back-list">&#8592; Todos os achados</button>
-    <div id="findings-list">Carregando...</div>
-    <div id="carousel-nav" style="display:none;">
-        <button class="carousel-btn" id="carousel-prev">◀ Anterior</button>
-        <span id="carousel-counter">1 / 1</span>
-        <button class="carousel-btn" id="carousel-next">Próximo ▶</button>
-    </div>
-    <div id="controls">
-        <button id="btn-toggle-all" class="btn">🔍 Visão Geral</button>
-        <button id="btn-reset-zoom" class="btn secondary">⟲ Reset</button>
-    </div>
-    <div id="signature-area">
-        <img id="signature-img" src="assinatura.png" alt="Assinatura" onerror="this.style.display='none'">
-    </div>
-</div>
+
 <script>
 // ============================================================
-// SEV LABELS
+// SEV LABELS & RULES
 // ============================================================
 const SEV_LABELS = {
-    critical:   { badge:'🔴 Críticos',              short:'Críticos',              bandColor:'#e53e3e', bandBg:'rgba(229,62,62,0.18)',  summary:(n)=>`${n} crítico${n>1?'s':''}` },
-    semi:       { badge:'🟠 Importantes',            short:'Importantes',           bandColor:'#f6ad55', bandBg:'rgba(221,107,32,0.18)', summary:(n)=>`${n} importante${n>1?'s':''}` },
-    attention:  { badge:'🟡 Acompanhamento Clínico', short:'Acompanhamento Clínico',bandColor:'#f6e05e', bandBg:'rgba(214,158,46,0.18)', summary:(n)=>`${n} acompanhamento clínico` },
-    complement: { badge:'🟢 Achados secundários',    short:'Achados secundários',   bandColor:'#68d391', bandBg:'rgba(56,161,105,0.18)', summary:(n)=>`${n} secundário${n>1?'s':''}` },
+    critical:   { short:'Crítico', bandColor:'#e53e3e', bandBg:'rgba(229,62,62,0.18)' },
+    semi:       { short:'Importante', bandColor:'#f6ad55', bandBg:'rgba(221,107,32,0.18)' },
+    attention:  { short:'Acompanhar', bandColor:'#f6e05e', bandBg:'rgba(214,158,46,0.18)' },
+    complement: { short:'Secundário', bandColor:'#68d391', bandBg:'rgba(56,161,105,0.18)' },
 };
-const SEV_RULES = [
+
+const SEV_RULES =[
     { level:'critical', color:'#e53e3e', words:['incluso','impactado','reabsorção','envolvimento pulpar','comprometimento pulpar','lesão extensa','rarefação','radiolúcida','radiolucida','periápice','periapice','canal mandibular','íntima proximidade','intima proximidade','cisto','tumor','necrose','fístula','fistula','abscesso','osteíte','osteite','fratura','dilaceração severa','reabsorção radicular','reabsorcao radicular','reabsorção interna','reabsorção externa','rarefação na região de furca','rarefação interradicular','lesão de furca','furca comprometida','reabsorção patológica','rizólise patológica','rizólise acelerada','rarefação óssea na região de furca','rarefação óssea interradicular','lesão de furca em dente permanente'] },
     { level:'semi',     color:'#dd6b20', words:['semi-incluso','semi incluso','cárie','cariosa','carie','obturação inadequada','restauração com falha','sobrecontorno','subcontorno','remanescente radicular','alvéolo','alveolo','espessamento','seio maxilar','sinusite','mucosite','lesão cariosa','lesão radiolúcida','lesão radiolucida','peri-implantite','mobilidade','lesão periapical','pericoronite','cárie em decíduo','carie em deciduo','cárie em dente decíduo','lesão cariosa em decíduo','rizólise','reabsorção fisiológica','reabsorção radicular fisiológica'] },
     { level:'attention',color:'#d69e2e', words:['aumento do espaço','calcificação','atrição','giroversão','dilaceração','arredondamento apical','pino intrarradicular','implante','contenção','cálculo','calculo','perda óssea','perda ossea','reabsorção leve','obturação','restauração radiopaca','tratado endodonticamente','endodonticamente','condensação','selamento','semi-irrompido','irrompido','decíduo','deciduo','dente de leite','erupção do sucessor','rizólise em estágio','estágio de rizólise','reabsorção radicular em estágio'] },
 ];
+
 function classifyText(t) {
     const l=t.toLowerCase();
     for(const r of SEV_RULES) if(r.words.some(w=>l.includes(w))) return {level:r.level,color:r.color};
     return {level:'complement',color:'#38a169'};
 }
+
 // ============================================================
-// DENTES
+// BANCO DIAGNÓSTICO
+// ============================================================
+const DIAGNOSTIC_BANK =[
+    { words: ['reabsorção interna', 'reabsorcao interna'], diag: 'Reabsorção Radicular Interna' },
+    { words:['reabsorção externa', 'reabsorcao externa', 'reabsorção cervical'], diag: 'Reabsorção Radicular Externa' },
+    { words:['reabsorção radicular', 'reabsorcao radicular'], diag: 'Reabsorção Radicular' },
+    { words:['furca comprometida', 'lesão de furca', 'rarefação na região de furca', 'rarefação interradicular'], diag: 'Envolvimento de Furca' },
+    { words: ['cárie', 'cariosa', 'carie', 'lesão cariosa'], diag: 'Cárie Dentária' },
+    { words:['perda óssea', 'reabsorção alveolar', 'defeito ósseo', 'defeito angular'], diag: 'Doença Periodontal (Perda Óssea)' },
+    { words:['abscesso', 'fístula', 'fistula', 'lesão periapical', 'periápice', 'periapice', 'rarefação periapical'], diag: 'Periodontite Apical (Lesão Periapical)' },
+    { words:['cálculo', 'calculo', 'tártaro'], diag: 'Cálculo Dental' },
+    { words:['incluso', 'impactado', 'semi-incluso', 'pericoronite'], diag: 'Dente Incluso / Impactado' },
+    { words:['seio maxilar', 'espessamento', 'sinusite', 'mucosite', 'velamento'], diag: 'Alteração Sinusal (Espessamento / Mucosite)' },
+    { words: ['canal mandibular', 'íntima proximidade', 'nervo alveolar'], diag: 'Proximidade com Nervo Alveolar Inferior' },
+    { words:['peri-implantite', 'perda óssea peri-implantar'], diag: 'Peri-implantite' },
+    { words: ['implante', 'osseointegrado'], diag: 'Implante Osseointegrado' },
+    { words:['cisto', 'lesão cística', 'dentígero', 'folicular'], diag: 'Lesão de Aspecto Cístico' },
+    { words:['tumor', 'lesão mista', 'lesão multilocular'], diag: 'Lesão Óssea / Aspecto Tumoral' },
+    { words: ['fratura', 'linha de fratura'], diag: 'Fratura Radicular / Dental' },
+    { words: ['sobrecontorno', 'subcontorno'], diag: 'Falha em Restauração (Sobre/Subcontorno)' },
+    { words:['dilaceração', 'dilaceracao'], diag: 'Dilaceração Radicular' },
+    { words:['desgaste', 'atrição', 'sobrecarga oclusal'], diag: 'Desgaste Dental / Atrição' },
+    { words:['obturação inadequada', 'falha', 'subobtur', 'sobreobtur'], diag: 'Tratamento Endodôntico Deficiente' },
+    { words:['tratado endodonticamente', 'endodonticamente'], diag: 'Dente Tratado Endodonticamente' },
+    { words:['raiz residual', 'remanescente radicular', 'raízes residuais', 'raiz retida'], diag: 'Raiz Residual' },
+    { words:['calcificação pulpar', 'esclerose pulpar'], diag: 'Calcificação Pulpar' },
+    { words:['atm', 'côndilo', 'articulação'], diag: 'Alteração em ATM' },
+    { words:['alvéolo', 'alveolo', 'pós-exodontia', 'alveolite'], diag: 'Alvéolo em Reparação' },
+    { words: ['contenção', 'aparelho', 'braquete'], diag: 'Dispositivo Ortodôntico' }
+];
+
+function getDiagnosticHypothesis(text) {
+    const lower = text.toLowerCase();
+    for (const item of DIAGNOSTIC_BANK) {
+        if (item.words.some(w => lower.includes(w))) return item.diag;
+    }
+    return 'Achado Radiográfico (Requer Avaliação Clínica)';
+}
+
+// ============================================================
+// DENTES E CARD TITLE
 // ============================================================
 const DENTES_ANTERIORES=['11','12','13','21','22','23','31','32','33','41','42','43'];
 const DENTES_DECIDUOS=['51','52','53','54','55','61','62','63','64','65','71','72','73','74','75','81','82','83','84','85'];
+
 function isDentDeciduo(t) {
     const m=t.match(/\b([5-8][1-5])\b/g);
     if(m) return m.some(n=>DENTES_DECIDUOS.includes(n));
     const l=t.toLowerCase();
     return l.includes('decíduo')||l.includes('deciduo')||l.includes('dente de leite')||l.includes('leite');
 }
+
 function temFurca(t) { const l=t.toLowerCase(); return l.includes('furca')||l.includes('interradicular')||l.includes('bifurcação')||l.includes('trifurcação'); }
 function detectSobrecontornoTipo(t) {
     const l=t.toLowerCase();
@@ -361,177 +378,15 @@ function detectSobrecontornoTipo(t) {
     if(['incisivo','canino','central','lateral','anterior'].some(w=>l.includes(w))) return 'anterior';
     return 'posterior';
 }
-// ============================================================
-// BANCO DE CONDUTAS E EXAMES COM VARIAÇÕES
-// ============================================================
-function pickVar(annoId, variants) {
-    if(!annoId||variants.length===1) return variants[0];
-    const hash=(annoId+'').split('').reduce((a,c)=>a+c.charCodeAt(0),0);
-    return variants[hash%variants.length];
-}
-const IMPACT_BANK = {
-    endo_urgente:           ['Tratamento endodôntico de urgência','Pulpectomia / necropulpectomia indicada','Endodontia com urgência clínica — dor provável'],
-    endo_eletivo:           ['Tratamento endodôntico eletivo','Pulpectomia eletiva indicada','Canal radicular — avaliação e planejamento'],
-    endo_retratamento:      ['Retratamento endodôntico indicado','Revisão do tratamento endodôntico anterior','Avaliação para retratamento ou cirurgia parendodôntica'],
-    obturacao_inadequada:   ['Avaliação do selamento apical — possível falha do tratamento','Retratamento por obturação inadequada','Revisão endodôntica — risco de recontaminação'],
-    tratado_controle:       ['Controle radiográfico periódico do tratamento endodôntico','Acompanhamento anual — avaliar resposta periapical','Radiografia de controle pós-tratamento endodôntico'],
-    restauracao:            ['Restauração direta indicada','Controle e restauração da lesão cariosa','Restauração (resina ou ionômero conforme extensão)'],
-    restauracao_profunda:   ['Restauração com proteção pulpar indireta','Capeamento pulpar indireto — avaliar vitalidade','Restauração profunda com monitoramento pulpar'],
-    perio_basico:           ['Tratamento periodontal básico — raspagem e alisamento radicular','Raspagem supra e subgengival + instrução de higiene','Raspagem e alisamento radicular + reavaliação periodontal'],
-    perio_avancado:         ['Tratamento periodontal avançado — possível cirurgia','Cirurgia periodontal ressectiva ou regenerativa — avaliar','Avaliação e conduta periodontal cirúrgica — prognóstico reservado'],
-    furca_perm:             ['Avaliação periodontal — grau de furca (Glickman) — possível exodontia','Comprometimento de furca: avaliação do prognóstico dental','Lesão de furca — tratamento periodontal ou exodontia conforme grau'],
-    calculo:                ['Raspagem e alisamento radicular — remoção de cálculo','Profilaxia e raspagem subgengival','Instrução de higiene oral + raspagem periodontal'],
-    cirurgia_incluso:       ['Avaliação cirúrgica para exodontia do elemento incluso','Cirurgia de exodontia — planejamento com CBCT','Odontectomia — avaliar posição e risco cirúrgico'],
-    cirurgia_residual:      ['Exodontia das raízes residuais','Alveoloplastia e remoção de remanescente radicular','Cirurgia de remoção de raiz retida'],
-    cirurgia_avaliar_exo:   ['Avaliar exodontia — remanescente coronário insuficiente','Possível exodontia por destruição coronária extensa','Avaliação de exodontia vs. reconstrução protética'],
-    deciduo_pulpotomia:     ['Pulpotomia ou pulpectomia (dente decíduo)','Tratamento pulpar do decíduo — pulpotomia indicada','Pulpectomia do decíduo (polpa inflamada ou necrosada)'],
-    deciduo_restauracao:    ['Restauração do dente decíduo','Restauração com cimento ionômero de vidro (decíduo)','Controle de cárie e restauração do decíduo'],
-    deciduo_exo_urgente:    ['Exodontia do decíduo — indicação absoluta (furca comprometida)','Extração do decíduo com urgência — lesão interradicular','Exodontia imediata do decíduo — risco ao germe do sucessor'],
-    deciduo_acompanhar:     ['Acompanhar rizólise e erupção do sucessor permanente','Controle radiográfico da esfoliação do decíduo','Monitorar reabsorção radicular fisiológica — sem intervenção imediata'],
-    implante_acompanhar:    ['Acompanhamento da osseointegração','Controle radiográfico do implante osteointegrado','Avaliação periódica do implante — nível ósseo e prótese'],
-    implante_peri:          ['Tratamento da peri-implantite — desbridamento + antimicrobiano','Avaliação da peri-implantite — descontaminação da superfície','Peri-implantite: avaliação cirúrgica vs. tratamento conservador'],
-    seio_investigar:        ['Investigar causa sinusal (odontogênica × rinogênica) — encaminhar otorrino','Avaliação do espessamento sinusal — TC de seios indicada','Diferenciação de sinusite odontogênica vs. rinogênica — conduta multidisciplinar'],
-    canal_mand:             ['Avaliação pré-cirúrgica criteriosa — CBCT mandibular obrigatória','Risco de lesão ao nervo alveolar inferior — TC Cone Beam mandatória','Planejamento cirúrgico cuidadoso — proximidade com nervo alveolar inferior'],
-    reabsorcao:             ['Correlação clínica urgente — investigar causa da reabsorção','Avaliação da extensão da reabsorção radicular — CBCT indicado','Reabsorção radicular: avaliar etiologia (trauma, pressão ortodôntica, idiopática)'],
-    cisto:                  ['Avaliação e possível enucleação do cisto — biópsia','Cirurgia de enucleação ou marsupialização conforme extensão','Lesão cística: avaliação histopatológica obrigatória'],
-    fratura:                ['Avaliação da viabilidade dental — correlação clínica (trauma)','Fratura: avaliar extensão com CBCT — prognóstico reservado','Tratamento de fratura radicular: splintagem e monitoramento'],
-    desgaste:               ['Avaliação oclusal — bruxismo/apertamento dental','Placa miorrelaxante e ajuste oclusal','Avaliação do padrão de desgaste — etiologia multifatorial'],
-    alveolo:                ['Acompanhar reparação alveolar — higiene e retorno','Controle do alvéolo pós-exodontia — risco de alveolite','Monitoramento da cicatrização alveolar'],
-    calcificacao_pulpar:    ['Monitoramento da calcificação pulpar — sem intervenção imediata','Acompanhamento radiográfico da calcificação do canal','Calcificação pulpar: avaliar vitalidade — endodontia se sintomático'],
-    tumor:                  ['Biópsia e correlação histopatológica obrigatória','Excisão cirúrgica com análise histológica','Avaliação oncológica — biópsia incisional ou excisional'],
-    sobrecontorno:          ['Substituição / ajuste da restauração — risco de irritação gengival','Polimento ou refazimento da restauração com sobrecontorno','Remoção do sobrecontorno — prevenção de periodontite'],
-    dilaceracao:            ['Planejamento cirúrgico criterioso — dilaceração radicular','Avaliar via de acesso cirúrgico na dilaceração','Dilaceração: exodontia ou endodontia com dificuldade aumentada'],
-    atm:                    ['Avaliação de ATM — RM ou CBCT conforme sintomatologia','Remodelação condilar: correlação clínica e imagiológica','Avaliação multidisciplinar da ATM — fisioterapia + placa oclusal'],
-    ortodontia:             ['Acompanhamento ortodôntico — controle de ancoragem e movimentação','Monitoramento ortodôntico — checar reabsorção radicular','Controle periódico durante tratamento ortodôntico'],
-};
-const RECOMMEND_BANK = {
-    periapical:             ['Radiografia periapical pela técnica do paralelismo','RX periapical — técnica do paralelismo (mais acurada)','Periapical com posicionador — avaliação apical criteriosa'],
-    periapical_controle:    ['Periapical de controle pós-tratamento (6–12 meses)','RX periapical de acompanhamento','Periapical — avaliação da resposta periapical ao tratamento'],
-    interproximal:          ['Radiografia interproximal (bitewing) da região','Bitewing bilateral — detecção de cárie interproximal','RX interproximal — avaliação de crista óssea e cárie proximal'],
-    interproximal_ou_periapical: ['Radiografia interproximal ou periapical da região','Bitewing ou periapical conforme extensão clínica','RX interproximal (cárie inicial) ou periapical (lesão profunda)'],
-    cbct:                   ['TC Cone Beam (CBCT) — avaliação volumétrica','Tomografia computadorizada de feixe cônico — exame de escolha','CBCT — melhor avaliação tridimensional da região'],
-    cbct_mandibula:         ['CBCT mandibular — avaliação do canal alveolar inferior (mandatória)','Tomografia cone beam mandibular — relação com nervo alveolar inferior','TC Cone Beam mandibular — risco de parestesia pós-operatória'],
-    cbct_reabsorcao:        ['CBCT — avaliar extensão e localização da reabsorção radicular','Tomografia cone beam — classificação da reabsorção (interna/externa)','TC Cone Beam — confirmar extensão antes de definir prognóstico'],
-    cbct_fratura:           ['CBCT — diagnóstico de fratura radicular (padrão ouro)','TC Cone Beam — única modalidade confiável para fratura radicular vertical','Tomografia cone beam — confirmar fratura e extensão'],
-    cbct_cisto:             ['CBCT + biópsia — avaliação da lesão cística','TC Cone Beam para extensão da lesão + análise histopatológica','CBCT — limites, densidade e relação com estruturas nobres da lesão'],
-    cbct_implante:          ['CBCT — planejamento implantológico (volume ósseo e anatomia)','TC Cone Beam — disponibilidade óssea e guia cirúrgico digital','Tomografia cone beam — avaliação pré-implante obrigatória'],
-    serie_periapical:       ['Série periapical completa da região','Série periapical — mapeamento do nível ósseo','Periapicais múltiplos + interproximais bilaterais'],
-    seios_paranasais:       ['TC de seios paranasais (cortes coronais e axiais)','Tomografia de seios da face — avaliação sinusal completa','TC de seios paranasais — diferenciação odontogênica × rinogênica'],
-    rm_atm:                 ['RM de ATM (partes moles) e/ou CBCT ATM (componente ósseo)','Ressonância magnética de ATM — avaliação do disco articular','RM bilateral de ATM — correlação com sintomatologia'],
-    oclusal_deciduo:        ['Radiografia oclusal ou periapical do decíduo','RX periapical ou oclusal — avaliação do decíduo e germe','Oclusal da região — ver germe do sucessor permanente'],
-    periapical_paralelismo: ['Periapical pela técnica do paralelismo — avaliação de furca','RX periapical (paralelismo) — melhor resolução da furca','Periapical com posicionador — visualização da região interradicular'],
-    avaliacao_clinica:      ['Avaliação clínica complementar','Avaliação clínica com sondagem periodontal','Exame clínico detalhado — correlação com achados radiográficos'],
-    modelos_estudo:         ['Modelos de estudo + avaliação clínica oclusal','Montagem em articulador — análise oclusal funcional','Análise oclusal clínica + modelos digitalizados'],
-    periapical_implante:    ['Radiografia periapical do implante + sondagem periodontal','RX periapical para avaliação do nível ósseo peri-implantar','Periapical do implante — controle anual do nível ósseo marginal'],
-    interproximal_deciduo:  ['Radiografia interproximal da região (decíduo)','Bitewing da região do decíduo — avaliação de cárie proximal','RX interproximal — verificar envolvimento pulpar no decíduo'],
-};
-// ============================================================
-// LÓGICA DE CONDUTAS E EXAMES
-// ============================================================
-const PULPAR_WORDS=['envolvimento pulpar','comprometimento pulpar','câmara pulpar','exposição pulpar','necrose pulpar','cárie profunda','carie profunda','provável exposição','provavel exposicao','abscesso','fístula','fistula','periodontite apical','lesão periapical','periápice','periapice','rarefação periapical','rarefação óssea','rarefacao ossea','rarefacao periapical'];
-const TRATADO_WORDS=['tratado endodonticamente','endodonticamente','obturação endodôntica','tratamento endodôntico concluído'];
-const RESIDUAL_WORDS=['raízes residuais','raizes residuais','raiz residual','remanescente radicular','raiz retida'];
-const FURCA_PERM_WORDS=['rarefação na região de furca','rarefação óssea na região de furca','rarefação interradicular','lesão de furca','furca comprometida','lesão de furca em dente permanente'];
-const DECIDUO_WORDS=['decíduo','deciduo','dente de leite','dentes de leite','primário','leite','rizólise','reabsorção fisiológica'];
 
-function getImpactsAndRecommends(text, annoId) {
-    const lower=text.toLowerCase();
-    const temPulpar   =PULPAR_WORDS.some(w=>lower.includes(w));
-    const temTratado  =TRATADO_WORDS.some(w=>lower.includes(w));
-    const temResidual =RESIDUAL_WORDS.some(w=>lower.includes(w));
-    const temDeciduo  =DECIDUO_WORDS.some(w=>lower.includes(w))||isDentDeciduo(text);
-    const temFurcaPerm=FURCA_PERM_WORDS.some(w=>lower.includes(w))&&!temDeciduo;
-    const temFurcaDec =temFurca(text)&&temDeciduo;
-    const hasAbscesso =lower.includes('abscesso')||lower.includes('fístula')||lower.includes('fistula');
-    const impacts=[]; const recommends=[]; const seenI=new Set(); const seenR=new Set();
-    function addI(k){const v=pickVar(annoId,IMPACT_BANK[k]);if(!seenI.has(v)){impacts.push(v);seenI.add(v);}}
-    function addR(k){const v=pickVar(annoId,RECOMMEND_BANK[k]);if(!seenR.has(v)){recommends.push(v);seenR.add(v);}}
-    // Furca
-    if(temFurcaPerm){addI('furca_perm');addR('periapical_paralelismo');}
-    if(temFurcaDec){addI('deciduo_exo_urgente');addR('oclusal_deciduo');}
-    // Dente tratado
-    if(temTratado){
-        const temFalha=lower.includes('subobtur')||lower.includes('sobreobtur')||lower.includes('falha')||lower.includes('rarefação')||lower.includes('periápice')||lower.includes('periapice');
-        if(temFalha){addI('endo_retratamento');}
-        else if(lower.includes('obturação inadequada')||lower.includes('obturacao inadequada')){addI('obturacao_inadequada');}
-        else{addI('tratado_controle');}
-        addR('periapical_controle');
-    }
-    // Endodontia ativa
-    if(!temTratado&&!temResidual){
-        if(temDeciduo&&temPulpar){addI('deciduo_pulpotomia');addR('periapical');}
-        else if(!temDeciduo&&temPulpar){
-            if(hasAbscesso){addI('endo_urgente');}else{addI('endo_eletivo');}
-            addR('periapical');
-        }
-    }
-    // Raízes residuais
-    if(temResidual){addI('cirurgia_residual');addR('periapical');}
-    // Cárie / restauração
-    if(!temPulpar&&!temTratado&&!temResidual){
-        const ehProfunda=lower.includes('cárie profunda')||lower.includes('carie profunda')||lower.includes('lesão cariosa profunda');
-        const ehDestruicao=lower.includes('destruição coronária')||lower.includes('extensa destruição')||lower.includes('sem remanescente');
-        if(ehDestruicao){addI('cirurgia_avaliar_exo');addR('periapical');}
-        else if(ehProfunda){addI('restauracao_profunda');addR('periapical');}
-        else if(lower.includes('cárie')||lower.includes('carie')||lower.includes('cariosa')||lower.includes('lesão cariosa')){
-            if(temDeciduo){addI('deciduo_restauracao');addR('interproximal_deciduo');}
-            else{
-                addI('restauracao');
-                const ehProximal=lower.includes('interproximal')||lower.includes('face mesial')||lower.includes('face distal')||lower.includes('proximal');
-                if(ehProximal){addR('interproximal');}else{addR('interproximal_ou_periapical');}
-            }
-        }
-    }
-    // Reabsorção radicular
-    if(lower.includes('reabsorção radicular')||lower.includes('reabsorcao radicular')||lower.includes('reabsorção interna')||lower.includes('reabsorção externa')||lower.includes('reabsorção cervical')){addI('reabsorcao');addR('cbct_reabsorcao');}
-    // Perda óssea periodontal
-    if(lower.includes('perda óssea')||lower.includes('perda ossea')||lower.includes('reabsorção alveolar')||lower.includes('defeito ósseo')||lower.includes('defeito angular')||lower.includes('nível ósseo reduzido')){
-        const avancado=lower.includes('defeito angular')||lower.includes('defeito ósseo')||lower.includes('perda óssea generalizada');
-        if(avancado){addI('perio_avancado');}else{addI('perio_basico');}
-        addR('serie_periapical');
-    }
-    // Cálculo
-    if(lower.includes('cálculo')||lower.includes('calculo')||lower.includes('tártaro')){addI('calculo');addR('interproximal');}
-    // Incluso / impactado
-    if(lower.includes('incluso')||lower.includes('impactado')||lower.includes('semi-incluso')||lower.includes('pericoronite')){addI('cirurgia_incluso');addR('cbct');}
-    // Seio maxilar
-    if(lower.includes('seio maxilar')||lower.includes('espessamento mucoso')||lower.includes('sinusite')||lower.includes('mucosite sinusal')||lower.includes('pseudocisto sinusal')||lower.includes('velamento sinusal')){addI('seio_investigar');addR('seios_paranasais');}
-    // Canal mandibular
-    if(lower.includes('canal mandibular')||lower.includes('íntima proximidade')||lower.includes('intima proximidade')||lower.includes('nervo alveolar')){addI('canal_mand');addR('cbct_mandibula');}
-    // Peri-implantite / implante
-    if(lower.includes('peri-implantite')||lower.includes('perda óssea peri-implantar')){addI('implante_peri');addR('periapical_implante');}
-    else if(lower.includes('implante osseointegrado')||lower.includes('osseointegrad')||lower.includes('implante em função')){addI('implante_acompanhar');addR('cbct_implante');}
-    // Cisto
-    if(lower.includes('cisto')||lower.includes('lesão cística')||lower.includes('dentígero')||lower.includes('folicular')){addI('cisto');addR('cbct_cisto');}
-    // Tumor / lesão mista
-    if(lower.includes('tumor')||lower.includes('lesão mista')||lower.includes('lesão multilocular')){addI('tumor');addR('cbct');}
-    // Fratura
-    if(lower.includes('fratura radicular')||lower.includes('linha de fratura')||lower.includes('fragmento radicular')||lower.includes('fratura coronorradicular')){addI('fratura');addR('cbct_fratura');}
-    // Sobrecontorno
-    if(lower.includes('sobrecontorno')){addI('sobrecontorno');const t=detectSobrecontornoTipo(text);if(t==='anterior'){addR('periapical');addR('avaliacao_clinica');}else{addR('interproximal');}}
-    // Dilaceração
-    if(lower.includes('dilaceração')||lower.includes('dilaceracao')){addI('dilaceracao');addR('cbct');}
-    // Desgaste / atrição
-    if(lower.includes('atrição')||lower.includes('desgaste oclusal')||lower.includes('sobrecarga oclusal')){addI('desgaste');addR('modelos_estudo');}
-    // ATM
-    if(lower.includes('atm')||lower.includes('côndilo')||lower.includes('articulação temporomandibular')){addI('atm');addR('rm_atm');}
-    // Alvéolo
-    if(lower.includes('alvéolo')||lower.includes('alveolo')||lower.includes('pós-exodontia')||lower.includes('alveolite')){addI('alveolo');addR('periapical');}
-    // Calcificação pulpar
-    if(lower.includes('calcificação pulpar')||lower.includes('calcificação do canal')||lower.includes('esclerose pulpar')){addI('calcificacao_pulpar');addR('periapical');}
-    // Ortodontia
-    if(lower.includes('contenção')||lower.includes('aparelho ortodôntico')||lower.includes('braquete')){addI('ortodontia');addR('periapical');}
-    // Rizólise fisiológica sem furca
-    if(temDeciduo&&(lower.includes('rizólise')||lower.includes('reabsorção fisiológica'))&&!temFurcaDec&&impacts.length===0){addI('deciduo_acompanhar');addR('oclusal_deciduo');}
-    return {impacts,recommends};
-}
-// ============================================================
-// TÍTULO DO CARD
-// ============================================================
 function extractCardTitle(text) {
-    const lower=text.toLowerCase();
-    const pm=text.match(/\b([1-4][1-8])\b/g); if(pm) return {label:'DENTE',number:pm[0]};
-    const dm=text.match(/\b([5-8][1-5])\b/g); if(dm) return {label:'DENTE',number:dm[0]};
+    const lower = text.toLowerCase();
+    // Extrai todos os dentes encontrados
+    const matches = text.match(/\b([1-4][1-8]|[5-8][1-5])\b/g);
+    if (matches) {
+        const uniqueTeeth =[...new Set(matches)];
+        return { label: 'DENTE', number: uniqueTeeth.join(', ') };
+    }
     const ctxMap=[
         {keys:['sinusite','seio maxilar','espessamento mucoso','mucosite sinusal','velamento','pseudocisto sinusal'],label:'SEIO MAXILAR'},
         {keys:['perda óssea','perda ossea','reabsorção alveolar','suporte periodontal','defeito ósseo','nível ósseo'],label:'PERDA ÓSSEA'},
@@ -552,48 +407,171 @@ function extractCardTitle(text) {
     for(const c of ctxMap) if(c.keys.some(k=>lower.includes(k))) return {label:c.label,number:null};
     return {label:'ACHADO',number:null};
 }
+
 // ============================================================
-// CARD UPDATE
+// CONDUTAS E EXAMES 
 // ============================================================
-function updateFindingCard(text,sevColor,sevLevel,annoId){
-    const card=document.getElementById('finding-card');
-    const entity=document.getElementById('card-entity-label');
-    const band=document.getElementById('card-sev-band');
-    if(!text||text.length<2){card.style.display='none';return;}
-    card.style.borderLeftColor=sevColor; card.style.borderBottomColor=sevColor;
-    card.style.boxShadow=`0 16px 50px rgba(0,0,0,0.98),0 0 0 1px rgba(255,255,255,0.06),0 0 20px ${sevColor}22`;
-    const sl=SEV_LABELS[sevLevel]||SEV_LABELS.complement;
-    band.style.background=sl.bandBg; band.style.color=sl.bandColor;
-    band.style.borderBottom=`1px solid ${sevColor}30`;
-    band.innerHTML=`<span style="width:7px;height:7px;border-radius:50%;background:${sevColor};box-shadow:0 0 5px ${sevColor};display:inline-block;flex-shrink:0"></span>${sl.badge}`;
-    const hdr=document.getElementById('card-header-row');
-    hdr.style.background=`linear-gradient(90deg,${sevColor}20 0%,transparent 100%)`;
-    const {label,number}=extractCardTitle(text);
-    const rl=(label==='ACHADO')?(SEV_LABELS[sevLevel]?SEV_LABELS[sevLevel].short.toUpperCase():'ACHADO'):label;
-    entity.innerHTML=number?`<strong>DENTE ${number}</strong>`:`<strong>${rl}</strong>`;
-    const {impacts,recommends}=getImpactsAndRecommends(text,annoId);
-    document.getElementById('card-impact-tags').innerHTML=impacts.map(t=>`<span class="impact-tag">${t}</span>`).join('');
-    document.getElementById('card-recommend-tags').innerHTML=recommends.map(t=>`<span class="recommend-tag">${t}</span>`).join('');
-    const cr=document.getElementById('card-clinical-row');
-    if(impacts.length||recommends.length)cr.classList.add('visible');else cr.classList.remove('visible');
-    card.style.display='block';
+function pickVar(annoId, variants) {
+    if(!annoId||variants.length===1) return variants[0];
+    const hash=(annoId+'').split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+    return variants[hash%variants.length];
 }
-// ============================================================
-// PULSE
-// ============================================================
-let pulseAnim=null,pulsePhase=0;
-function startPulse(){stopPulse();pulsePhase=0;function step(){pulsePhase+=0.04;render();pulseAnim=requestAnimationFrame(step);}pulseAnim=requestAnimationFrame(step);}
-function stopPulse(){if(pulseAnim){cancelAnimationFrame(pulseAnim);pulseAnim=null;}}
-function drawPulse(cx,cy,color){
-    ctx.save();ctx.globalCompositeOperation='source-over';
-    const t=(Math.sin(pulsePhase)+1)/2,t2=(Math.sin(pulsePhase-1.8)+1)/2,t3=(Math.sin(pulsePhase-3.2)+1)/2;
-    [[18+t*34,1.5,0.55-t*0.52],[13+t2*22,1.8,0.45-t2*0.42],[8+t3*12,2,0.35-t3*0.30]].forEach(([r,lw,a])=>{
-        ctx.beginPath();ctx.arc(cx,cy,r*drawingScale,0,Math.PI*2);ctx.strokeStyle=color;ctx.lineWidth=lw*drawingScale;ctx.globalAlpha=a;ctx.stroke();
-    });
-    ctx.beginPath();ctx.arc(cx,cy,4.5*drawingScale,0,Math.PI*2);ctx.fillStyle='#fff';ctx.globalAlpha=0.95;ctx.fill();
-    ctx.beginPath();ctx.arc(cx,cy,4.5*drawingScale,0,Math.PI*2);ctx.fillStyle=color;ctx.globalAlpha=0.85;ctx.fill();
-    ctx.restore();
+
+const IMPACT_BANK = {
+    endo_urgente:['Tratamento endodôntico de urgência','Pulpectomia indicada','Endodontia clínica com urgência'],
+    endo_eletivo:['Tratamento endodôntico eletivo','Pulpectomia eletiva indicada','Canal radicular — avaliação e planejamento'],
+    endo_retratamento:['Retratamento endodôntico indicado','Revisão do tratamento endodôntico','Avaliação para retratamento'],
+    obturacao_inadequada:['Avaliação do selamento apical','Retratamento por obturação inadequada','Revisão endodôntica'],
+    tratado_controle:['Controle radiográfico periódico','Acompanhamento anual','Radiografia de controle pós-tratamento'],
+    restauracao:['Restauração direta indicada','Controle e restauração da lesão cariosa'],
+    restauracao_profunda:['Restauração com proteção pulpar','Capeamento pulpar indireto','Restauração profunda com monitoramento'],
+    perio_basico:['Tratamento periodontal básico','Raspagem supra e subgengival'],
+    perio_avancado:['Tratamento periodontal avançado','Avaliação periodontal cirúrgica'],
+    furca_perm:['Avaliação periodontal — grau de furca','Possível exodontia ou tratamento periodontal'],
+    calculo:['Raspagem e alisamento radicular','Profilaxia e raspagem subgengival'],
+    cirurgia_incluso:['Avaliação cirúrgica para exodontia','Cirurgia de exodontia com CBCT'],
+    cirurgia_residual:      ['Exodontia das raízes residuais','Cirurgia de remoção de raiz retida'],
+    cirurgia_avaliar_exo:['Avaliar exodontia — destruição extensa','Avaliação de exodontia vs. reconstrução'],
+    deciduo_pulpotomia:['Pulpotomia ou pulpectomia','Tratamento pulpar do decíduo'],
+    deciduo_restauracao:['Restauração do dente decíduo','Controle de cárie do decíduo'],
+    deciduo_exo_urgente:    ['Exodontia do decíduo indicada','Extração imediata — risco ao sucessor'],
+    deciduo_acompanhar:['Acompanhar rizólise e erupção','Monitorar esfoliação fisiológica'],
+    implante_acompanhar:['Acompanhamento da osseointegração','Controle radiográfico do implante'],
+    implante_peri:['Tratamento da peri-implantite','Descontaminação da superfície do implante'],
+    seio_investigar:['Investigar causa sinusal','Avaliação de sinusite odontogênica vs. rinogênica'],
+    canal_mand:             ['Avaliação pré-cirúrgica criteriosa','Risco ao nervo alveolar inferior'],
+    reabsorcao:             ['Investigar causa da reabsorção','Avaliar etiologia da reabsorção radicular'],
+    cisto:['Enucleação do cisto / biópsia','Cirurgia de enucleação / marsupialização'],
+    fratura:                ['Avaliação da viabilidade dental','Fratura: prognóstico reservado'],
+    desgaste:['Avaliação oclusal / Placa miorrelaxante','Ajuste oclusal indicado'],
+    alveolo:['Acompanhar reparação alveolar','Controle do alvéolo pós-exodontia'],
+    calcificacao_pulpar:['Monitoramento da calcificação','Endodontia apenas se sintomático'],
+    tumor:['Biópsia e análise histopatológica','Avaliação cirúrgica oncológica'],
+    sobrecontorno:['Substituição ou ajuste da restauração','Remoção do sobrecontorno'],
+    dilaceracao:['Planejamento cirúrgico criterioso','Exodontia/Endodontia de alta complexidade'],
+    atm:                    ['Avaliação de ATM','Avaliação multidisciplinar da ATM'],
+    ortodontia:             ['Acompanhamento ortodôntico','Controle durante tratamento ortodôntico'],
+};
+
+const RECOMMEND_BANK = {
+    periapical:['RX Periapical (Paralelismo)'],
+    periapical_controle:    ['RX Periapical de controle'],
+    interproximal:          ['RX Interproximal (Bitewing)'],
+    interproximal_ou_periapical: ['RX Interproximal ou Periapical'],
+    cbct:['TC Cone Beam (CBCT)'],
+    cbct_mandibula:         ['TC Cone Beam Mandibular'],
+    cbct_reabsorcao:        ['TC Cone Beam para avaliação da reabsorção'],
+    cbct_fratura:           ['TC Cone Beam (Padrão ouro para fraturas)'],
+    cbct_cisto:['TC Cone Beam + Biópsia'],
+    cbct_implante:          ['TC Cone Beam pré-implante'],
+    serie_periapical:       ['Série Periapical Completa'],
+    seios_paranasais:       ['TC de Seios Paranasais'],
+    rm_atm:['RM de ATM / CBCT de ATM'],
+    oclusal_deciduo:['RX Oclusal ou Periapical Infantil'],
+    periapical_paralelismo: ['RX Periapical com posicionador'],
+    avaliacao_clinica:      ['Avaliação Clínica e Sondagem'],
+    modelos_estudo:['Modelos de Estudo / Análise Oclusal'],
+    periapical_implante:['RX Periapical do Implante'],
+    interproximal_deciduo:['RX Interproximal Infantil'],
+};
+
+function getImpactsAndRecommends(text, annoId) {
+    const lower=text.toLowerCase();
+    const temPulpar   =['envolvimento pulpar','comprometimento pulpar','câmara pulpar','exposição pulpar','necrose pulpar','cárie profunda','carie profunda','abscesso','fístula','lesão periapical','periápice','rarefação periapical'].some(w=>lower.includes(w));
+    const temTratado  =['tratado endodonticamente','obturação endodôntica'].some(w=>lower.includes(w));
+    const temResidual =['raízes residuais','remanescente radicular','raiz retida'].some(w=>lower.includes(w));
+    const temDeciduo  =['decíduo','deciduo','dente de leite','rizólise'].some(w=>lower.includes(w))||isDentDeciduo(text);
+    const temFurcaPerm=['rarefação na região de furca','lesão de furca','furca comprometida'].some(w=>lower.includes(w))&&!temDeciduo;
+    const temFurcaDec =temFurca(text)&&temDeciduo;
+    const hasAbscesso =lower.includes('abscesso')||lower.includes('fístula');
+    
+    const impacts=[]; const recommends=[]; const seenI=new Set(); const seenR=new Set();
+    function addI(k){const v=pickVar(annoId,IMPACT_BANK[k]);if(!seenI.has(v)){impacts.push(v);seenI.add(v);}}
+    function addR(k){const v=pickVar(annoId,RECOMMEND_BANK[k]);if(!seenR.has(v)){recommends.push(v);seenR.add(v);}}
+    
+    if(temFurcaPerm){addI('furca_perm');addR('periapical_paralelismo');}
+    if(temFurcaDec){addI('deciduo_exo_urgente');addR('oclusal_deciduo');}
+    if(temTratado){
+        const temFalha=lower.includes('subobtur')||lower.includes('sobreobtur')||lower.includes('falha')||lower.includes('rarefação')||lower.includes('periápice');
+        if(temFalha){addI('endo_retratamento');}else if(lower.includes('obturação inadequada')){addI('obturacao_inadequada');}else{addI('tratado_controle');}
+        addR('periapical_controle');
+    }
+    if(!temTratado&&!temResidual){
+        if(temDeciduo&&temPulpar){addI('deciduo_pulpotomia');addR('periapical');}
+        else if(!temDeciduo&&temPulpar){
+            if(hasAbscesso){addI('endo_urgente');}else{addI('endo_eletivo');}
+            addR('periapical');
+        }
+    }
+    if(temResidual){addI('cirurgia_residual');addR('periapical');}
+    if(!temPulpar&&!temTratado&&!temResidual){
+        const ehProfunda=lower.includes('cárie profunda')||lower.includes('lesão cariosa profunda');
+        const ehDestruicao=lower.includes('destruição coronária');
+        if(ehDestruicao){addI('cirurgia_avaliar_exo');addR('periapical');}
+        else if(ehProfunda){addI('restauracao_profunda');addR('periapical');}
+        else if(lower.includes('cárie')||lower.includes('carie')||lower.includes('cariosa')){
+            if(temDeciduo){addI('deciduo_restauracao');addR('interproximal_deciduo');}
+            else{
+                addI('restauracao');
+                if(lower.includes('interproximal')||lower.includes('proximal')){addR('interproximal');}else{addR('interproximal_ou_periapical');}
+            }
+        }
+    }
+    if(lower.includes('reabsorção radicular')||lower.includes('reabsorção interna')||lower.includes('reabsorção externa')){addI('reabsorcao');addR('cbct_reabsorcao');}
+    if(lower.includes('perda óssea')||lower.includes('defeito ósseo')){
+        if(lower.includes('defeito angular')||lower.includes('generalizada')){addI('perio_avancado');}else{addI('perio_basico');}
+        addR('serie_periapical');
+    }
+    if(lower.includes('cálculo')||lower.includes('tártaro')){addI('calculo');addR('interproximal');}
+    if(lower.includes('incluso')||lower.includes('impactado')||lower.includes('semi-incluso')){addI('cirurgia_incluso');addR('cbct');}
+    if(lower.includes('seio maxilar')||lower.includes('sinusite')||lower.includes('mucosite')){addI('seio_investigar');addR('seios_paranasais');}
+    if(lower.includes('canal mandibular')||lower.includes('íntima proximidade')){addI('canal_mand');addR('cbct_mandibula');}
+    if(lower.includes('peri-implantite')){addI('implante_peri');addR('periapical_implante');}
+    else if(lower.includes('implante osseointegrado')){addI('implante_acompanhar');addR('cbct_implante');}
+    if(lower.includes('cisto')||lower.includes('dentígero')){addI('cisto');addR('cbct_cisto');}
+    if(lower.includes('tumor')||lower.includes('lesão mista')){addI('tumor');addR('cbct');}
+    if(lower.includes('fratura')){addI('fratura');addR('cbct_fratura');}
+    if(lower.includes('sobrecontorno')){addI('sobrecontorno');if(detectSobrecontornoTipo(text)==='anterior'){addR('periapical');addR('avaliacao_clinica');}else{addR('interproximal');}}
+    if(lower.includes('dilaceração')){addI('dilaceracao');addR('cbct');}
+    if(lower.includes('atrição')||lower.includes('desgaste')){addI('desgaste');addR('modelos_estudo');}
+    if(lower.includes('atm')||lower.includes('côndilo')){addI('atm');addR('rm_atm');}
+    if(lower.includes('alvéolo')||lower.includes('alveolite')){addI('alveolo');addR('periapical');}
+    if(lower.includes('calcificação pulpar')){addI('calcificacao_pulpar');addR('periapical');}
+    if(lower.includes('contenção')||lower.includes('braquete')){addI('ortodontia');addR('periapical');}
+    if(temDeciduo&&lower.includes('rizólise')&&!temFurcaDec&&impacts.length===0){addI('deciduo_acompanhar');addR('oclusal_deciduo');}
+    
+    return {impacts, recommends};
 }
+
+function updateFindingActionCard(text, sevColor, annoId) {
+    const diag = getDiagnosticHypothesis(text);
+    const { impacts, recommends } = getImpactsAndRecommends(text, annoId);
+    
+    document.querySelector('#ac-diagnostic span').innerHTML = `<span class="diag-tag">${diag}</span>`;
+    
+    const impactEl = document.querySelector('#ac-impact');
+    if (impacts.length) {
+        impactEl.querySelector('span').innerHTML = impacts.map(t=>`<span class="impact-tag">${t}</span>`).join('');
+        impactEl.style.display = 'block';
+    } else { impactEl.style.display = 'none'; }
+    
+    const recEl = document.querySelector('#ac-recommend');
+    if (recommends.length) {
+        recEl.querySelector('span').innerHTML = recommends.map(t=>`<span class="recommend-tag">${t}</span>`).join('');
+        recEl.style.display = 'block';
+    } else { recEl.style.display = 'none'; }
+    
+    document.getElementById('action-card').style.borderLeftColor = sevColor;
+    document.getElementById('bottom-area').classList.add('visible');
+}
+
+// ============================================================
+// CORE / CANVAS RENDERING
+// ============================================================
+let pulseAnim=null, pulsePhase=0;
+function startPulse(){ stopPulse(); pulsePhase=0; function step(){ pulsePhase+=0.05; render(); pulseAnim=requestAnimationFrame(step); } pulseAnim=requestAnimationFrame(step); }
+function stopPulse(){ if(pulseAnim){ cancelAnimationFrame(pulseAnim); pulseAnim=null; } }
+
 function getAnnoCenterNorm(anno){
     if(anno.points&&anno.points.length){const xs=anno.points.map(p=>p.x),ys=anno.points.map(p=>p.y);return{x:(Math.min(...xs)+Math.max(...xs))/2,y:(Math.min(...ys)+Math.max(...ys))/2};}
     if(anno.start&&anno.end)return{x:(anno.start.x+anno.end.x)/2,y:(anno.start.y+anno.end.y)/2};
@@ -601,521 +579,443 @@ function getAnnoCenterNorm(anno){
     if(anno.x!==undefined)return{x:anno.x,y:anno.y};
     return null;
 }
-// ============================================================
-// MAIN
-// ============================================================
+
 let DATA=null;
 try{const hash=window.location.hash.substring(1);if(hash){const json=decodeURIComponent(escape(atob(hash)));DATA=JSON.parse(json);}}catch(e){console.error(e);}
 
 if(!DATA){
-    document.getElementById('findings-list').innerHTML="<p style='text-align:center;color:red;padding:20px;'>Erro ao carregar dados.</p>";
-}else{
-    const listEl=document.getElementById('findings-list');
-    listEl.innerHTML=DATA.findingsHtml||"<p style='padding:10px;'>Nenhum achado interativo.</p>";
-    if(DATA.signature)document.getElementById('signature-img').src=DATA.signature;
-    const items=listEl.querySelectorAll('p[data-highlight-color]');
-    const sevCounts={critical:0,semi:0,attention:0,complement:0};
-    items.forEach(p=>{
+    document.getElementById('findings-list').innerHTML="<p style='text-align:center;color:red;padding:20px;width:100%;'>Erro ao carregar dados.</p>";
+} else {
+    const listEl = document.getElementById('findings-list');
+    listEl.innerHTML = DATA.findingsHtml || "<p style='padding:10px;'>Nenhum achado interativo.</p>";
+    if(DATA.signature) document.getElementById('signature-img').src=DATA.signature;
+    
+    const items = listEl.querySelectorAll('p[data-highlight-color]');
+    document.getElementById('achados-count').textContent = `${items.length} achados`;
+
+    // BUILDING CARDS
+    items.forEach(p => {
         p.classList.add('finding-item');
-        const orig=p.innerHTML;
-        const tmp=document.createElement('div');tmp.innerHTML=orig;
-        const text=tmp.textContent||tmp.innerText||'';
-        const sev=classifyText(text);
-        p.dataset.severity=sev.level;p.dataset.severityColor=sev.color;
-        p.style.borderLeftColor=sev.color;p.style.borderBottomColor=sev.color;
-        sevCounts[sev.level]=(sevCounts[sev.level]||0)+1;
-        const {label,number}=extractCardTitle(text);
-        const rl=(label==='ACHADO')?(SEV_LABELS[sev.level]?SEV_LABELS[sev.level].short.toUpperCase():'ACHADO'):label;
-        const hl=number?`<strong>DENTE ${number}</strong>`:`<strong>${rl}</strong>`;
-        const cleanHTML=orig.replace(/<br\s*\/?>\s*<br\s*\/?>/gi,' ').replace(/<br\s*\/?>/gi,' ').replace(/<\/p>\s*<p[^>]*>/gi,' ').replace(/<p[^>]*>/gi,'').replace(/<\/p>/gi,'').replace(/\s{2,}/g,' ').trim();
-        p.innerHTML=`<div class="item-header" style="background:${sev.color}14"><span class="sev-dot" style="background:${sev.color};box-shadow:0 0 4px ${sev.color};width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0"></span><span class="item-entity-label" style="color:${sev.color}">${hl}</span></div><div class="item-body">${cleanHTML}</div>`;
+        const orig = p.innerHTML;
+        const tmp = document.createElement('div'); tmp.innerHTML = orig;
+        const text = tmp.textContent || tmp.innerText || '';
+        
+        const sev = classifyText(text);
+        p.dataset.severityColor = sev.color;
+        
+        const { label, number } = extractCardTitle(text);
+        const hl = number ? `DENTE ${number}` : label;
+        const catName = SEV_LABELS[sev.level] ? SEV_LABELS[sev.level].short.toUpperCase() : 'ACHADO';
+        
+        const cleanHTML = orig.replace(/<br\s*\/?>\s*<br\s*\/?>/gi,' ').replace(/<br\s*\/?>/gi,' ').replace(/<\/p>\s*<p[^>]*>/gi,' ').replace(/<p[^>]*>/gi,'').replace(/<\/p>/gi,'').replace(/\s{2,}/g,' ').trim();
+        
+        p.innerHTML = `
+            <div class="item-header" style="border-bottom: 1px solid ${sev.color}30;">
+                <span class="item-entity-label" style="color:${sev.color}">${hl}</span>
+                <span class="item-category-label" style="background:${sev.color}15; color:${sev.color}; border: 1px solid ${sev.color}40;">${catName}</span>
+            </div>
+            <div class="item-body">
+                <div class="item-text">${cleanHTML}</div>
+                <button class="btn-ver-mais">Ver mais...</button>
+            </div>
+        `;
+        p.style.borderLeftColor = sev.color;
+        p.style.borderRightColor = sev.color;
+
+        const btnVerMais = p.querySelector('.btn-ver-mais');
+        const itemText = p.querySelector('.item-text');
+        btnVerMais.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isExpanded = itemText.classList.toggle('expanded');
+            btnVerMais.textContent = isExpanded ? 'Ver menos...' : 'Ver mais...';
+            if (isExpanded) {
+                setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }), 50);
+            }
+        });
     });
-    buildSeveritySummary(sevCounts,items.length);
-    // CARROSSEL
-    const carouselNav=document.getElementById('carousel-nav');
-    const carouselPrev=document.getElementById('carousel-prev');
-    const carouselNext=document.getElementById('carousel-next');
-    const carouselCounter=document.getElementById('carousel-counter');
-    const allItems=Array.from(listEl.querySelectorAll('.finding-item'));
-    let carouselIndex=0;
-    function isMobilePortraitNow(){return window.innerWidth<=768&&window.innerHeight>window.innerWidth;}
-    function setupCarousel(){if(!isMobilePortraitNow()){carouselNav.style.display='none';return;}carouselNav.style.display='flex';updateCarouselCounter();updateCarouselButtons();}
-    function updateCarouselCounter(){carouselCounter.textContent=`${carouselIndex+1} / ${allItems.length}`;}
-    function updateCarouselButtons(){carouselPrev.disabled=carouselIndex===0;carouselNext.disabled=carouselIndex===allItems.length-1;}
-    function scrollCarouselTo(idx,triggerClick){if(idx<0||idx>=allItems.length)return;carouselIndex=idx;const item=allItems[idx];item.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});updateCarouselCounter();updateCarouselButtons();if(triggerClick)item.click();}
-    // Spotlight sync
-    function syncListToSpotlight(){
-        if(!activeFilter)return;
-        const fa=DATA.annotations.filter(anno=>{const li=document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);return li&&li.dataset.severity===activeFilter;});
-        if(!fa.length)return;
-        const fi=((spotlightIndex%fa.length)+fa.length)%fa.length;
-        const tgt=document.querySelector(`.finding-item[data-annotation-id="${fa[fi].id}"]`);
-        if(!tgt)return;
-        document.querySelectorAll('.finding-item').forEach(el=>{el.classList.remove('active','spotlight-active');el.style.boxShadow='';});
-        tgt.classList.add('active','spotlight-active');
-        const sc={critical:'#e53e3e',semi:'#dd6b20',attention:'#d69e2e',complement:'#38a169'}[activeFilter]||'#fff';
-        tgt.style.boxShadow=`0 0 0 2px ${sc},0 6px 24px rgba(0,0,0,0.7)`;
-        if(isMobilePortraitNow()){const idx=allItems.indexOf(tgt);if(idx!==-1){carouselIndex=idx;tgt.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});updateCarouselCounter();updateCarouselButtons();}}
-        else{tgt.scrollIntoView({behavior:'smooth',block:'nearest'});}
-    }
-    carouselPrev.addEventListener('click',()=>scrollCarouselTo(carouselIndex-1,true));
-    carouselNext.addEventListener('click',()=>scrollCarouselTo(carouselIndex+1,true));
-    listEl.addEventListener('click',e=>{const item=e.target.closest('.finding-item');if(!item||!isMobilePortraitNow())return;const idx=allItems.indexOf(item);if(idx!==-1){carouselIndex=idx;updateCarouselCounter();updateCarouselButtons();}});
-    let scrollTimer=null;
-    listEl.addEventListener('scroll',()=>{if(!isMobilePortraitNow())return;clearTimeout(scrollTimer);scrollTimer=setTimeout(()=>{const lr=listEl.getBoundingClientRect(),c=lr.left+lr.width/2;let cl=0,md=Infinity;allItems.forEach((it,i)=>{const r=it.getBoundingClientRect(),d=Math.abs((r.left+r.width/2)-c);if(d<md){md=d;cl=i;}});carouselIndex=cl;updateCarouselCounter();updateCarouselButtons();},80);});
-    setupCarousel();window.addEventListener('resize',setupCarousel);
-    if(screen.orientation)screen.orientation.addEventListener('change',()=>setTimeout(setupCarousel,250));
-    // CANVAS
-    const viewer=document.getElementById('viewer-area');
-    const canvas=document.getElementById('canvas');
-    const ctx=canvas.getContext('2d');
-    let img=new Image();
-    let scale=1,panX=0,panY=0;
-    let isDragging=false,startX,startY,startClickX=0,startClickY=0;
-    let activeAnnotationId=null,showAll=true,drawingScale=1;
-    let activeFilter=null,spotlightIndex=0,animFrame=null;
-    img.onload=()=>{
-        resize(); drawingScale=img.naturalWidth/1200;
-        fitImage(); // FIX #4: abre centralizado sem offset de anotações
+
+    // Horizontal Scroll with Mouse Wheel (Desktop UX)
+    listEl.addEventListener('wheel', (e) => {
+        if (e.deltaY !== 0) {
+            e.preventDefault();
+            listEl.scrollLeft += e.deltaY;
+        }
+    });
+
+    // CANVAS INIT
+    const viewer = document.getElementById('viewer-area');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let img = new Image();
+    let scale = 1, panX = 0, panY = 0;
+    let isDragging = false, startX, startY, startClickX = 0, startClickY = 0;
+    let activeAnnotationId = null, showAll = true, drawingScale = 1;
+    let superZoomMode = false;
+    let animFrame = null;
+
+    img.onload = () => {
+        resize(); 
+        drawingScale = img.naturalWidth / 1200;
+        fitImage(); 
         render();
     };
-    img.src=DATA.image;
-    window.addEventListener('resize',()=>{resize();fitImage();render();});
-    if(screen.orientation)screen.orientation.addEventListener('change',()=>setTimeout(()=>{resize();fitImage();render();},200));
-    function resize(){canvas.width=viewer.clientWidth;canvas.height=viewer.clientHeight;}
-    function fitImage(){const rW=canvas.width/img.naturalWidth,rH=canvas.height/img.naturalHeight;scale=Math.min(rW,rH);panX=(canvas.width-img.naturalWidth*scale)/2;panY=(canvas.height-img.naturalHeight*scale)/2;}
-    function isLandscapeMobile(){return window.innerWidth<=900&&window.innerWidth>window.innerHeight;}
-    function isMobilePortrait(){return window.innerWidth<=768&&window.innerHeight>window.innerWidth;}
-    // RENDER
-    function render(){
-        ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.setTransform(scale,0,0,scale,panX,panY);ctx.drawImage(img,0,0);
-        if(activeFilter){
+    img.src = DATA.image;
+    
+    window.addEventListener('resize', () => { resize(); fitImage(); render(); });
+    if(screen.orientation) screen.orientation.addEventListener('change', () => setTimeout(() => { resize(); fitImage(); render(); }, 200));
+
+    function resize() { canvas.width = viewer.clientWidth; canvas.height = viewer.clientHeight; }
+    function fitImage() {
+        const rW = canvas.width / img.naturalWidth, rH = canvas.height / img.naturalHeight;
+        scale = Math.min(rW, rH);
+        panX = (canvas.width - img.naturalWidth * scale) / 2;
+        panY = (canvas.height - img.naturalHeight * scale) / 2;
+    }
+
+    // RENDER LOGIC
+    function render() {
+        ctx.setTransform(1,0,0,1,0,0); 
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        
+        if (activeAnnotationId && !superZoomMode) {
+            // SPOTLIGHT OVERLAY
+            ctx.setTransform(scale,0,0,scale,panX,panY);
+            ctx.drawImage(img,0,0);
+            
             ctx.setTransform(1,0,0,1,0,0);
-            const offA=document.createElement('canvas');offA.width=canvas.width;offA.height=canvas.height;
-            const ctxA=offA.getContext('2d');ctxA.setTransform(scale,0,0,scale,panX,panY);ctxA.drawImage(img,0,0);
-            ctxA.setTransform(1,0,0,1,0,0);ctxA.fillStyle='rgba(0,0,0,0.62)';ctxA.fillRect(0,0,offA.width,offA.height);
+            const offA = document.createElement('canvas'); offA.width = canvas.width; offA.height = canvas.height;
+            const ctxA = offA.getContext('2d'); ctxA.setTransform(scale,0,0,scale,panX,panY); ctxA.drawImage(img,0,0);
+            ctxA.setTransform(1,0,0,1,0,0); ctxA.fillStyle = 'rgba(0,0,0,0.75)'; ctxA.fillRect(0,0,offA.width,offA.height);
             ctx.drawImage(offA,0,0);
-            const fa=DATA.annotations.filter(anno=>{const li=document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);return li&&li.dataset.severity===activeFilter;});
-            const fi=((spotlightIndex%fa.length)+fa.length)%fa.length;
-            fa.forEach((anno,i)=>drawSpotlightLupa(anno,i===fi));
-            if(fa.length>1){
-                ctx.save();ctx.setTransform(1,0,0,1,0,0);
-                const hint=`${fi+1} / ${fa.length}  —  toque para avançar`;
-                ctx.font=`bold 12px 'Segoe UI',sans-serif`;ctx.textAlign='center';
-                const hw=ctx.measureText(hint).width+22,hx=canvas.width/2,hy=canvas.height-18;
-                ctx.fillStyle='rgba(0,0,0,0.55)';ctx.beginPath();ctx.roundRect(hx-hw/2,hy-14,hw,22,11);ctx.fill();
-                ctx.fillStyle='rgba(255,255,255,0.70)';ctx.fillText(hint,hx,hy+3);ctx.restore();
-            }
-        }else if(showAll){
-            DATA.annotations.forEach(anno=>drawAnnotation(anno,false));
-        }else if(activeAnnotationId){
-            const anno=DATA.annotations.find(a=>a.id===activeAnnotationId);
-            if(anno){drawAnnotation(anno,true);const cn=getAnnoCenterNorm(anno);if(cn){const el=document.querySelector(`p[data-annotation-id="${anno.id}"]`);const col=el?el.dataset.severityColor:'#00ffff';drawPulse(cn.x*img.naturalWidth,cn.y*img.naturalHeight,col);}}
+            
+            const anno = DATA.annotations.find(a => a.id === activeAnnotationId);
+            if (anno) drawSpotlightLupa(anno);
+        } 
+        else if (activeAnnotationId && superZoomMode) {
+            // SUPER ZOOM (Image + Highlighted Annotation)
+            ctx.setTransform(scale,0,0,scale,panX,panY);
+            ctx.drawImage(img,0,0);
+            
+            const anno = DATA.annotations.find(a => a.id === activeAnnotationId);
+            if (anno) drawAnnotation(anno, true, true);
+        }
+        else if (showAll) {
+            // SHOW ALL
+            ctx.setTransform(scale,0,0,scale,panX,panY);
+            ctx.drawImage(img,0,0);
+            DATA.annotations.forEach(anno => drawAnnotation(anno, false, false));
         }
     }
-    function drawSpotlightLupa(anno,isFocused){
-        const cn=getAnnoCenterNorm(anno);if(!cn)return;
-        const cxImg=cn.x*img.naturalWidth,cyImg=cn.y*img.naturalHeight;
-        const cxS=cxImg*scale+panX,cyS=cyImg*scale+panY;
-        let annoR=45;
-        if(anno.points&&anno.points.length>1){const xs=anno.points.map(p=>p.x*img.naturalWidth*scale),ys=anno.points.map(p=>p.y*img.naturalHeight*scale);annoR=Math.hypot(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys))*0.45;}
-        const radius=Math.max(annoR*1.9,65);
-        const el=document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);
-        const col=el?el.dataset.severityColor:'#fff';
-        if(isFocused){
-            ctx.save();ctx.setTransform(1,0,0,1,0,0);
-            ctx.beginPath();ctx.arc(cxS,cyS,radius,0,Math.PI*2);ctx.clip();
-            const zS=scale*1.4;ctx.setTransform(zS,0,0,zS,cxS-cxImg*zS,cyS-cyImg*zS);ctx.drawImage(img,0,0);ctx.restore();
-            ctx.save();ctx.setTransform(1,0,0,1,0,0);
-            const pt=(Math.sin(pulsePhase*0.7)+1)/2;
-            ctx.beginPath();ctx.arc(cxS,cyS,radius,0,Math.PI*2);ctx.strokeStyle=`rgba(255,255,255,${0.28+pt*0.14})`;ctx.lineWidth=2;ctx.stroke();
-            ctx.restore();
-        }else{
-            const dR=Math.max(annoR*0.9,28);
-            ctx.save();ctx.setTransform(1,0,0,1,0,0);
-            ctx.beginPath();ctx.arc(cxS,cyS,dR,0,Math.PI*2);ctx.strokeStyle=`${col}70`;ctx.lineWidth=1.5;ctx.stroke();
-            ctx.beginPath();ctx.arc(cxS,cyS,4,0,Math.PI*2);ctx.fillStyle=`${col}99`;ctx.fill();ctx.restore();
+
+    function drawSpotlightLupa(anno) {
+        const cn = getAnnoCenterNorm(anno); if(!cn) return;
+        const cxImg = cn.x * img.naturalWidth, cyImg = cn.y * img.naturalHeight;
+        const cxS = cxImg * scale + panX, cyS = cyImg * scale + panY;
+        
+        let annoR = 45;
+        if (anno.points && anno.points.length > 1) {
+            const xs = anno.points.map(p => p.x * img.naturalWidth * scale), ys = anno.points.map(p => p.y * img.naturalHeight * scale);
+            annoR = Math.hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) * 0.45;
         }
+        const radius = Math.max(annoR * 1.9, 65);
+        
+        ctx.save(); ctx.setTransform(1,0,0,1,0,0);
+        ctx.beginPath(); ctx.arc(cxS, cyS, radius, 0, Math.PI * 2); ctx.clip();
+        
+        // Image insight loupe
+        const zS = scale * 1.4; 
+        ctx.setTransform(zS,0,0,zS, cxS - cxImg * zS, cyS - cyImg * zS); 
+        ctx.drawImage(img, 0, 0); 
+        ctx.restore();
+        
+        // Ring
+        ctx.save(); ctx.setTransform(1,0,0,1,0,0);
+        const pt = (Math.sin(pulsePhase * 0.7) + 1) / 2;
+        ctx.beginPath(); ctx.arc(cxS, cyS, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${0.28 + pt * 0.14})`; 
+        ctx.lineWidth = 2; 
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 10;
+        ctx.stroke();
+        ctx.restore();
     }
-    // DRAW ANNOTATION — curvas suaves com Chaikin subdivision
-    function chaikin(pts,closed,passes){
-        // Refinamento de Chaikin: transforma pontos angulares em curva suave
-        let p=pts.slice();
-        for(let k=0;k<passes;k++){
-            const q=[];
-            const n=p.length;
-            const lim=closed?n:n-1;
-            for(let i=0;i<lim;i++){
-                const a=p[i],b=p[(i+1)%n];
-                q.push({x:a.x*0.75+b.x*0.25,y:a.y*0.75+b.y*0.25});
-                q.push({x:a.x*0.25+b.x*0.75,y:a.y*0.25+b.y*0.75});
+
+    function chaikin(pts, closed, passes) {
+        let p = pts.slice();
+        for(let k=0; k<passes; k++) {
+            const q =[]; const n = p.length; const lim = closed ? n : n-1;
+            for(let i=0; i<lim; i++) {
+                const a = p[i], b = p[(i+1)%n];
+                q.push({x: a.x*0.75 + b.x*0.25, y: a.y*0.75 + b.y*0.25});
+                q.push({x: a.x*0.25 + b.x*0.75, y: a.y*0.25 + b.y*0.75});
             }
-            if(closed){p=q;}
-            else{p=[p[0],...q,p[n-1]];}
+            if(closed) p = q; else p = [p[0], ...q, p[n-1]];
         }
         return p;
     }
-    function buildSmoothPath(c,pts,closed){
-        if(pts.length<2)return;
-        const refined=pts.length>=3?chaikin(pts,closed,3):pts;
-        c.beginPath();
-        c.moveTo(refined[0].x,refined[0].y);
-        for(let i=1;i<refined.length;i++)c.lineTo(refined[i].x,refined[i].y);
-        if(closed)c.closePath();
+    function buildSmoothPath(c, pts, closed) {
+        if(pts.length < 2) return;
+        const refined = pts.length >= 3 ? chaikin(pts, closed, 3) : pts;
+        c.beginPath(); c.moveTo(refined[0].x, refined[0].y);
+        for(let i=1; i<refined.length; i++) c.lineTo(refined[i].x, refined[i].y);
+        if(closed) c.closePath();
     }
-    function hexAlpha(hex,alpha){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return `rgba(${r},${g},${b},${alpha})`;}
-    function boostColor(hex){
-        // Deixa a cor mais saturada/brilhante para o glow
-        const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-        const boost=c=>Math.min(255,Math.round(c*1.25+20));
+    function hexAlpha(hex, alpha) {
+        const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+        return `rgba(${r},${g},${b},${alpha})`;
+    }
+    function boostColor(hex) {
+        const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+        const boost = c => Math.min(255, Math.round(c * 1.25 + 20));
         return `rgb(${boost(r)},${boost(g)},${boost(b)})`;
     }
-    function drawAnnotation(anno,isActive){
-        const el=document.querySelector(`p[data-annotation-id="${anno.id}"]`);
-        const color=(el&&el.dataset.severityColor)?el.dataset.severityColor:(anno.color||'#00FFFF');
-        const bright=boostColor(color);
-        const baseWidth=(anno.thickness||4)*drawingScale;
-        const isZoom=isActive===true;
-        const strokeW=isZoom?baseWidth*0.6:baseWidth*1.6;
-        const fillOp=isZoom?0.10:0.22;
 
-        ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
+    function drawAnnotation(anno, isActive, isSuperZoom) {
+        const el = document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);
+        const color = (el && el.dataset.severityColor) ? el.dataset.severityColor : (anno.color || '#00FFFF');
+        const bright = boostColor(color);
+        const baseWidth = (anno.thickness || 4) * drawingScale;
+        
+        let strokeW = isActive ? baseWidth * 0.6 : baseWidth * 1.6;
+        let fillOp = isActive ? 0.10 : 0.22;
+        let lineCol = color;
 
-        if(anno.points&&anno.fillColor){
-            const pts=anno.points.map(p=>({x:p.x*img.naturalWidth,y:p.y*img.naturalHeight}));
-            const cx=pts.reduce((s,p)=>s+p.x,0)/pts.length,cy=pts.reduce((s,p)=>s+p.y,0)/pts.length;
-            const maxR=Math.max(...pts.map(p=>Math.hypot(p.x-cx,p.y-cy)))*1.3;
+        if (isSuperZoom) {
+            strokeW = baseWidth * 0.25; // mais fino
+            fillOp = 0.05; // bem transparente
+            lineCol = bright; // cor saturada
+        }
 
-            // Fill gradiente radial mais opaco e intenso
-            buildSmoothPath(ctx,pts,true);
-            const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,maxR);
-            grad.addColorStop(0,hexAlpha(color,fillOp*2.0));
-            grad.addColorStop(0.5,hexAlpha(color,fillOp));
-            grad.addColorStop(1,hexAlpha(color,0));
-            ctx.fillStyle=grad;ctx.fill();
+        ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
 
-            // Pass 1: sombra bem espessa (separa da imagem de fundo)
-            buildSmoothPath(ctx,pts,true);
-            ctx.strokeStyle='rgba(0,0,0,0.8)';
-            ctx.lineWidth=strokeW+(isZoom?3:7)*drawingScale;
+        if (anno.points && anno.fillColor) {
+            const pts = anno.points.map(p => ({ x: p.x * img.naturalWidth, y: p.y * img.naturalHeight }));
+            const cx = pts.reduce((s,p) => s+p.x, 0)/pts.length, cy = pts.reduce((s,p) => s+p.y, 0)/pts.length;
+            const maxR = Math.max(...pts.map(p => Math.hypot(p.x-cx, p.y-cy))) * 1.3;
+
+            buildSmoothPath(ctx, pts, true);
+            const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
+            grad.addColorStop(0, hexAlpha(color, fillOp * 2.0));
+            grad.addColorStop(0.5, hexAlpha(color, fillOp));
+            grad.addColorStop(1, hexAlpha(color, 0));
+            ctx.fillStyle = grad; ctx.fill();
+
+            // Shadow
+            buildSmoothPath(ctx, pts, true);
+            ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+            ctx.lineWidth = strokeW + (isSuperZoom ? 1 : (isActive ? 3 : 7)) * drawingScale;
             ctx.stroke();
 
-            // Pass 2: glow externo colorido suave
-            buildSmoothPath(ctx,pts,true);
-            ctx.strokeStyle=hexAlpha(color,0.35);
-            ctx.lineWidth=strokeW+(isZoom?1.5:4)*drawingScale;
+            // Glow
+            buildSmoothPath(ctx, pts, true);
+            ctx.strokeStyle = hexAlpha(color, 0.35);
+            ctx.lineWidth = strokeW + (isSuperZoom ? 0.5 : (isActive ? 1.5 : 4)) * drawingScale;
             ctx.stroke();
 
-            // Pass 3: contorno colorido principal — forte e limpo
-            buildSmoothPath(ctx,pts,true);
-            ctx.strokeStyle=bright;
-            ctx.lineWidth=strokeW;
+            // Main Core
+            buildSmoothPath(ctx, pts, true);
+            ctx.strokeStyle = lineCol;
+            ctx.lineWidth = strokeW;
             ctx.stroke();
 
-            // Pass 4: fio de brilho interno fino e branco
-            buildSmoothPath(ctx,pts,true);
-            ctx.strokeStyle=isZoom?'rgba(255,255,255,0.18)':'rgba(255,255,255,0.28)';
-            ctx.lineWidth=strokeW*0.22;
+            // Inner reflection
+            buildSmoothPath(ctx, pts, true);
+            ctx.strokeStyle = isActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.28)';
+            ctx.lineWidth = strokeW * (isSuperZoom ? 0.4 : 0.22);
             ctx.stroke();
 
-            // Zoom: tracejado animado sutil
-            if(isZoom){
-                const dL=7*drawingScale,dG=11*drawingScale,dO=(pulsePhase*9)%(dL+dG);
-                buildSmoothPath(ctx,pts,true);
-                ctx.setLineDash([dL,dG]);ctx.lineDashOffset=-dO;
-                ctx.strokeStyle='rgba(255,255,255,0.18)';ctx.lineWidth=strokeW*0.4;
-                ctx.stroke();ctx.setLineDash([]);ctx.lineDashOffset=0;
-            }
+        } else if (anno.points) {
+            const pts = anno.points.map(p => ({ x: p.x * img.naturalWidth, y: p.y * img.naturalHeight }));
+            buildSmoothPath(ctx, pts, false); ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = strokeW + (isSuperZoom?2:6)*drawingScale; ctx.stroke();
+            buildSmoothPath(ctx, pts, false); ctx.strokeStyle = hexAlpha(color, 0.4); ctx.lineWidth = strokeW + (isSuperZoom?1:3)*drawingScale; ctx.stroke();
+            buildSmoothPath(ctx, pts, false); ctx.strokeStyle = lineCol; ctx.lineWidth = strokeW; ctx.stroke();
+            buildSmoothPath(ctx, pts, false); ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = strokeW*0.2; ctx.stroke();
 
-        }else if(anno.points){
-            // Linha aberta (polígono sem fill)
-            const pts=anno.points.map(p=>({x:p.x*img.naturalWidth,y:p.y*img.naturalHeight}));
-            buildSmoothPath(ctx,pts,false);
-            ctx.strokeStyle='rgba(0,0,0,0.8)';
-            ctx.lineWidth=strokeW+(isZoom?2.5:6)*drawingScale;
-            ctx.stroke();
-            buildSmoothPath(ctx,pts,false);
-            ctx.strokeStyle=hexAlpha(color,0.4);
-            ctx.lineWidth=strokeW+(isZoom?1:3)*drawingScale;
-            ctx.stroke();
-            buildSmoothPath(ctx,pts,false);
-            ctx.strokeStyle=bright;
-            ctx.lineWidth=strokeW;
-            ctx.stroke();
-            buildSmoothPath(ctx,pts,false);
-            ctx.strokeStyle='rgba(255,255,255,0.22)';
-            ctx.lineWidth=strokeW*0.2;
-            ctx.stroke();
-
-        }else if(anno.type&&anno.size){
-            const x=anno.x*img.naturalWidth,y=anno.y*img.naturalHeight,s=anno.size*img.naturalWidth;
-            let hL=s*0.3,sW=s*0.1;
-            ctx.translate(x,y);ctx.rotate(anno.rotation);ctx.scale(anno.scale,anno.scale);
+        } else if (anno.type && anno.size) {
+            const x = anno.x * img.naturalWidth, y = anno.y * img.naturalHeight, s = anno.size * img.naturalWidth;
+            let hL = s * 0.3, sW = s * 0.1;
+            ctx.translate(x, y); ctx.rotate(anno.rotation); ctx.scale(anno.scale, anno.scale);
             if(anno.type==='normal'){
-                ctx.beginPath();ctx.moveTo(-s/2+hL,0);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/2);ctx.moveTo(s/2,0);ctx.lineTo(s/2-hL,hL/2);
-                ctx.strokeStyle='rgba(0,0,0,0.8)';ctx.lineWidth=sW*(isZoom?1.8:2.8);ctx.lineCap='round';ctx.stroke();
-                ctx.beginPath();ctx.moveTo(-s/2+hL,0);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/2);ctx.moveTo(s/2,0);ctx.lineTo(s/2-hL,hL/2);
-                ctx.strokeStyle=hexAlpha(color,0.4);ctx.lineWidth=sW*(isZoom?1.4:2.2);ctx.stroke();
-                ctx.beginPath();ctx.moveTo(-s/2+hL,0);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/2);ctx.moveTo(s/2,0);ctx.lineTo(s/2-hL,hL/2);
-                ctx.fillStyle=bright;ctx.fill();ctx.strokeStyle=bright;ctx.lineWidth=sW*(isZoom?1:1.6);ctx.stroke();
-            }else if(anno.type==='outline'){
-                hL=s*0.4;sW=s*0.15;
-                const arrowPath=()=>{ctx.beginPath();ctx.moveTo(-s/2,-sW/2);ctx.lineTo(-s/2,sW/2);ctx.lineTo(s/2-hL,sW/2);ctx.lineTo(s/2-hL,hL/2);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/2);ctx.lineTo(s/2-hL,-sW/2);ctx.closePath();};
-                arrowPath();ctx.strokeStyle='rgba(0,0,0,0.8)';ctx.lineWidth=isZoom?4*drawingScale:6*drawingScale;ctx.lineJoin='miter';ctx.stroke();
-                arrowPath();ctx.strokeStyle=hexAlpha(color,0.4);ctx.lineWidth=isZoom?3*drawingScale:5*drawingScale;ctx.stroke();
-                arrowPath();ctx.strokeStyle=bright;ctx.lineWidth=isZoom?2*drawingScale:3.5*drawingScale;ctx.stroke();
-            }else if(anno.type==='complex'){
-                hL=s*0.4;sW=s*0.2;
-                ctx.beginPath();ctx.moveTo(-s/2,-sW/2);ctx.lineTo(-s/2,sW/2);ctx.lineTo(s/2-hL,sW/2);ctx.lineTo(s/2-hL,hL/1.5);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/1.5);ctx.lineTo(s/2-hL,-sW/2);ctx.closePath();
-                ctx.fillStyle=bright;ctx.fill();ctx.strokeStyle=bright;ctx.lineWidth=(isZoom?1:2)*drawingScale;ctx.lineJoin='miter';ctx.stroke();
-            }
-        }else if(anno.text&&anno.x!==undefined){
-            const x=anno.x*img.naturalWidth,y=anno.y*img.naturalHeight;
-            const fs=(parseInt(anno.font)||24)*drawingScale*(isZoom?1:1.15);
-            ctx.font=`bold ${fs}px Arial`;ctx.textAlign='center';
-            ctx.lineWidth=(isZoom?5:7)*drawingScale;ctx.strokeStyle='rgba(0,0,0,0.9)';ctx.strokeText(anno.text,x,y);
-            ctx.lineWidth=(isZoom?3:4.5)*drawingScale;ctx.strokeStyle=hexAlpha(color,0.4);ctx.strokeText(anno.text,x,y);
-            ctx.fillStyle=bright;ctx.fillText(anno.text,x,y);
-        }else if(anno.start&&anno.end){
-            const p1={x:anno.start.x*img.naturalWidth,y:anno.start.y*img.naturalHeight};
-            const p2={x:anno.end.x*img.naturalWidth,y:anno.end.y*img.naturalHeight};
-            const lw=baseWidth*(isZoom?0.7:1.3);
-            ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
-            ctx.strokeStyle='rgba(0,0,0,0.8)';ctx.lineWidth=lw+(isZoom?2:5)*drawingScale;ctx.stroke();
-            ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
-            ctx.strokeStyle=hexAlpha(color,0.4);ctx.lineWidth=lw+(isZoom?1:2.5)*drawingScale;ctx.stroke();
-            ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
-            ctx.strokeStyle=bright;ctx.lineWidth=lw;ctx.stroke();
-            if(anno.text){
-                const fs=20*drawingScale*(isZoom?1:1.15);ctx.font=`bold ${fs}px Arial`;ctx.textAlign='center';
-                const mx=(p1.x+p2.x)/2,my=(p1.y+p2.y)/2;
-                ctx.lineWidth=(isZoom?5:7)*drawingScale;ctx.strokeStyle='rgba(0,0,0,0.9)';ctx.strokeText(anno.text,mx,my-10);
-                ctx.fillStyle=bright;ctx.fillText(anno.text,mx,my-10);
+                ctx.beginPath(); ctx.moveTo(-s/2+hL,0); ctx.lineTo(s/2,0); ctx.lineTo(s/2-hL,-hL/2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-hL,hL/2);
+                ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=sW*(isSuperZoom?1:2.8); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(-s/2+hL,0); ctx.lineTo(s/2,0); ctx.lineTo(s/2-hL,-hL/2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-hL,hL/2);
+                ctx.strokeStyle=hexAlpha(color,0.4); ctx.lineWidth=sW*(isSuperZoom?0.8:2.2); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(-s/2+hL,0); ctx.lineTo(s/2,0); ctx.lineTo(s/2-hL,-hL/2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-hL,hL/2);
+                ctx.fillStyle=lineCol; ctx.fill(); ctx.strokeStyle=lineCol; ctx.lineWidth=sW*(isSuperZoom?0.5:1.6); ctx.stroke();
             }
         }
         ctx.restore();
     }
-    function zoomNatural(anno){
-        let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
-        if(anno.points){anno.points.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});}
-        else if(anno.start&&anno.end){minX=Math.min(anno.start.x,anno.end.x);maxX=Math.max(anno.start.x,anno.end.x);minY=Math.min(anno.start.y,anno.end.y);maxY=Math.max(anno.start.y,anno.end.y);}
-        else if(anno.x!==undefined){let sz=anno.size?(anno.size*(anno.scale||1)):0.08;minX=anno.x-sz/2;maxX=anno.x+sz/2;minY=anno.y-sz/2;maxY=anno.y+sz/2;}
-        if(maxX-minX<0.1){minX-=0.1;maxX+=0.1;}if(maxY-minY<0.1){minY-=0.1;maxY+=0.1;}
-        const regW=(maxX-minX)*img.naturalWidth,regH=(maxY-minY)*img.naturalHeight;
-        const landscape=isLandscapeMobile(),mobile=isMobilePortrait();
-        const padX=canvas.width*(landscape?0.18:0.30),padY=canvas.height*(landscape?0.18:0.30);
-        let tScale=Math.min((canvas.width-padX)/regW,(canvas.height-padY)/regH);
-        tScale=Math.min(tScale,3.5);tScale=Math.max(tScale,Math.min(canvas.width/img.naturalWidth,canvas.height/img.naturalHeight));
-        const cX=((minX+maxX)/2)*img.naturalWidth,cY=((minY+maxY)/2)*img.naturalHeight;
-        scale=tScale;panX=canvas.width/2-cX*scale;
-        const ratioY=landscape?0.47:mobile?0.65:0.50;
-        panY=canvas.height*ratioY-cY*scale;
+
+    function smoothZoomTo(ts, tpx, tpy, dur) {
+        if(animFrame) cancelAnimationFrame(animFrame);
+        const ss = scale, spx = panX, spy = panY, st = performance.now();
+        function ease(t){ return t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t; }
+        function step(now){
+            const t = Math.min((now - st)/dur, 1), ev = ease(t);
+            scale = ss + (ts - ss) * ev;
+            panX = spx + (tpx - spx) * ev;
+            panY = spy + (tpy - spy) * ev;
+            render();
+            if(t < 1) animFrame = requestAnimationFrame(step); else animFrame = null;
+        }
+        animFrame = requestAnimationFrame(step);
     }
-    listEl.addEventListener('click',e=>{
-        const item=e.target.closest('.finding-item');if(!item)return;
-        document.querySelectorAll('.finding-item').forEach(el=>{el.classList.remove('active','spotlight-active');el.style.boxShadow='';});
-        const id=item.dataset.annotationId;
-        if(activeAnnotationId===id){resetView();}
-        else{
-            activeAnnotationId=id;showAll=false;activeFilter=null;
-            document.querySelectorAll('.sev-count').forEach(el=>el.classList.remove('active-filter'));
+
+    function zoomNatural(anno, mult = 1.0) {
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        if(anno.points){ anno.points.forEach(p=>{ minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x); minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y); }); }
+        else if(anno.start&&anno.end){ minX=Math.min(anno.start.x,anno.end.x); maxX=Math.max(anno.start.x,anno.end.x); minY=Math.min(anno.start.y,anno.end.y); maxY=Math.max(anno.start.y,anno.end.y); }
+        else if(anno.x!==undefined){ let sz=anno.size?(anno.size*(anno.scale||1)):0.08; minX=anno.x-sz/2; maxX=anno.x+sz/2; minY=anno.y-sz/2; maxY=anno.y+sz/2; }
+        
+        if(maxX-minX < 0.1){ minX-=0.1; maxX+=0.1; } if(maxY-minY < 0.1){ minY-=0.1; maxY+=0.1; }
+        const regW = (maxX-minX) * img.naturalWidth, regH = (maxY-minY) * img.naturalHeight;
+        
+        const padX = canvas.width * 0.20, padY = canvas.height * 0.20;
+        let tScale = Math.min((canvas.width - padX)/regW, (canvas.height - padY)/regH);
+        
+        tScale = tScale * mult; // SUPER ZOOM APLICAÇÃO
+        tScale = Math.min(tScale, 7.0); // Limite máximo para evitar distorção extrema
+        tScale = Math.max(tScale, Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight));
+        
+        const cX = ((minX+maxX)/2) * img.naturalWidth, cY = ((minY+maxY)/2) * img.naturalHeight;
+        const tPX = canvas.width/2 - cX*tScale;
+        const tPY = canvas.height/2 - cY*tScale;
+        
+        smoothZoomTo(tScale, tPX, tPY, 450);
+    }
+
+    // INTERAÇÕES
+    function toggleAllAction() {
+        activeAnnotationId = null;
+        showAll = true;
+        superZoomMode = false;
+        document.getElementById('bottom-area').classList.remove('visible');
+        
+        document.querySelectorAll('.finding-item').forEach(el => {
+            el.classList.remove('active');
+            const text = el.querySelector('.item-text');
+            if(text) text.classList.remove('expanded');
+            const btn = el.querySelector('.btn-ver-mais');
+            if(btn) btn.textContent = 'Ver mais...';
+        });
+        
+        stopPulse();
+        const fitS = Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight);
+        const fitPX = (canvas.width - img.naturalWidth*fitS)/2, fitPY = (canvas.height - img.naturalHeight*fitS)/2;
+        smoothZoomTo(fitS, fitPX, fitPY, 420);
+    }
+
+    document.getElementById('btn-visao-geral').addEventListener('click', toggleAllAction);
+
+    listEl.addEventListener('click', e => {
+        const item = e.target.closest('.finding-item');
+        if (!item || e.target.classList.contains('btn-ver-mais')) return;
+
+        document.querySelectorAll('.finding-item').forEach(el => el.classList.remove('active'));
+
+        const id = item.dataset.annotationId;
+        if (activeAnnotationId === id && !superZoomMode) {
+            toggleAllAction(); 
+        } else {
+            activeAnnotationId = id;
+            showAll = false;
+            superZoomMode = false; // Começa sempre no Spotlight (Visão Contextual)
             item.classList.add('active');
-            const anno=DATA.annotations.find(a=>a.id===id);
-            if(anno){
-                const sevColor=item.dataset.severityColor||'#00ffff';
-                const sevLevel=item.dataset.severity||'complement';
-                const bodyEl=item.querySelector('.item-body');
-                const cardText=(bodyEl?bodyEl.innerText:item.innerText).replace(/\n/g,' ').trim();
-                updateFindingCard(cardText,sevColor,sevLevel,id);
-                zoomNatural(anno);
-                if(isMobilePortrait()){
-                    // Entra no modo foco: card grande ocupa toda área inferior
-                    enterPortraitFocus();
-                    // Mostra o card de conduta no viewer também
-                    requestAnimationFrame(()=>positionCard(anno));
-                }else{
-                    requestAnimationFrame(()=>positionCard(anno));
-                }
+
+            const anno = DATA.annotations.find(a => a.id === id);
+            if (anno) {
+                const sevColor = item.dataset.severityColor || '#00ffff';
+                const bodyEl = item.querySelector('.item-text');
+                const cardText = (bodyEl ? bodyEl.innerText : item.innerText).replace(/\n/g, ' ').trim();
+                
+                updateFindingActionCard(cardText, sevColor, anno.id);
+                zoomNatural(anno, 1.0); // Normal zoom for Spotlight
+                item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 startPulse();
             }
         }
+    });
+
+    document.getElementById('action-card').addEventListener('click', () => {
+        if (!activeAnnotationId || superZoomMode) return;
+        superZoomMode = true; // Ativa Super Zoom
+        stopPulse(); // Desliga a animação da lupa
+        const anno = DATA.annotations.find(a => a.id === activeAnnotationId);
+        if (anno) {
+            zoomNatural(anno, 2.2); // Super Zoom Multplicador
+            render();
+        }
+    });
+
+    // MOUSE & TOUCH CANVAS EVENTS
+    viewer.addEventListener('mousedown', e => { isDragging=true; startX=e.clientX-panX; startY=e.clientY-panY; startClickX=e.clientX; startClickY=e.clientY; });
+    viewer.addEventListener('mousemove', e => { if(isDragging){ panX=e.clientX-startX; panY=e.clientY-startY; render(); } });
+    viewer.addEventListener('mouseup', () => isDragging=false);
+    
+    viewer.addEventListener('click', e => {
+        if(Math.abs(e.clientX-startClickX)>5 || Math.abs(e.clientY-startClickY)>5) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const relX = ((e.clientX - rect.left - panX)/scale)/img.naturalWidth;
+        const relY = ((e.clientY - rect.top - panY)/scale)/img.naturalHeight;
+        
+        let clickedAnno = null, minDist = Infinity;
+        DATA.annotations.forEach(anno => {
+            let dist = Infinity;
+            if(anno.points){ anno.points.forEach(p=>{ const d=Math.hypot(p.x-relX, p.y-relY); if(d<dist) dist=d; }); }
+            else if(anno.start&&anno.end){ const mx=(anno.start.x+anno.end.x)/2, my=(anno.start.y+anno.end.y)/2; dist=Math.hypot(mx-relX, my-relY); }
+            else if(anno.x!==undefined){ dist=Math.hypot(anno.x-relX, anno.y-relY); }
+            if(dist<0.05 && dist<minDist){ minDist=dist; clickedAnno=anno; }
+        });
+        
+        if (clickedAnno) {
+            const li = document.querySelector(`.finding-item[data-annotation-id="${clickedAnno.id}"]`);
+            if (li) li.click();
+        } else {
+            toggleAllAction();
+        }
+    });
+
+    viewer.addEventListener('wheel', e => {
+        e.preventDefault();
+        const d = e.deltaY>0 ? 0.9 : 1.1;
+        const mx = e.clientX - canvas.getBoundingClientRect().left, my = e.clientY - canvas.getBoundingClientRect().top;
+        panX = mx - (mx - panX) * d; panY = my - (my - panY) * d;
+        scale *= d;
         render();
     });
 
-    // ── PORTRAIT FOCUS MODE ──
-    function enterPortraitFocus(){
-        document.getElementById('sidebar').classList.add('portrait-focus');
-        carouselNav.style.display='none';
-    }
-    function exitPortraitFocus(){
-        document.getElementById('sidebar').classList.remove('portrait-focus');
-        if(isMobilePortraitNow()) setupCarousel();
-    }
-    document.getElementById('btn-back-list').addEventListener('click',()=>{
-        exitPortraitFocus();
-        // Volta ao estado neutro
-        activeAnnotationId=null;showAll=false;activeFilter=null;
-        document.querySelectorAll('.finding-item').forEach(el=>{el.classList.remove('active','spotlight-active');el.style.boxShadow='';});
-        document.querySelectorAll('.sev-count').forEach(el=>el.classList.remove('active-filter'));
-        closeCard();stopPulse();fitImage();render();
-    });
-    function positionCard(anno){
-        const card=document.getElementById('finding-card');
-        if(!card||card.style.display==='none')return;
-        const vW=viewer.offsetWidth,vH=viewer.offsetHeight;
-        const pad=10;
-        const cn=getAnnoCenterNorm(anno);
-        if(isMobilePortrait()){
-            const annoScreenX=cn?(cn.x*img.naturalWidth*scale+panX):(vW/2);
-            const annoScreenY=cn?(cn.y*img.naturalHeight*scale+panY):(vH/2);
-            const cardW=card.offsetWidth||Math.min(vW*0.52,210);
-            const cardH=card.offsetHeight||120;
-            // Posiciona sempre no quadrante oposto com folga generosa
-            const onRight=(annoScreenX>vW/2);
-            const onBottom=(annoScreenY>vH/2);
-            const left=onRight?pad:(vW-cardW-pad);
-            const top=onBottom?pad:(vH-cardH-pad);
-            card.style.left=left+'px'; card.style.top=top+'px';
-            card.style.bottom='auto'; card.style.right='auto';
-            card.style.maxHeight=(vH*0.4)+'px';
-            return;
+    let idist = 0, iscale = 1;
+    viewer.addEventListener('touchstart', e => {
+        if(e.touches.length === 2){
+            idist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+            iscale = scale;
+        } else if(e.touches.length === 1){
+            isDragging = true;
+            startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY;
+            startClickX = e.touches[0].clientX; startClickY = e.touches[0].clientY;
         }
-        if(!cn)return;
-        const cardW=card.offsetWidth||vW*0.4,cardH=card.offsetHeight||130;
-        const cy=cn.y*img.naturalHeight*scale+panY,cx=cn.x*img.naturalWidth*scale+panX;
-        card.style.left=((cx<vW/2)?(vW-cardW-pad):pad)+'px';
-        card.style.top=((cy<vH/2)?(vH-cardH-pad):pad)+'px';
-        card.style.bottom='auto';card.style.right='auto';
-        card.style.maxHeight=(vH-pad*2)+'px';
-    }
-    window.closeCard=function(){
-        const card=document.getElementById('finding-card');card.style.display='none';
-        card.style.top='';card.style.left='';card.style.bottom='';card.style.right='';stopPulse();
-    };
-    function resetView(){
-        activeAnnotationId=null;showAll=false;activeFilter=null;closeCard();
-        document.querySelectorAll('.finding-item').forEach(el=>{el.classList.remove('active','spotlight-active');el.style.boxShadow='';});
-        document.querySelectorAll('.sev-count').forEach(el=>el.classList.remove('active-filter'));
-        exitPortraitFocus();
-        stopPulse();fitImage();render();
-    }
-    viewer.addEventListener('mousedown',e=>{isDragging=true;startX=e.clientX-panX;startY=e.clientY-panY;startClickX=e.clientX;startClickY=e.clientY;});
-    viewer.addEventListener('mousemove',e=>{if(isDragging){panX=e.clientX-startX;panY=e.clientY-startY;render();}});
-    viewer.addEventListener('mouseup',()=>isDragging=false);
-    viewer.addEventListener('click',e=>{
-        if(Math.abs(e.clientX-startClickX)>5||Math.abs(e.clientY-startClickY)>5)return;
-        if(e.target.closest('#finding-card')||e.target.closest('#app-header'))return;
-        if(activeFilter){
-            const fa=DATA.annotations.filter(anno=>{const li=document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);return li&&li.dataset.severity===activeFilter;});
-            if(fa.length>1){spotlightIndex=(spotlightIndex+1)%fa.length;syncListToSpotlight();render();return;}
+    }, {passive:false});
+    
+    viewer.addEventListener('touchmove', e => {
+        e.preventDefault();
+        if(e.touches.length === 2){
+            const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+            const delta = dist / idist;
+            const cx = viewer.offsetWidth/2, cy = viewer.offsetHeight/2;
+            const ns = iscale * delta;
+            panX = cx - (cx - panX) * (ns / scale);
+            panY = cy - (cy - panY) * (ns / scale);
+            scale = ns;
+            render();
+        } else if(isDragging && e.touches.length === 1){
+            panX = e.touches[0].clientX - startX; panY = e.touches[0].clientY - startY;
+            render();
         }
-        const rect=canvas.getBoundingClientRect();
-        const relX=((e.clientX-rect.left-panX)/scale)/img.naturalWidth;
-        const relY=((e.clientY-rect.top-panY)/scale)/img.naturalHeight;
-        let clickedAnno=null,minDist=Infinity;
-        DATA.annotations.forEach(anno=>{
-            let dist=Infinity;
-            if(anno.points){anno.points.forEach(p=>{const d=Math.hypot(p.x-relX,p.y-relY);if(d<dist)dist=d;});}
-            else if(anno.start&&anno.end){const mx=(anno.start.x+anno.end.x)/2,my=(anno.start.y+anno.end.y)/2;dist=Math.hypot(mx-relX,my-relY);}
-            else if(anno.x!==undefined){dist=Math.hypot(anno.x-relX,anno.y-relY);}
-            if(dist<0.05&&dist<minDist){minDist=dist;clickedAnno=anno;}
-        });
-        if(clickedAnno){const li=document.querySelector(`.finding-item[data-annotation-id="${clickedAnno.id}"]`);if(li){li.click();li.scrollIntoView({behavior:'smooth',block:'nearest'});}}
-        else{resetView();}
-    });
-    viewer.addEventListener('wheel',e=>{e.preventDefault();const d=e.deltaY>0?0.9:1.1;const mx=e.clientX-canvas.getBoundingClientRect().left,my=e.clientY-canvas.getBoundingClientRect().top;panX=mx-(mx-panX)*d;panY=my-(my-panY)*d;scale*=d;render();});
-    let idist=0,iscale=1;
-    viewer.addEventListener('touchstart',e=>{if(e.touches.length===2){idist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX,e.touches[0].pageY-e.touches[1].pageY);iscale=scale;}else if(e.touches.length===1){isDragging=true;startX=e.touches[0].clientX-panX;startY=e.touches[0].clientY-panY;startClickX=e.touches[0].clientX;startClickY=e.touches[0].clientY;}},{passive:false});
-    viewer.addEventListener('touchmove',e=>{e.preventDefault();if(e.touches.length===2){const dist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX,e.touches[0].pageY-e.touches[1].pageY);const delta=dist/idist;const cx=viewer.offsetWidth/2,cy=viewer.offsetHeight/2;const ns=iscale*delta;panX=cx-(cx-panX)*(ns/scale);panY=cy-(cy-panY)*(ns/scale);scale=ns;render();}else if(isDragging&&e.touches.length===1){panX=e.touches[0].clientX-startX;panY=e.touches[0].clientY-startY;render();}},{passive:false});
-    viewer.addEventListener('touchend',()=>isDragging=false);
-    function smoothZoomTo(ts,tpx,tpy,dur){
-        if(animFrame)cancelAnimationFrame(animFrame);
-        const ss=scale,spx=panX,spy=panY,st=performance.now();
-        function ease(t){return t<0.5?2*t*t:-1+(4-2*t)*t;}
-        function step(now){const t=Math.min((now-st)/dur,1),ev=ease(t);scale=ss+(ts-ss)*ev;panX=spx+(tpx-spx)*ev;panY=spy+(tpy-spy)*ev;render();if(t<1)animFrame=requestAnimationFrame(step);else animFrame=null;}
-        animFrame=requestAnimationFrame(step);
-    }
-    function calcZoomForAnnos(annos){
-        let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
-        annos.forEach(anno=>{if(anno.points){anno.points.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});}else if(anno.start&&anno.end){minX=Math.min(minX,anno.start.x,anno.end.x);maxX=Math.max(maxX,anno.start.x,anno.end.x);minY=Math.min(minY,anno.start.y,anno.end.y);maxY=Math.max(maxY,anno.start.y,anno.end.y);}else if(anno.x!==undefined){const s=anno.size?(anno.size*(anno.scale||1)):0.08;minX=Math.min(minX,anno.x-s/2);maxX=Math.max(maxX,anno.x+s/2);minY=Math.min(minY,anno.y-s/2);maxY=Math.max(maxY,anno.y+s/2);}});
-        if(!isFinite(minX))return null;
-        const pad=0.08;minX=Math.max(0,minX-pad);maxX=Math.min(1,maxX+pad);minY=Math.max(0,minY-pad);maxY=Math.min(1,maxY+pad);
-        const regW=(maxX-minX)*img.naturalWidth,regH=(maxY-minY)*img.naturalHeight;
-        let ts=Math.min((canvas.width-120)/regW,(canvas.height-120)/regH);
-        ts=Math.max(ts,Math.min(canvas.width/img.naturalWidth,canvas.height/img.naturalHeight));
-        const cX=((minX+maxX)/2)*img.naturalWidth,cY=((minY+maxY)/2)*img.naturalHeight;
-        return{scale:ts,panX:canvas.width/2-cX*ts,panY:canvas.height/2-cY*ts};
-    }
-    function toggleAllAction(){
-        activeFilter=null;showAll=!showAll;activeAnnotationId=null;closeCard();
-        document.querySelectorAll('.finding-item').forEach(el=>{el.classList.remove('active','spotlight-active');el.style.boxShadow='';});
-        document.querySelectorAll('.sev-count').forEach(el=>el.classList.remove('active-filter'));
-        stopPulse();
-        const fitS=Math.min(canvas.width/img.naturalWidth,canvas.height/img.naturalHeight);
-        const fitPX=(canvas.width-img.naturalWidth*fitS)/2,fitPY=(canvas.height-img.naturalHeight*fitS)/2;
-        smoothZoomTo(fitS,fitPX,fitPY,420);render();
-    }
-    function activateSeverityFilter(sevLevel){
-        exitPortraitFocus();
-        if(activeFilter===sevLevel){
-            activeFilter=null;showAll=false;
-            document.querySelectorAll('.sev-count').forEach(el=>el.classList.remove('active-filter'));
-            document.querySelectorAll('.finding-item').forEach(el=>{el.classList.remove('active','spotlight-active');el.style.boxShadow='';});
-            activeAnnotationId=null;closeCard();stopPulse();
-            const fitS=Math.min(canvas.width/img.naturalWidth,canvas.height/img.naturalHeight);
-            smoothZoomTo(fitS,(canvas.width-img.naturalWidth*fitS)/2,(canvas.height-img.naturalHeight*fitS)/2,380);
-            render();return;
-        }
-        activeFilter=sevLevel;showAll=false;activeAnnotationId=null;closeCard();stopPulse();
-        spotlightIndex=0;
-        document.querySelectorAll('.finding-item').forEach(el=>{el.classList.remove('active','spotlight-active');el.style.boxShadow='';});
-        document.querySelectorAll('.sev-count').forEach(el=>el.classList.remove('active-filter'));
-        const badge=document.querySelector(`.sev-count.${sevLevel}`);if(badge)badge.classList.add('active-filter');
-        const fa=DATA.annotations.filter(anno=>{const li=document.querySelector(`.finding-item[data-annotation-id="${anno.id}"]`);return li&&li.dataset.severity===sevLevel;});
-        if(fa.length>0){
-            if(fa.length===1){fitImage();zoomNatural(fa[0]);const tS=scale,tPX=panX,tPY=panY;fitImage();smoothZoomTo(tS,tPX,tPY,480);}
-            else{const ts=calcZoomForAnnos(fa);if(ts)smoothZoomTo(ts.scale,ts.panX,ts.panY,450);}
-        }
-        startPulse();render();
-        setTimeout(syncListToSpotlight,80);
-    }
-    document.getElementById('btn-toggle-all').addEventListener('click',toggleAllAction);
-    document.getElementById('btn-toggle-all-header').addEventListener('click',toggleAllAction);
-    document.getElementById('btn-reset-zoom').addEventListener('click',resetView);
-    function buildSeveritySummary(counts,total){
-        const defs=[{key:'critical',cls:'critical'},{key:'semi',cls:'semi'},{key:'attention',cls:'attention'},{key:'complement',cls:'complement'}];
-        // Sidebar desktop: com prefixo "N achados"
-        const elMain=document.getElementById('severity-summary');
-        if(elMain){
-            const parts=[];
-            defs.forEach(d=>{
-                if(!counts[d.key])return;
-                const n=counts[d.key],lbl=SEV_LABELS[d.key].short;
-                parts.push(`<span class="sev-count ${d.cls}" data-filter="${d.key}"><span class="sev-dot ${d.cls}"></span><span>${n} · ${lbl}</span></span>`);
-            });
-            elMain.innerHTML=`<span style="font-size:11px;color:#555;margin-right:2px;">${total} achados</span>`+parts.join('');
-            elMain.querySelectorAll('.sev-count[data-filter]').forEach(badge=>{badge.addEventListener('click',()=>activateSeverityFilter(badge.dataset.filter));});
-        }
-        // Portrait top: só as pílulas, sem "N achados" (já aparece no título)
-        const elTop=document.getElementById('severity-summary-top');
-        if(elTop){
-            const parts=[];
-            defs.forEach(d=>{
-                if(!counts[d.key])return;
-                const n=counts[d.key],lbl=SEV_LABELS[d.key].short;
-                parts.push(`<span class="sev-count ${d.cls}" data-filter="${d.key}"><span class="sev-dot ${d.cls}"></span><span>${n} · ${lbl}</span></span>`);
-            });
-            elTop.innerHTML=parts.join('');
-            elTop.querySelectorAll('.sev-count[data-filter]').forEach(badge=>{badge.addEventListener('click',()=>activateSeverityFilter(badge.dataset.filter));});
-        }
-        // Contagem no título portrait
-        const countEl=document.getElementById('achados-count-top');
-        if(countEl)countEl.textContent=total+' achados';
-    }
-    // Botão Visão Geral portrait
-    const btnTopAll=document.getElementById('btn-toggle-all-top');
-    if(btnTopAll)btnTopAll.addEventListener('click',toggleAllAction);
+    }, {passive:false});
+    
+    viewer.addEventListener('touchend', () => isDragging=false);
 }
 </script>
 </body>
