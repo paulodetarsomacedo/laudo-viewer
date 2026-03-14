@@ -269,7 +269,7 @@ canvas { display: block; }
     color: #888; 
     margin-bottom: 5px; 
     letter-spacing: 0.3px; 
-    white-space: normal; /* Permite que o título quebre linha no mobile */
+    white-space: normal; 
     line-height: 1.2;
 }
 
@@ -289,7 +289,7 @@ canvas { display: block; }
     font-size: 9.5px; 
     line-height: 1.35;
     margin: 0; 
-    white-space: normal; /* Quebra de linha ativada */
+    white-space: normal; 
     word-wrap: break-word;
     text-align: left;
 }
@@ -465,7 +465,7 @@ function classifyText(t) {
 // BANCO DIAGNÓSTICO
 // ============================================================
 const DIAGNOSTIC_BANK =[
-    { words: ['reabsorção interna', 'reabsorcao interna'], diag: 'Reabsorção Radicular Interna' },
+    { words:['reabsorção interna', 'reabsorcao interna'], diag: 'Reabsorção Radicular Interna' },
     { words:['reabsorção externa', 'reabsorcao externa', 'reabsorção cervical'], diag: 'Reabsorção Radicular Externa' },
     { words:['reabsorção radicular', 'reabsorcao radicular'], diag: 'Reabsorção Radicular' },
     { words:['furca comprometida', 'lesão de furca', 'rarefação na região de furca', 'rarefação interradicular'], diag: 'Envolvimento de Furca' },
@@ -495,6 +495,15 @@ const DIAGNOSTIC_BANK =[
 
 function getDiagnosticHypothesis(text) {
     const lower = text.toLowerCase();
+    
+    // Lógica Específica Robusta: Cárie com Envolvimento Pulpar
+    const temCarie = ['cárie', 'carie', 'cariosa'].some(w => lower.includes(w));
+    const temPolpa =['envolvimento pulpar', 'comprometimento pulpar', 'exposição pulpar', 'exposicao pulpar'].some(w => lower.includes(w));
+    
+    if (temCarie && temPolpa) {
+        return 'Cárie com Envolvimento Pulpar';
+    }
+
     for (const item of DIAGNOSTIC_BANK) {
         if (item.words.some(w => lower.includes(w))) return item.diag;
     }
