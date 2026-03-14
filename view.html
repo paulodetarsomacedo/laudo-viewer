@@ -465,7 +465,7 @@ function classifyText(t) {
 // BANCO DIAGNÓSTICO
 // ============================================================
 const DIAGNOSTIC_BANK =[
-    { words:['reabsorção interna', 'reabsorcao interna'], diag: 'Reabsorção Radicular Interna' },
+    { words: ['reabsorção interna', 'reabsorcao interna'], diag: 'Reabsorção Radicular Interna' },
     { words:['reabsorção externa', 'reabsorcao externa', 'reabsorção cervical'], diag: 'Reabsorção Radicular Externa' },
     { words:['reabsorção radicular', 'reabsorcao radicular'], diag: 'Reabsorção Radicular' },
     { words:['furca comprometida', 'lesão de furca', 'rarefação na região de furca', 'rarefação interradicular'], diag: 'Envolvimento de Furca' },
@@ -480,8 +480,8 @@ const DIAGNOSTIC_BANK =[
     { words:['implante', 'osseointegrado'], diag: 'Implante Osseointegrado' },
     { words:['cisto', 'lesão cística', 'dentígero', 'folicular'], diag: 'Lesão de Aspecto Cístico' },
     { words:['tumor', 'lesão mista', 'lesão multilocular'], diag: 'Lesão Óssea / Aspecto Tumoral' },
-    { words: ['fratura', 'linha de fratura'], diag: 'Fratura Radicular / Dental' },
-    { words: ['sobrecontorno', 'subcontorno'], diag: 'Falha em Restauração (Sobre/Subcontorno)' },
+    { words:['fratura', 'linha de fratura'], diag: 'Fratura Radicular / Dental' },
+    { words:['sobrecontorno', 'subcontorno'], diag: 'Falha em Restauração (Sobre/Subcontorno)' },
     { words:['dilaceração', 'dilaceracao'], diag: 'Dilaceração Radicular' },
     { words:['desgaste', 'atrição', 'sobrecarga oclusal'], diag: 'Desgaste Dental / Atrição' },
     { words:['obturação inadequada', 'falha', 'subobtur', 'sobreobtur'], diag: 'Tratamento Endodôntico Deficiente' },
@@ -496,17 +496,28 @@ const DIAGNOSTIC_BANK =[
 function getDiagnosticHypothesis(text) {
     const lower = text.toLowerCase();
     
-    // Lógica Específica Robusta: Cárie com Envolvimento Pulpar
-    const temCarie = ['cárie', 'carie', 'cariosa'].some(w => lower.includes(w));
+    // Regra de Ouro (Prioridade Máxima): Lesão Periapical Inflamatória
+    const temRarefacaoPeriapical = (
+        (['rarefação', 'rarefacao'].some(w => lower.includes(w)) &&['periápice', 'periapice', 'apical', 'periapical'].some(w => lower.includes(w))) ||['lesão periapical', 'lesao periapical', 'cicatriz óssea', 'cicatriz ossea', 'periodontite apical'].some(w => lower.includes(w))
+    );
+    
+    if (temRarefacaoPeriapical) {
+        return 'Lesão Periapical Inflamatória';
+    }
+
+    // Regra Específica: Cárie com Envolvimento Pulpar
+    const temCarie =['cárie', 'carie', 'cariosa'].some(w => lower.includes(w));
     const temPolpa =['envolvimento pulpar', 'comprometimento pulpar', 'exposição pulpar', 'exposicao pulpar'].some(w => lower.includes(w));
     
     if (temCarie && temPolpa) {
         return 'Cárie com Envolvimento Pulpar';
     }
 
+    // Regras Genéricas
     for (const item of DIAGNOSTIC_BANK) {
         if (item.words.some(w => lower.includes(w))) return item.diag;
     }
+    
     return 'Achado Radiográfico (Avaliação Clínica)';
 }
 
