@@ -101,32 +101,24 @@ body {
     width: 260px; 
     scroll-snap-align: center;
     background: #181818; 
-    border-radius: 12px; /* Curvatura mais premium Apple-like */
+    border-radius: 10px; 
     cursor: pointer;
     display: flex; 
     flex-direction: column; 
-    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
     border-top: 1px solid #2a2a2a;
     border-bottom: 1px solid #2a2a2a;
     border-left: 4px solid transparent; 
     border-right: 4px solid transparent; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
-
 .finding-item:hover {
     background: #1e1e1e;
 }
-
-/* Efeitos Especiais de Destaque para Card Ativo */
 .finding-item.active {
-    transform: translateY(-3px);
-    /* Background e Box-shadow dinâmicos são injetados pelo JS baseado na gravidade */
-}
-.finding-item.active .item-text {
-    color: #ffffff; /* Texto "acende" quando ativo */
-}
-.finding-item.active .item-entity-label {
-    text-shadow: 0 0 10px currentColor; /* Leve brilho neon no título */
+    background: #222; 
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.8);
 }
 
 .item-header {
@@ -134,13 +126,12 @@ body {
     justify-content: space-between; 
     align-items: center;
     padding: 8px 12px; 
-    border-radius: 12px 12px 0 0;
+    border-radius: 10px 10px 0 0;
 }
 .item-entity-label { 
     font-size: 11px; 
     font-weight: 900; 
     letter-spacing: 0.5px; 
-    transition: text-shadow 0.3s;
 }
 .item-category-label {
     font-size: 9px; 
@@ -164,7 +155,6 @@ body {
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: color 0.3s;
 }
 .item-text.expanded {
     -webkit-line-clamp: unset;
@@ -395,13 +385,17 @@ canvas { display: block; }
 <div id="app-layout">
     <div id="top-area">
         <div id="app-header-row">
-            <div style="display:flex; flex-direction:column; gap:1px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="laudo-title">&#128269; Laudo Interativo</span>
-                    <span id="achados-count" style="font-size:10px; color:#666; font-weight:700;"></span>
+            <!-- NOVO CONTAINER DA LOGO + TEXTOS -->
+            <div style="display:flex; align-items:center; gap:10px;">
+                <img src="sorriso.png" alt="Logo" style="max-height: 36px; width: auto; object-fit: contain; border-radius: 4px;">
+                <div style="display:flex; flex-direction:column; gap:1px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="laudo-title">Laudo Interativo</span>
+                        <span id="achados-count" style="font-size:10px; color:#666; font-weight:700;"></span>
+                    </div>
+                    <span class="premium-subtitle">Achados Radiográficos</span>
+                    <span style="font-size: 8.5px; color: #888; font-weight: 600; letter-spacing: 0.3px;">Toque nos cards para explorar detalhes e condutas clínicas</span>
                 </div>
-                <span class="premium-subtitle">Achados Radiográficos</span>
-                <span style="font-size: 8.5px; color: #888; font-weight: 600; letter-spacing: 0.3px;">Toque nos cards para explorar detalhes e condutas clínicas</span>
             </div>
             <button id="btn-visao-geral">Visão Geral</button>
         </div>
@@ -472,7 +466,7 @@ function classifyText(t) {
 // BANCO DIAGNÓSTICO
 // ============================================================
 const DIAGNOSTIC_BANK =[
-    { words: ['reabsorção interna', 'reabsorcao interna'], diag: 'Reabsorção Radicular Interna' },
+    { words:['reabsorção interna', 'reabsorcao interna'], diag: 'Reabsorção Radicular Interna' },
     { words:['reabsorção externa', 'reabsorcao externa', 'reabsorção cervical'], diag: 'Reabsorção Radicular Externa' },
     { words:['reabsorção radicular', 'reabsorcao radicular'], diag: 'Reabsorção Radicular' },
     { words:['furca comprometida', 'lesão de furca', 'rarefação na região de furca', 'rarefação interradicular'], diag: 'Envolvimento de Furca' },
