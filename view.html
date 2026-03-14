@@ -50,7 +50,7 @@ body {
     display: flex; 
     align-items: center; 
     justify-content: space-between;
-    padding: 4px 15px 0px 15px; /* Compensação milimétrica de espaço para o novo texto */
+    padding: 4px 15px 0px 15px; 
 }
 
 .laudo-title { 
@@ -64,7 +64,7 @@ body {
 .premium-subtitle {
     font-size: 13px;
     font-weight: 900;
-    color: #3b82f6; /* Azul Médico Premium */
+    color: #3b82f6; 
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -89,7 +89,7 @@ body {
     overflow-x: auto; 
     overflow-y: hidden; 
     scroll-snap-type: x mandatory;
-    padding: 2px 15px 4px 15px; /* Ajuste para não empurrar o viewer */
+    padding: 2px 15px 4px 15px; 
     gap: 12px; 
     scrollbar-width: none; /* Firefox */
     -webkit-overflow-scrolling: touch;
@@ -220,7 +220,7 @@ body {
 canvas { display: block; }
 
 /* ==========================================================
-   BOTTOM ACTION AREA & GRID REFINADO (CORREÇÃO OVERFLOW)
+   BOTTOM ACTION AREA & GRID DE 3 COLUNAS SOFISTICADO
 ========================================================== */
 #bottom-area {
     flex-shrink: 0; 
@@ -237,7 +237,7 @@ canvas { display: block; }
 
 #action-card {
     background: #181818; 
-    padding: 12px 15px; 
+    padding: 10px 12px; 
     border-left: 5px solid transparent; 
     cursor: pointer; 
     transition: background 0.2s;
@@ -245,90 +245,78 @@ canvas { display: block; }
 }
 #action-card:hover { background: #1c1c1c; }
 
+/* Flexbox dinâmico: Cria até 3 colunas de larguras iguais */
 .ac-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 12px;
-    margin-bottom: 10px; 
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px; 
     width: 100%;
 }
 .ac-item {
-    font-size: 11px;
-    line-height: 1.3;
+    flex: 1; 
+    min-width: 0; /* Evita o estouramento (overflow) da coluna */
     display: flex;
     flex-direction: column;
     align-items: flex-start;
 }
-.ac-item.full-width {
-    grid-column: 1 / -1;
-    align-items: center;
-    margin-bottom: 4px;
-}
+
 .ac-item strong { 
     display: flex; 
-    align-items: center;
-    gap: 5px;
-    font-size: 8.5px; 
+    align-items: flex-start;
+    gap: 4px;
+    font-size: 7.5px; 
     text-transform: uppercase; 
-    color: #777; 
+    color: #888; 
     margin-bottom: 5px; 
-    letter-spacing: 0.5px; 
-    white-space: nowrap; 
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
+    letter-spacing: 0.3px; 
+    white-space: normal; /* Permite que o título quebre linha no mobile */
+    line-height: 1.2;
 }
 
 .ac-content {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 4px;
     width: 100%;
 }
-.ac-item.full-width .ac-content {
-    justify-content: center;
-}
 
-.diag-tag { 
+/* Molduras padronizadas, sofisticadas e com quebra de linha ativada */
+.diag-tag, .impact-tag, .recommend-tag { 
     display: block; 
-    font-size: 12px; 
-    color: #fff; 
-    font-weight: 700; 
-    letter-spacing: 0.2px;
-    line-height: 1.4;
-    white-space: normal; 
-    word-wrap: break-word;
     width: 100%;
-}
-
-.impact-tag, .recommend-tag { 
-    display: inline-block; 
     border-radius: 5px; 
-    padding: 5px 8px; 
-    font-size: 10.5px; 
-    line-height: 1.3;
+    padding: 6px 7px; 
+    font-size: 9.5px; 
+    line-height: 1.35;
     margin: 0; 
-    white-space: normal; 
+    white-space: normal; /* Quebra de linha ativada */
     word-wrap: break-word;
     text-align: left;
 }
-.ac-item.full-width .impact-tag {
-    text-align: center; 
+
+/* Moldura nova da Hipótese Diagnóstica */
+.diag-tag { 
+    background: rgba(255, 255, 255, 0.08); 
+    border: 1px solid rgba(255, 255, 255, 0.15); 
+    color: #f1f5f9; 
+    font-weight: 700; 
 }
+
+/* Exame e Conduta refinados */
 .impact-tag { 
     background: rgba(100,116,139,0.15); 
     border: 1px solid rgba(100,116,139,0.3); 
-    color: #94a3b8; 
+    color: #cbd5e1; 
 }
 .recommend-tag { 
     background: rgba(56,161,105,0.1); 
     border: 1px solid rgba(56,161,105,0.25); 
-    color: #68d391; 
+    color: #86efac; 
 }
 
 #zoom-instruction {
-    font-size: 8.5px; 
-    color: #444; 
+    font-size: 8px; 
+    color: #555; 
     text-align: center; 
     margin-top: 6px; 
     text-transform: uppercase; 
@@ -406,7 +394,6 @@ canvas { display: block; }
                     <span id="achados-count" style="font-size:10px; color:#666; font-weight:700;"></span>
                 </div>
                 <span class="premium-subtitle">Achados Radiográficos</span>
-                <!-- TEXTO DE INSTRUÇÃO -->
                 <span style="font-size: 8.5px; color: #888; font-weight: 600; letter-spacing: 0.3px;">Toque nos cards para explorar detalhes e condutas clínicas</span>
             </div>
             <button id="btn-visao-geral">Visão Geral</button>
@@ -427,6 +414,7 @@ canvas { display: block; }
     
     <div id="bottom-area">
         <div id="action-card">
+            <!-- Grid de 3 Colunas Dinâmico -->
             <div class="ac-grid">
                 <div id="ac-diagnostic" class="ac-item">
                     <strong>🔬 Hipótese Diagnóstica</strong> 
@@ -436,10 +424,10 @@ canvas { display: block; }
                     <strong>📸 Exame Sugerido</strong> 
                     <div class="ac-content"></div>
                 </div>
-            </div>
-            <div id="ac-impact" class="ac-item full-width center">
-                <strong>💡 Conduta Provável</strong> 
-                <div class="ac-content"></div>
+                <div id="ac-impact" class="ac-item">
+                    <strong>💡 Conduta Provável</strong> 
+                    <div class="ac-content"></div>
+                </div>
             </div>
             
             <div id="zoom-instruction">Toque neste card para super zoom no achado</div>
@@ -736,7 +724,7 @@ function getAnnoCenterNorm(anno){
     return null;
 }
 
-// Proteção Robusta de Cores (Garante renderização de desenhos livres exportados com RGB ou Nome)
+// Proteção Robusta de Cores
 function parseColor(c) {
     if (!c) return { r: 0, g: 255, b: 255 };
     if (c.startsWith('#')) {
@@ -765,7 +753,6 @@ function boostColor(colorStr) {
     return `rgb(${boost(r)},${boost(g)},${boost(b)})`;
 }
 
-// Inicialização Unificada 
 let DATA=null;
 try{const hash=window.location.hash.substring(1);if(hash){const json=decodeURIComponent(escape(atob(hash)));DATA=JSON.parse(json);}}catch(e){console.error(e);}
 
