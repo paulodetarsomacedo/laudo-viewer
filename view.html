@@ -24,6 +24,66 @@ body {
     font-family: 'Segoe UI', sans-serif; 
 }
 
+/* ==========================================================
+   SPLASH SCREEN PREMIUM
+========================================================== */
+#splash-screen {
+    position: fixed;
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh;
+    background: #050505;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease-out;
+}
+
+.splash-logo {
+    max-height: 55px;
+    margin-bottom: 25px;
+    animation: splash-pulse 2s infinite ease-in-out;
+}
+
+.splash-text {
+    font-size: 13px;
+    font-weight: 800;
+    color: #3b82f6;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+    text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+
+.splash-bar {
+    width: 180px;
+    height: 2px;
+    background: #222;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.splash-progress {
+    height: 100%;
+    background: #3b82f6;
+    width: 0%;
+    animation: load-bar 2.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes splash-pulse {
+    0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 0px transparent); }
+    50% { transform: scale(1.05); opacity: 0.8; filter: drop-shadow(0 0 10px rgba(255,255,255,0.1)); }
+    100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 0px transparent); }
+}
+
+@keyframes load-bar {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
 /* LAYOUT PRINCIPAL (Mobile Portrait Padrão) */
 #app-layout {
     display: flex;
@@ -321,11 +381,14 @@ canvas { display: block; }
     font-weight: 700;
 }
 
+/* ÁREA DE ASSINATURA FIXA (Não esconde mais!) */
 #signature-area { 
+    flex-shrink: 0;
     text-align: center; 
     padding: 6px; 
     background: #0a0a0a; 
     border-top: 1px solid #1a1a1a; 
+    width: 100%;
 }
 #signature-img { 
     max-height: 25px; 
@@ -340,12 +403,12 @@ canvas { display: block; }
     #app-layout {
         display: grid;
         grid-template-columns: 320px 1fr;
-        grid-template-rows: 1fr auto;
+        grid-template-rows: 1fr auto auto; /* Atualizado para 3 linhas: viewer, bottom, signature */
     }
     
     #top-area {
         grid-column: 1 / 2;
-        grid-row: 1 / 3; 
+        grid-row: 1 / 4; /* Ocupa do topo à base na esquerda */
         border-right: 1px solid #222;
         border-bottom: none;
     }
@@ -377,17 +440,28 @@ canvas { display: block; }
         grid-column: 2 / 3;
         grid-row: 2 / 3;
     }
+    
+    #signature-area {
+        grid-column: 2 / 3;
+        grid-row: 3 / 4; /* Assinatura fixada no canto inferior direito */
+    }
 }
 </style>
 </head>
 <body>
 
+<!-- SPLASH SCREEN ANIMADA -->
+<div id="splash-screen">
+    <img src="sorriso.png" alt="Logo Clínica" class="splash-logo" onerror="this.style.display='none'">
+    <div class="splash-text">Carregando Laudo Interativo</div>
+    <div class="splash-bar"><div class="splash-progress"></div></div>
+</div>
+
 <div id="app-layout">
     <div id="top-area">
         <div id="app-header-row">
-            <!-- NOVO CONTAINER DA LOGO + TEXTOS -->
             <div style="display:flex; align-items:center; gap:10px;">
-                <img src="sorriso.png" alt="Logo" style="max-height: 36px; width: auto; object-fit: contain; border-radius: 4px;">
+                <img src="sorriso.png" alt="Logo" style="max-height: 36px; width: auto; object-fit: contain; border-radius: 4px;" onerror="this.style.display='none'">
                 <div style="display:flex; flex-direction:column; gap:1px;">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span class="laudo-title">Laudo Interativo</span>
@@ -433,13 +507,28 @@ canvas { display: block; }
             
             <div id="zoom-instruction">Toque neste card para super zoom no achado</div>
         </div>
-        <div id="signature-area">
-            <img id="signature-img" src="assinatura.png" alt="Assinatura" onerror="this.style.display='none'">
-        </div>
+    </div>
+    
+    <!-- ASSINATURA MOVIDA PARA FORA DO BOTTOM-AREA (FICA SEMPRE VISÍVEL) -->
+    <div id="signature-area">
+        <img id="signature-img" src="assinatura.png" alt="Assinatura" onerror="this.style.display='none'">
     </div>
 </div>
 
 <script>
+// ============================================================
+// LÓGICA DO SPLASH SCREEN (3 SEGUNDOS)
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.style.opacity = '0';
+            setTimeout(() => splash.remove(), 500); // Remove do DOM após o fade-out
+        }
+    }, 3000); // Exatamente 3 segundos
+});
+
 // ============================================================
 // SEV LABELS & RULES
 // ============================================================
@@ -497,7 +586,6 @@ const DIAGNOSTIC_BANK =[
 function getDiagnosticHypothesis(text) {
     const lower = text.toLowerCase();
     
-    // Regra de Ouro (Prioridade Máxima): Lesão Periapical Inflamatória
     const temRarefacaoPeriapical = (
         (['rarefação', 'rarefacao'].some(w => lower.includes(w)) &&['periápice', 'periapice', 'apical', 'periapical'].some(w => lower.includes(w))) ||['lesão periapical', 'lesao periapical', 'cicatriz óssea', 'cicatriz ossea', 'periodontite apical'].some(w => lower.includes(w))
     );
@@ -506,7 +594,6 @@ function getDiagnosticHypothesis(text) {
         return 'Lesão Periapical Inflamatória';
     }
 
-    // Regra Específica: Cárie com Envolvimento Pulpar
     const temCarie =['cárie', 'carie', 'cariosa'].some(w => lower.includes(w));
     const temPolpa =['envolvimento pulpar', 'comprometimento pulpar', 'exposição pulpar', 'exposicao pulpar'].some(w => lower.includes(w));
     
@@ -514,7 +601,6 @@ function getDiagnosticHypothesis(text) {
         return 'Cárie com Envolvimento Pulpar';
     }
 
-    // Regras Genéricas
     for (const item of DIAGNOSTIC_BANK) {
         if (item.words.some(w => lower.includes(w))) return item.diag;
     }
@@ -1171,7 +1257,6 @@ if(!DATA){
             
             const sevColor = item.dataset.severityColor || '#00ffff';
             
-            // INJEÇÃO PREMIUM DE COR NO CARD ATIVO
             item.style.background = `linear-gradient(145deg, ${sevColor}1A 0%, #111111 100%)`;
             item.style.boxShadow = `0 12px 30px rgba(0,0,0,0.85), 0 0 0 1.5px ${sevColor}, 0 6px 20px ${sevColor}33`;
 
