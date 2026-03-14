@@ -161,24 +161,30 @@ body {
     width: 260px; 
     scroll-snap-align: center;
     background: #181818; 
-    border-radius: 10px; 
+    border-radius: 12px; 
     cursor: pointer;
     display: flex; 
     flex-direction: column; 
-    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
     border-top: 1px solid #2a2a2a;
     border-bottom: 1px solid #2a2a2a;
     border-left: 4px solid transparent; 
     border-right: 4px solid transparent; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
+
 .finding-item:hover {
     background: #1e1e1e;
 }
+
 .finding-item.active {
-    background: #222; 
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+    transform: translateY(-3px);
+}
+.finding-item.active .item-text {
+    color: #ffffff; 
+}
+.finding-item.active .item-entity-label {
+    text-shadow: 0 0 10px currentColor; 
 }
 
 .item-header {
@@ -186,12 +192,13 @@ body {
     justify-content: space-between; 
     align-items: center;
     padding: 8px 12px; 
-    border-radius: 10px 10px 0 0;
+    border-radius: 12px 12px 0 0;
 }
 .item-entity-label { 
     font-size: 11px; 
     font-weight: 900; 
     letter-spacing: 0.5px; 
+    transition: text-shadow 0.3s;
 }
 .item-category-label {
     font-size: 9px; 
@@ -215,6 +222,7 @@ body {
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: color 0.3s;
 }
 .item-text.expanded {
     -webkit-line-clamp: unset;
@@ -403,12 +411,12 @@ canvas { display: block; }
     #app-layout {
         display: grid;
         grid-template-columns: 320px 1fr;
-        grid-template-rows: 1fr auto auto; /* Atualizado para 3 linhas: viewer, bottom, signature */
+        grid-template-rows: 1fr auto auto;
     }
     
     #top-area {
         grid-column: 1 / 2;
-        grid-row: 1 / 4; /* Ocupa do topo à base na esquerda */
+        grid-row: 1 / 4; 
         border-right: 1px solid #222;
         border-bottom: none;
     }
@@ -443,7 +451,7 @@ canvas { display: block; }
     
     #signature-area {
         grid-column: 2 / 3;
-        grid-row: 3 / 4; /* Assinatura fixada no canto inferior direito */
+        grid-row: 3 / 4; 
     }
 }
 </style>
@@ -509,7 +517,7 @@ canvas { display: block; }
         </div>
     </div>
     
-    <!-- ASSINATURA MOVIDA PARA FORA DO BOTTOM-AREA (FICA SEMPRE VISÍVEL) -->
+    <!-- ASSINATURA MOVIDA PARA FORA DO BOTTOM-AREA -->
     <div id="signature-area">
         <img id="signature-img" src="assinatura.png" alt="Assinatura" onerror="this.style.display='none'">
     </div>
@@ -524,9 +532,9 @@ window.addEventListener('DOMContentLoaded', () => {
         const splash = document.getElementById('splash-screen');
         if (splash) {
             splash.style.opacity = '0';
-            setTimeout(() => splash.remove(), 500); // Remove do DOM após o fade-out
+            setTimeout(() => splash.remove(), 500); 
         }
-    }, 3000); // Exatamente 3 segundos
+    }, 3000); 
 });
 
 // ============================================================
@@ -586,20 +594,24 @@ const DIAGNOSTIC_BANK =[
 function getDiagnosticHypothesis(text) {
     const lower = text.toLowerCase();
     
+    // Regra de Ouro (Prioridade Máxima): Lesão Periapical Inflamatória
     const temRarefacaoPeriapical = (
         (['rarefação', 'rarefacao'].some(w => lower.includes(w)) &&['periápice', 'periapice', 'apical', 'periapical'].some(w => lower.includes(w))) ||['lesão periapical', 'lesao periapical', 'cicatriz óssea', 'cicatriz ossea', 'periodontite apical'].some(w => lower.includes(w))
     );
     
-    if (temRarefacaoPeriapical) {
-        return 'Lesão Periapical Inflamatória';
-    }
+    if (temRarefacaoPeriapical) return 'Lesão Periapical Inflamatória';
 
-    const temCarie =['cárie', 'carie', 'cariosa'].some(w => lower.includes(w));
+    // Regra Específica: Cárie com Envolvimento Pulpar ou Cárie Profunda
+    const temCarie = ['cárie', 'carie', 'cariosa'].some(w => lower.includes(w));
     const temPolpa =['envolvimento pulpar', 'comprometimento pulpar', 'exposição pulpar', 'exposicao pulpar'].some(w => lower.includes(w));
+    const temCarieProfunda =['cárie profunda', 'carie profunda', 'lesão cariosa profunda'].some(w => lower.includes(w));
     
-    if (temCarie && temPolpa) {
-        return 'Cárie com Envolvimento Pulpar';
-    }
+    if (temCarie && temPolpa) return 'Cárie com Envolvimento Pulpar';
+    if (temCarieProfunda) return 'Cárie Profunda';
+
+    // Regra Específica: Rarefação Óssea Genérica (se não pegou no periapical acima)
+    const temRarefacaoOssea =['rarefação óssea', 'rarefacao ossea'].some(w => lower.includes(w));
+    if (temRarefacaoOssea) return 'Rarefação Óssea';
 
     for (const item of DIAGNOSTIC_BANK) {
         if (item.words.some(w => lower.includes(w))) return item.diag;
@@ -669,6 +681,7 @@ function pickVar(annoId, variants) {
 }
 
 const IMPACT_BANK = {
+    endo_avaliacao:['Tratamento endodôntico - avaliação e planejamento'], // NOVA REGRA
     endo_urgente:['Tratamento endodôntico de urgência','Pulpectomia indicada','Endodontia clínica com urgência'],
     endo_eletivo:['Tratamento endodôntico eletivo','Pulpectomia eletiva indicada','Canal radicular — avaliação e planejamento'],
     endo_retratamento:['Retratamento endodôntico indicado','Revisão do tratamento endodôntico','Avaliação para retratamento'],
@@ -726,9 +739,9 @@ const RECOMMEND_BANK = {
     interproximal_deciduo:['RX Interproximal Infantil'],
 };
 
-function getImpactsAndRecommends(text, annoId) {
+function getImpactsAndRecommends(text, annoId, diag = '') {
     const lower=text.toLowerCase();
-    const temPulpar   =['envolvimento pulpar','comprometimento pulpar','câmara pulpar','exposição pulpar','necrose pulpar','cárie profunda','carie profunda','abscesso','fístula','lesão periapical','periápice','rarefação periapical'].some(w=>lower.includes(w));
+    const temPulpar   =['envolvimento pulpar','comprometimento pulpar','câmara pulpar','exposição pulpar','necrose pulpar','cárie profunda','carie profunda','abscesso','fístula','lesão periapical','periápice','rarefação periapical', 'rarefação óssea', 'rarefacao ossea'].some(w=>lower.includes(w));
     const temTratado  =['tratado endodonticamente','obturação endodôntica'].some(w=>lower.includes(w));
     const temResidual =['raízes residuais','remanescente radicular','raiz retida'].some(w=>lower.includes(w));
     const temDeciduo  =['decíduo','deciduo','dente de leite','rizólise'].some(w=>lower.includes(w))||isDentDeciduo(text);
@@ -740,21 +753,43 @@ function getImpactsAndRecommends(text, annoId) {
     function addI(k){const v=pickVar(annoId,IMPACT_BANK[k]);if(!seenI.has(v)){impacts.push(v);seenI.add(v);}}
     function addR(k){const v=pickVar(annoId,RECOMMEND_BANK[k]);if(!seenR.has(v)){recommends.push(v);seenR.add(v);}}
     
+    // Identifica se cai na Nova Regra Endodôntica
+    const diagReqEndo = (
+        diag === 'Cárie Profunda' || 
+        diag === 'Cárie com Envolvimento Pulpar' || 
+        diag === 'Rarefação Óssea' || 
+        diag === 'Lesão Periapical Inflamatória'
+    );
+
     if(temFurcaPerm){addI('furca_perm');addR('periapical_paralelismo');}
     if(temFurcaDec){addI('deciduo_exo_urgente');addR('oclusal_deciduo');}
+    
     if(temTratado){
         const temFalha=lower.includes('subobtur')||lower.includes('sobreobtur')||lower.includes('falha')||lower.includes('rarefação')||lower.includes('periápice');
-        if(temFalha){addI('endo_retratamento');}else if(lower.includes('obturação inadequada')){addI('obturacao_inadequada');}else{addI('tratado_controle');}
+        if(temFalha){
+            if (diagReqEndo) addI('endo_avaliacao'); 
+            else addI('endo_retratamento');
+        } else if(lower.includes('obturação inadequada')){addI('obturacao_inadequada');}else{addI('tratado_controle');}
         addR('periapical_controle');
     }
+    
     if(!temTratado&&!temResidual){
         if(temDeciduo&&temPulpar){addI('deciduo_pulpotomia');addR('periapical');}
         else if(!temDeciduo&&temPulpar){
-            if(hasAbscesso){addI('endo_urgente');}else{addI('endo_eletivo');}
+            // Injeção da Regra Prioritária
+            if (diagReqEndo) {
+                addI('endo_avaliacao');
+            } else if(hasAbscesso) {
+                addI('endo_urgente');
+            } else {
+                addI('endo_eletivo');
+            }
             addR('periapical');
         }
     }
+    
     if(temResidual){addI('cirurgia_residual');addR('periapical');}
+    
     if(!temPulpar&&!temTratado&&!temResidual){
         const ehProfunda=lower.includes('cárie profunda')||lower.includes('lesão cariosa profunda');
         const ehDestruicao=lower.includes('destruição coronária');
@@ -768,6 +803,7 @@ function getImpactsAndRecommends(text, annoId) {
             }
         }
     }
+    
     if(lower.includes('reabsorção radicular')||lower.includes('reabsorção interna')||lower.includes('reabsorção externa')){addI('reabsorcao');addR('cbct_reabsorcao');}
     if(lower.includes('perda óssea')||lower.includes('defeito ósseo')){
         if(lower.includes('defeito angular')||lower.includes('generalizada')){addI('perio_avancado');}else{addI('perio_basico');}
@@ -796,7 +832,8 @@ function getImpactsAndRecommends(text, annoId) {
 
 function updateFindingActionCard(text, sevColor, annoId) {
     const diag = getDiagnosticHypothesis(text);
-    const { impacts, recommends } = getImpactsAndRecommends(text, annoId);
+    // Passando o diag recém-gerado como argumento para garantir precisão
+    const { impacts, recommends } = getImpactsAndRecommends(text, annoId, diag);
     
     document.querySelector('#ac-diagnostic .ac-content').innerHTML = `<span class="diag-tag">${diag}</span>`;
     
