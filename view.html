@@ -107,132 +107,287 @@ body {
 }
 
 #app-header-row {
-    display: flex;
-    align-items: flex-start;
+    display: flex; 
+    align-items: center; 
     justify-content: space-between;
-    gap: 10px;
-    padding: 8px 15px 2px 15px;
+    padding: 4px 15px 0px 15px; 
 }
 
-.laudo-title {
-    font-size: 13px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: #bbb;
+.laudo-title { 
+    font-size: 13px; 
+    font-weight: 800; 
+    text-transform: uppercase; 
+    letter-spacing: 1.5px; 
+    color: #bbb; 
 }
 
 .premium-subtitle {
     font-size: 13px;
     font-weight: 900;
-    color: #3b82f6;
+    color: #3b82f6; 
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-#header-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-.top-chip-btn {
-    background: rgba(17, 24, 39, 0.88);
-    color: #9dc7ff;
-    border: 1px solid rgba(59,130,246,0.25);
-    border-radius: 12px;
-    padding: 6px 10px;
-    font-size: 10px;
-    font-weight: 800;
+#btn-visao-geral {
+    background: rgba(0, 123, 255, 0.15); 
+    color: #5a9fd4; 
+    border: 1px solid rgba(0, 123, 255, 0.28);
+    border-radius: 12px; 
+    padding: 4px 12px; 
+    font-size: 11px; 
+    font-weight: 700; 
     cursor: pointer;
     transition: all 0.2s;
-    white-space: nowrap;
 }
-.top-chip-btn:hover, .top-chip-btn.active { background: rgba(30, 64, 175, 0.22); color: #dbeafe; border-color: rgba(96,165,250,0.5); box-shadow: 0 0 0 1px rgba(96,165,250,0.18), 0 6px 14px rgba(2,6,23,0.35); }
+#btn-visao-geral:active { background: rgba(0, 123, 255, 0.3); }
 
-#summary-wrap { padding: 8px 15px 6px 15px; display:flex; flex-direction:column; gap:8px; }
-#exam-summary { background: linear-gradient(180deg, rgba(15,23,42,0.94) 0%, rgba(10,15,25,0.94) 100%); border: 1px solid rgba(148,163,184,0.18); border-radius: 14px; padding: 10px 12px; color: #dbeafe; font-size: 11px; line-height: 1.45; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 18px rgba(0,0,0,0.3); }
-#exam-summary strong { color:#60a5fa; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; display:block; margin-bottom:4px; }
-.filter-row, .mode-row, .utility-row { display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling: touch; }
-.filter-row::-webkit-scrollbar, .mode-row::-webkit-scrollbar, .utility-row::-webkit-scrollbar { display:none; }
-.filter-chip, .mode-chip, .utility-chip, .complement-toggle { border:none; border-radius:999px; padding:7px 11px; font-size:10px; font-weight:800; letter-spacing:0.2px; cursor:pointer; white-space:nowrap; transition: all 0.2s ease; }
-.filter-chip { background: rgba(255,255,255,0.06); color:#b6c7df; border:1px solid rgba(255,255,255,0.08); }
-.filter-chip.active, .filter-chip:hover { background: rgba(59,130,246,0.18); color:#eff6ff; border-color: rgba(96,165,250,0.45); }
-.mode-chip { background: rgba(8,47,73,0.82); color:#c6f0ff; border:1px solid rgba(34,211,238,0.2); }
-.mode-chip.active, .mode-chip:hover { background: rgba(8,145,178,0.22); border-color: rgba(34,211,238,0.45); }
-.utility-chip, .complement-toggle { background: rgba(22,28,36,0.92); color:#d1d5db; border:1px solid rgba(148,163,184,0.18); }
-.utility-chip:hover, .complement-toggle:hover { background: rgba(51,65,85,0.65); color:#fff; }
-#primary-finding-slot { padding: 0 15px 8px 15px; display:none; }
-#primary-finding-slot.has-primary { display:block; }
-.primary-heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; color:#94a3b8; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px; }
+/* CAROUSEL / LISTA DE ACHADOS */
+#findings-list {
+    display: flex; 
+    flex-direction: row; 
+    overflow-x: auto; 
+    overflow-y: hidden; 
+    scroll-snap-type: x mandatory;
+    padding: 2px 15px 4px 15px; 
+    gap: 12px; 
+    scrollbar-width: none; /* Firefox */
+    -webkit-overflow-scrolling: touch;
+}
+#findings-list::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
 
-#findings-list { display: flex; flex-direction: row; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; padding: 0 15px 6px 15px; gap: 12px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-#findings-list::-webkit-scrollbar { display: none; }
-.finding-item { flex: 0 0 264px; width: 264px; scroll-snap-align: center; background: linear-gradient(180deg, rgba(23,23,23,0.96) 0%, rgba(12,12,12,0.98) 100%); border-radius: 16px; cursor: pointer; display: flex; flex-direction: column; transition: all 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); border: 1px solid rgba(255,255,255,0.08); border-left: 4px solid transparent; box-shadow: 0 8px 22px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03); position: relative; overflow: hidden; }
-.finding-item::after { content:''; position:absolute; inset:0; background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent 35%); pointer-events:none; }
-.finding-item:hover { transform: translateY(-2px); }
-.finding-item.active { transform: translateY(-3px) scale(1.01); }
-.finding-item.active .item-text { color: #ffffff; }
-.finding-item.active .item-entity-label { text-shadow: 0 0 10px currentColor; }
-.finding-item.is-primary { width:100%; flex:1 0 auto; min-height: 136px; }
-.finding-item.is-complement { opacity: 0.92; }
-.finding-item.filtered-out, .timeline-dot.filtered-out { display:none !important; }
-.item-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 10px 12px 8px 12px; }
-.item-entity-wrap { display:flex; flex-direction:column; gap:5px; }
-.item-entity-label { font-size: 11px; font-weight: 900; letter-spacing: 0.5px; transition: text-shadow 0.3s; }
-.item-meta-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-.item-category-label, .item-clinical-badge, .item-region-badge { font-size: 8.5px; font-weight: 800; padding: 3px 6px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.8px; }
-.item-region-badge { background: rgba(148,163,184,0.12); color:#cbd5e1; border:1px solid rgba(148,163,184,0.18); }
-.item-body { padding: 0 12px 12px 12px; font-size: 12px; color: #ccc; line-height: 1.5; display: flex; flex-direction: column; gap:8px; }
-.item-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; transition: color 0.3s; }
-.finding-item.is-primary .item-text { -webkit-line-clamp: 4; font-size: 12.5px; }
-.item-text.expanded { -webkit-line-clamp: unset; }
-.item-why { display:none; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px; color:#cbd5e1; font-size:10px; line-height:1.45; }
-.finding-item.active .item-why { display:block; }
-.btn-ver-mais { align-self: flex-end; font-size: 10px; font-weight: 700; color: #7cc3ff; cursor: pointer; background: none; border: none; padding: 0; }
-#complementary-section { display:none; padding: 0 15px 4px 15px; }
-#complementary-section.visible { display:block; }
-#complementary-list { display:flex; gap:10px; overflow-x:auto; scrollbar-width:none; }
-#complementary-list::-webkit-scrollbar { display:none; }
-#complementary-list .finding-item { flex: 0 0 220px; width:220px; }
-#carousel-nav { display: flex; justify-content: center; align-items: center; flex-direction:column; gap: 8px; padding: 4px 15px 8px 15px; }
-#timeline-dots { display:flex; align-items:center; gap:6px; overflow-x:auto; max-width:100%; scrollbar-width:none; }
-#timeline-dots::-webkit-scrollbar { display:none; }
-.timeline-dot { width:9px; height:9px; border-radius:50%; border:none; cursor:pointer; flex:0 0 auto; background: rgba(148,163,184,0.28); box-shadow: inset 0 1px 0 rgba(255,255,255,0.18); transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; }
-.timeline-dot.active { transform: scale(1.28); box-shadow: 0 0 0 2px rgba(255,255,255,0.08), 0 0 14px currentColor; }
-.carousel-nav-row { display:flex; justify-content:center; align-items:center; gap:15px; }
-.nav-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #bbb; border-radius: 12px; width: 32px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px; transition: all 0.2s; }
-.nav-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
-#nav-counter { font-size: 11px; color: #888; font-weight: 700; width: 56px; text-align: center; }
+.finding-item {
+    flex: 0 0 260px; 
+    width: 260px; 
+    scroll-snap-align: center;
+    background: #181818; 
+    border-radius: 12px; 
+    cursor: pointer;
+    display: flex; 
+    flex-direction: column; 
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    border-top: 1px solid #2a2a2a;
+    border-bottom: 1px solid #2a2a2a;
+    border-left: 4px solid transparent; 
+    border-right: 4px solid transparent; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.finding-item:hover {
+    background: #1e1e1e;
+}
+
+.finding-item.active {
+    transform: translateY(-3px);
+}
+.finding-item.active .item-text {
+    color: #ffffff; 
+}
+.finding-item.active .item-entity-label {
+    text-shadow: 0 0 10px currentColor; 
+}
+
+.item-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    padding: 8px 12px; 
+    border-radius: 12px 12px 0 0;
+}
+.item-entity-label { 
+    font-size: 11px; 
+    font-weight: 900; 
+    letter-spacing: 0.5px; 
+    transition: text-shadow 0.3s;
+}
+.item-category-label {
+    font-size: 9px; 
+    font-weight: 800; 
+    padding: 3px 6px; 
+    border-radius: 5px;
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+}
+.item-body { 
+    padding: 10px 12px; 
+    font-size: 12px; 
+    color: #ccc; 
+    line-height: 1.5; 
+    display: flex;
+    flex-direction: column;
+}
+.item-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.3s;
+}
+.item-text.expanded {
+    -webkit-line-clamp: unset;
+}
+.btn-ver-mais {
+    align-self: flex-end;
+    font-size: 10px;
+    font-weight: 700;
+    color: #6daaf0;
+    margin-top: 6px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+/* NAV MENU */
+#carousel-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    padding-bottom: 5px;
+}
+.nav-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #bbb;
+    border-radius: 12px;
+    width: 32px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 10px;
+    transition: all 0.2s;
+}
+.nav-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+}
+#nav-counter {
+    font-size: 11px;
+    color: #888;
+    font-weight: 700;
+    width: 45px;
+    text-align: center;
+}
 
 /* VIEWER AREA */
-#viewer-area { flex: 1; position: relative; overflow: hidden; background: #000; cursor: grab; display: flex; align-items: center; justify-content: center; transition: filter 0.25s ease, opacity 0.25s ease; }
+#viewer-area { 
+    flex: 1; 
+    position: relative; 
+    overflow: hidden; 
+    background: #000; 
+    cursor: grab; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 #viewer-area:active { cursor: grabbing; }
-#viewer-area.focus-mode-active canvas { filter: saturate(1.04) contrast(1.03); }
-#focus-why-box { position:absolute; left:14px; right:14px; bottom:14px; z-index:9; display:none; background: linear-gradient(180deg, rgba(10,15,25,0.86) 0%, rgba(5,8,15,0.9) 100%); border:1px solid rgba(96,165,250,0.22); border-radius:16px; padding:10px 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.45); backdrop-filter: blur(10px); }
-#focus-why-box.visible { display:block; }
-#focus-why-box strong { display:block; color:#93c5fd; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px; }
-#focus-why-box span { color:#e5eefc; font-size:11px; line-height:1.45; }
 canvas { display: block; }
 
-#bottom-area { flex-shrink: 0; background: #0f1115; border-top: 1px solid #1f2937; z-index: 20; display: none; flex-direction: column; box-shadow: 0 -8px 28px rgba(0,0,0,0.55); }
-#bottom-area.visible { display: flex; }
-#action-card { background: linear-gradient(180deg, rgba(23,23,23,0.98) 0%, rgba(12,12,12,1) 100%); padding: 12px; border-left: 4px solid transparent; transition: background 0.2s; width: 100%; }
-#action-card.clickable { cursor: pointer; }
-#action-card:hover { background: linear-gradient(180deg, rgba(30,30,30,0.98) 0%, rgba(16,16,16,1) 100%); }
-#action-toolbar { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
-#action-title-wrap { display:flex; flex-direction:column; gap:2px; }
-#action-title-wrap .eyebrow { color:#60a5fa; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.9px; }
-#action-title-wrap .subline { color:#7b8798; font-size:10px; font-weight:700; }
-#btn-copy-conclusion { border:none; border-radius:999px; padding:7px 10px; background:rgba(37,99,235,0.16); color:#dbeafe; font-size:10px; font-weight:800; cursor:pointer; border:1px solid rgba(96,165,250,0.3); }
-.ac-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: 8px; width: 100%; }
-.ac-item { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
-.ac-item strong { display:flex; align-items:flex-start; gap:4px; font-size:8px; text-transform: uppercase; color:#8ea0b8; margin-bottom:5px; letter-spacing:0.5px; line-height:1.2; }
-.ac-content { display:flex; flex-direction:column; gap:5px; width:100%; }
-.diag-tag, .impact-tag, .recommend-tag { display:block; width:100%; border-radius:8px; padding:7px 8px; font-size:9.8px; line-height:1.38; word-wrap:break-word; text-align:left; }
-.diag-tag { background: rgba(59,130,246,0.08); border:1px solid rgba(96,165,250,0.2); color:#eff6ff; font-weight:700; }
-.impact-tag { background: rgba(100,116,139,0.13); border:1px solid rgba(100,116,139,0.24); color:#dbe4f0; }
-.recommend-tag { background: rgba(34,197,94,0.1); border:1px solid rgba(74,222,128,0.22); color:#bbf7d0; }
-#requester-explain { margin-top:8px; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px; display:none; }
-#requester-explain.visible { display:block; }
-#requester-explain strong { display:block; color:#fbbf24; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:5px; }
-#requester-explain-content { color:#e5e7eb; font-size:10px; line-height:1.45; }
-#zoom-instruction { font-size: 8px; color: #667085; text-align: center; margin-top: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+/* ==========================================================
+   BOTTOM ACTION AREA & GRID DE 3 COLUNAS SOFISTICADO
+========================================================== */
+#bottom-area {
+    flex-shrink: 0; 
+    background: #111; 
+    border-top: 1px solid #222;
+    z-index: 20; 
+    display: none; 
+    flex-direction: column;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
+}
+#bottom-area.visible { 
+    display: flex; 
+}
+
+#action-card {
+    background: #181818; 
+    padding: 10px 12px; 
+    border-left: 5px solid transparent; 
+    cursor: pointer; 
+    transition: background 0.2s;
+    width: 100%;
+}
+#action-card:hover { background: #1c1c1c; }
+
+/* Flexbox dinâmico: Cria até 3 colunas de larguras iguais */
+.ac-grid {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px; 
+    width: 100%;
+}
+.ac-item {
+    flex: 1; 
+    min-width: 0; 
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.ac-item strong { 
+    display: flex; 
+    align-items: flex-start;
+    gap: 4px;
+    font-size: 7.5px; 
+    text-transform: uppercase; 
+    color: #888; 
+    margin-bottom: 5px; 
+    letter-spacing: 0.3px; 
+    white-space: normal; 
+    line-height: 1.2;
+}
+
+.ac-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+/* Molduras padronizadas, sofisticadas e com quebra de linha ativada */
+.diag-tag, .impact-tag, .recommend-tag { 
+    display: block; 
+    width: 100%;
+    border-radius: 5px; 
+    padding: 6px 7px; 
+    font-size: 9.5px; 
+    line-height: 1.35;
+    margin: 0; 
+    white-space: normal; 
+    word-wrap: break-word;
+    text-align: left;
+}
+
+.diag-tag { 
+    background: rgba(255, 255, 255, 0.08); 
+    border: 1px solid rgba(255, 255, 255, 0.15); 
+    color: #f1f5f9; 
+    font-weight: 700; 
+}
+.impact-tag { 
+    background: rgba(100,116,139,0.15); 
+    border: 1px solid rgba(100,116,139,0.3); 
+    color: #cbd5e1; 
+}
+.recommend-tag { 
+    background: rgba(56,161,105,0.1); 
+    border: 1px solid rgba(56,161,105,0.25); 
+    color: #86efac; 
+}
+
+#zoom-instruction {
+    font-size: 8px; 
+    color: #555; 
+    text-align: center; 
+    margin-top: 6px; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+    font-weight: 700;
+}
 
 /* ÁREA DE ASSINATURA FIXA (Não esconde mais!) */
 #signature-area { 
@@ -267,17 +422,22 @@ canvas { display: block; }
     }
     
     #findings-list {
-        flex-direction: column;
+        flex-direction: column; 
         overflow-y: auto;
         overflow-x: hidden;
-        scroll-snap-type: none;
-        padding: 0 15px 12px 15px;
-        flex: 1;
+        scroll-snap-type: none; 
+        padding: 15px;
+        flex: 1; 
     }
-    .finding-item { width: 100%; flex: 0 0 auto; }
-    #primary-finding-slot { padding: 0 15px 10px 15px; }
-    #complementary-section { padding: 0 15px 8px 15px; }
-    #complementary-list { flex-direction: column; overflow-y:auto; overflow-x:hidden; }
+    
+    .finding-item {
+        width: 100%;
+        flex: 0 0 auto;
+    }
+    
+    #carousel-nav {
+        display: none !important; 
+    }
     
     #viewer-area {
         grid-column: 2 / 3;
@@ -308,76 +468,59 @@ canvas { display: block; }
 <div id="app-layout">
     <div id="top-area">
         <div id="app-header-row">
-            <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+            <div style="display:flex; align-items:center; gap:10px;">
                 <img src="sorriso.png" alt="Logo" style="max-height: 36px; width: auto; object-fit: contain; border-radius: 4px;" onerror="this.style.display='none'">
-                <div style="display:flex; flex-direction:column; gap:1px; min-width:0;">
-                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <div style="display:flex; flex-direction:column; gap:1px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
                         <span class="laudo-title">Laudo Interativo</span>
                         <span id="achados-count" style="font-size:10px; color:#666; font-weight:700;"></span>
                     </div>
                     <span class="premium-subtitle">Achados Radiográficos</span>
-                    <span style="font-size: 8.5px; color: #888; font-weight: 600; letter-spacing: 0.3px;">Leitura guiada para o dentista clínico</span>
+                    <span style="font-size: 8.5px; color: #888; font-weight: 600; letter-spacing: 0.3px;">Toque nos cards para explorar detalhes e condutas clínicas</span>
                 </div>
             </div>
-            <div id="header-actions">
-                <button id="btn-focus-mode" class="top-chip-btn active">Modo Foco</button>
-                <button id="btn-visao-geral" class="top-chip-btn">Panorama</button>
-            </div>
+            <button id="btn-visao-geral">Visão Geral</button>
         </div>
-        <div id="summary-wrap">
-            <div id="exam-summary"><strong>Resumo do exame</strong><span id="exam-summary-text">Carregando síntese clínica...</span></div>
-            <div class="mode-row">
-                <button id="btn-relevant-only" class="mode-chip">Só achados relevantes</button>
-                <button id="btn-explain-requester" class="mode-chip">Explicação ao solicitante</button>
-            </div>
-            <div id="region-filters" class="filter-row"></div>
-            <div class="utility-row">
-                <button id="btn-copy-summary" class="utility-chip">Copiar resumo</button>
-                <button id="btn-copy-conclusion-top" class="utility-chip">Copiar conclusão</button>
-                <button id="btn-reset-filters" class="utility-chip">Limpar filtros</button>
-            </div>
-        </div>
-        <div id="primary-finding-slot">
-            <div class="primary-heading"><span>Achado principal</span><span id="primary-clinical-badge"></span></div>
-            <div id="primary-finding-card"></div>
-        </div>
+        
         <div id="findings-list">Carregando...</div>
-        <div id="complementary-section">
-            <button id="btn-toggle-complements" class="complement-toggle">Ver complementares</button>
-            <div id="complementary-list"></div>
-        </div>
+        
         <div id="carousel-nav">
-            <div id="timeline-dots"></div>
-            <div class="carousel-nav-row">
-                <button id="nav-prev" class="nav-btn">◀</button>
-                <span id="nav-counter">0 / 0</span>
-                <button id="nav-next" class="nav-btn">▶</button>
-            </div>
+            <button id="nav-prev" class="nav-btn">◀</button>
+            <span id="nav-counter">0 / 0</span>
+            <button id="nav-next" class="nav-btn">▶</button>
         </div>
     </div>
+    
     <div id="viewer-area">
         <canvas id="canvas"></canvas>
-        <div id="focus-why-box"><strong>Por que isso importa</strong><span id="focus-why-text"></span></div>
     </div>
+    
     <div id="bottom-area">
         <div id="action-card">
-            <div id="action-toolbar">
-                <div id="action-title-wrap">
-                    <span class="eyebrow">Cartão de decisão clínica</span>
-                    <span class="subline">Toque novamente para aproximar ainda mais o achado</span>
-                </div>
-                <button id="btn-copy-conclusion">Copiar conclusão</button>
-            </div>
+            <!-- Grid de 3 Colunas Dinâmico -->
             <div class="ac-grid">
-                <div id="ac-diagnostic" class="ac-item"><strong>🔬 Interpretação</strong><div class="ac-content"></div></div>
-                <div id="ac-impact" class="ac-item"><strong>⚕️ Relevância clínica</strong><div class="ac-content"></div></div>
-                <div id="ac-recommend" class="ac-item"><strong>📌 Conduta sugerida</strong><div class="ac-content"></div></div>
+                <div id="ac-diagnostic" class="ac-item">
+                    <strong>🔬 Hipótese Diagnóstica</strong> 
+                    <div class="ac-content"></div>
+                </div>
+                <div id="ac-recommend" class="ac-item">
+                    <strong>📸 Exame Sugerido</strong> 
+                    <div class="ac-content"></div>
+                </div>
+                <div id="ac-impact" class="ac-item">
+                    <strong>💡 Conduta Provável</strong> 
+                    <div class="ac-content"></div>
+                </div>
             </div>
-            <div id="requester-explain"><strong>Explicação ao solicitante</strong><div id="requester-explain-content"></div></div>
-            <div id="zoom-instruction">No modo foco, o restante da interface perde contraste e o achado selecionado ganha destaque.</div>
+            
+            <div id="zoom-instruction">Toque neste card para super zoom no achado</div>
         </div>
     </div>
-    <div id="signature-area"><img id="signature-img" src="assinatura.png" alt="Assinatura" onerror="this.style.display='none'"></div>
+    
+    <!-- ASSINATURA MOVIDA PARA FORA DO BOTTOM-AREA -->
+    <div id="signature-area">
+        <img id="signature-img" src="assinatura.png" alt="Assinatura" onerror="this.style.display='none'">
+    </div>
 </div>
 
 <script>
@@ -689,33 +832,26 @@ function getImpactsAndRecommends(text, annoId, diag = '') {
 
 function updateFindingActionCard(text, sevColor, annoId) {
     const diag = getDiagnosticHypothesis(text);
+    // Passando o diag recém-gerado como argumento para garantir precisão
     const { impacts, recommends } = getImpactsAndRecommends(text, annoId, diag);
+    
     document.querySelector('#ac-diagnostic .ac-content').innerHTML = `<span class="diag-tag">${diag}</span>`;
+    
     const impactEl = document.querySelector('#ac-impact');
-    if (impacts.length) { impactEl.querySelector('.ac-content').innerHTML = impacts.map(t=>`<span class="impact-tag">${t}</span>`).join(''); impactEl.style.display = 'flex'; } else { impactEl.style.display = 'none'; }
+    if (impacts.length) {
+        impactEl.querySelector('.ac-content').innerHTML = impacts.map(t=>`<span class="impact-tag">${t}</span>`).join('');
+        impactEl.style.display = 'flex'; 
+    } else { impactEl.style.display = 'none'; }
+    
     const recEl = document.querySelector('#ac-recommend');
-    if (recommends.length) { recEl.querySelector('.ac-content').innerHTML = recommends.map(t=>`<span class="recommend-tag">${t}</span>`).join(''); recEl.style.display = 'flex'; } else { recEl.style.display = 'none'; }
-    requesterExplainContent.textContent = buildRequesterExplain(text, diag, impacts, recommends);
-    requesterExplain.classList.toggle('visible', explainModeEnabled);
+    if (recommends.length) {
+        recEl.querySelector('.ac-content').innerHTML = recommends.map(t=>`<span class="recommend-tag">${t}</span>`).join('');
+        recEl.style.display = 'flex';
+    } else { recEl.style.display = 'none'; }
+    
     document.getElementById('action-card').style.borderLeftColor = sevColor;
-    document.getElementById('action-card').classList.add('clickable');
     document.getElementById('bottom-area').classList.add('visible');
 }
-function copyConclusionText() {
-    const diag = document.querySelectorAll('#ac-diagnostic .diag-tag');
-    const imp = document.querySelectorAll('#ac-impact .impact-tag');
-    const rec = document.querySelectorAll('#ac-recommend .recommend-tag');
-    const parts = [];
-    if (diag.length) parts.push(`Interpretação: ${Array.from(diag).map(el=>el.textContent).join('; ')}.`);
-    if (imp.length) parts.push(`Relevância clínica: ${Array.from(imp).map(el=>el.textContent).join('; ')}.`);
-    if (rec.length) parts.push(`Conduta sugerida: ${Array.from(rec).map(el=>el.textContent).join('; ')}.`);
-    const full = parts.join(' ');
-    if (!full) return;
-    navigator.clipboard?.writeText(full).catch(()=>{});
-    const btn = document.getElementById('btn-copy-conclusion');
-    if (btn) { btn.textContent = 'Conclusão copiada'; setTimeout(()=>btn.textContent='Copiar conclusão', 1400); }
-}
-
 
 // ============================================================
 // CORE / CANVAS RENDERING & SAFETY FIXES
@@ -768,174 +904,54 @@ if(!DATA){
     document.getElementById('findings-list').innerHTML="<p style='text-align:center;color:red;padding:20px;width:100%;'>Erro ao carregar dados.</p>";
 } else {
     const listEl = document.getElementById('findings-list');
-    const primarySlot = document.getElementById('primary-finding-slot');
-    const primaryCard = document.getElementById('primary-finding-card');
-    const primaryClinicalBadge = document.getElementById('primary-clinical-badge');
-    const complementarySection = document.getElementById('complementary-section');
-    const complementaryList = document.getElementById('complementary-list');
-    const btnToggleComplements = document.getElementById('btn-toggle-complements');
-    const timelineEl = document.getElementById('timeline-dots');
-    const focusWhyBox = document.getElementById('focus-why-box');
-    const focusWhyText = document.getElementById('focus-why-text');
-    const requesterExplain = document.getElementById('requester-explain');
-    const requesterExplainContent = document.getElementById('requester-explain-content');
-    const regionFiltersEl = document.getElementById('region-filters');
-    const examSummaryText = document.getElementById('exam-summary-text');
-    const btnFocusMode = document.getElementById('btn-focus-mode');
-    const btnPanoramaMode = document.getElementById('btn-visao-geral');
-    const btnRelevantOnly = document.getElementById('btn-relevant-only');
-    const btnExplainRequester = document.getElementById('btn-explain-requester');
-    const btnCopySummary = document.getElementById('btn-copy-summary');
-    const btnCopyConclusionTop = document.getElementById('btn-copy-conclusion-top');
-    const btnResetFilters = document.getElementById('btn-reset-filters');
-
     listEl.innerHTML = DATA.findingsHtml || "<p style='padding:10px;'>Nenhum achado interativo.</p>";
     if(DATA.signature) document.getElementById('signature-img').src=DATA.signature;
+    
+    const items = listEl.querySelectorAll('p[data-highlight-color]');
+    document.getElementById('achados-count').textContent = `${items.length} achados`;
 
-    let currentRegionFilter = 'todos';
-    let relevantOnlyMode = false;
-    let focusModeEnabled = true;
-    let explainModeEnabled = false;
-    let complementaryExpanded = false;
-    let processedItems = [];
-
-    const severityOrder = { critical: 4, semi: 3, attention: 2, complement: 1 };
-    const regionOptions = [
-        { id:'todos', label:'Todos' },
-        { id:'dentes', label:'Dentes' },
-        { id:'periapical', label:'Periapical' },
-        { id:'osso_alveolar', label:'Osso alveolar' },
-        { id:'seio_maxilar', label:'Seio maxilar' },
-        { id:'atm', label:'ATM' },
-        { id:'estruturas_adjacentes', label:'Estruturas adjacentes' }
-    ];
-
-    function normalizeText(html){ return html.replace(/<br\s*\/?>\s*<br\s*\/?>/gi,' ').replace(/<br\s*\/?>/gi,' ').replace(/<\/p>\s*<p[^>]*>/gi,' ').replace(/<p[^>]*>/gi,'').replace(/<\/p>/gi,'').replace(/\s{2,}/g,' ').trim(); }
-    function extractTextFromHTML(html){ const tmp = document.createElement('div'); tmp.innerHTML = html; return (tmp.textContent || tmp.innerText || '').replace(/\s{2,}/g,' ').trim(); }
-    function detectRegion(text){
-        const lower = text.toLowerCase();
-        if (/([1-8][1-8])/.test(text) || ['dente','elemento','raiz','raízes','coroa','canal radicular','remanescente radicular','raiz residual','lesão de cárie','lesao de carie'].some(k=>lower.includes(k))) return 'dentes';
-        if (['periap','periáp','perirrad','ápice','apice','furca','interradicular'].some(k=>lower.includes(k))) return 'periapical';
-        if (['perda óssea','perda ossea','alveolar','periodontal','crista óssea','crista ossea','defeito ósseo','defeito osseo','cálculo','calculo'].some(k=>lower.includes(k))) return 'osso_alveolar';
-        if (['seio maxilar','sinus','mucosite','espessamento mucoso','velamento'].some(k=>lower.includes(k))) return 'seio_maxilar';
-        if (['atm','côndilo','condilo','articulação','articulacao'].some(k=>lower.includes(k))) return 'atm';
-        return 'estruturas_adjacentes';
-    }
-    function regionLabel(region){ return (regionOptions.find(r=>r.id===region)||{}).label || 'Estruturas adjacentes'; }
-    function getClinicalBadge(level){ return level === 'critical' ? 'Alta relevância' : (level === 'semi' ? 'Relevância moderada' : 'Achado complementar'); }
-    function whyItMatters(text, diag, region){
-        const lower = text.toLowerCase();
-        if(['cárie','carie','cariosa'].some(k=>lower.includes(k))) return 'Sugere necessidade de controle restaurador e de avaliação da proximidade com a polpa, especialmente se houver cavitação ou extensão profunda.';
-        if(['perda óssea','perda ossea','periodontal','alveolar','furca'].some(k=>lower.includes(k))) return 'Pode indicar comprometimento do suporte periodontal e impactar diretamente o prognóstico funcional dos dentes envolvidos.';
-        if(['periap','periáp','perirrad','rarefação','rarefacao'].some(k=>lower.includes(k))) return 'Esse padrão pode refletir processo inflamatório crônico ou ativo de origem endodôntica, exigindo correlação clínica e pulpar.';
-        if(['raiz residual','remanescente radicular','raízes residuais'].some(k=>lower.includes(k))) return 'Raízes residuais podem manter foco infeccioso local e dificultar reabilitação ou reparo ósseo adequado.';
-        if(['seio maxilar','sinusite','mucosite'].some(k=>lower.includes(k))) return 'Alterações sinusais podem ter relação odontogênica e interferir no planejamento clínico e cirúrgico da região posterior da maxila.';
-        if(['atm','côndilo','condilo'].some(k=>lower.includes(k))) return 'Achados em ATM podem justificar investigação complementar quando houver sintomatologia articular, limitação funcional ou ruídos.';
-        return `Achado localizado em ${regionLabel(region).toLowerCase()}, com potencial repercussão clínica que deve ser correlacionada com exame clínico e planejamento do caso.`;
-    }
-    function buildRequesterExplain(text, diag, impacts, recommends){
-        const base = `Foi observada imagem compatível com ${diag.toLowerCase()}.`;
-        const imp = impacts && impacts.length ? ` Clinicamente, isso pode exigir ${impacts[0].toLowerCase()}.` : '';
-        const rec = recommends && recommends.length ? ` Como complemento, considera-se útil ${recommends[0]}.` : '';
-        return `${base}${imp}${rec}`;
-    }
-    function computePriorityScore(text, sevLevel){
-        let score = severityOrder[sevLevel] || 1;
-        const lower = text.toLowerCase();
-        if(['lesão periapical','lesao periapical','periap','rarefação','rarefacao','comprometimento pulpar','envolvimento pulpar','abscesso','reabsorção','reabsorcao'].some(k=>lower.includes(k))) score += 1.6;
-        if(['raízes residuais','raiz residual','remanescente radicular'].some(k=>lower.includes(k))) score += 1.1;
-        if(['perda óssea','perda ossea','periodontal','furca'].some(k=>lower.includes(k))) score += 1.2;
-        return score;
-    }
-    function buildExamSummary(entries){
-        if(!entries.length) return 'Não foi possível sintetizar os achados do exame.';
-        const teethMap = { carie:new Set(), periapical:new Set(), periodontal:new Set(), residual:new Set() };
-        const general = { carie:0, periapical:0, periodontal:0, residual:0, seio:0, atm:0 };
-        entries.forEach(e=>{
-            const l=e.cleanText.toLowerCase();
-            const nums = (e.cleanText.match(/([1-8][1-8])/g)||[]);
-            if(['cárie','carie','cariosa'].some(k=>l.includes(k))){ general.carie++; nums.forEach(n=>teethMap.carie.add(n)); }
-            if(['periap','periáp','perirrad','rarefação','rarefacao'].some(k=>l.includes(k))){ general.periapical++; nums.forEach(n=>teethMap.periapical.add(n)); }
-            if(['perda óssea','perda ossea','alveolar','periodontal','furca'].some(k=>l.includes(k))){ general.periodontal++; nums.forEach(n=>teethMap.periodontal.add(n)); }
-            if(['raízes residuais','raiz residual','remanescente radicular'].some(k=>l.includes(k))){ general.residual++; nums.forEach(n=>teethMap.residual.add(n)); }
-            if(['seio maxilar','sinusite','mucosite','espessamento mucoso'].some(k=>l.includes(k))) general.seio++;
-            if(['atm','côndilo','condilo'].some(k=>l.includes(k))) general.atm++;
-        });
-        const listTeeth = set => { const arr=[...set]; return arr.length ? ` nos elementos ${arr.join(', ')}` : ''; };
-        const parts=[];
-        if(general.carie) parts.push(general.carie > 1 ? `lesões de cárie${listTeeth(teethMap.carie)}` : `presença de lesão de cárie${listTeeth(teethMap.carie)}`);
-        if(general.periodontal) parts.push(general.periodontal > 1 ? `perda óssea periodontal em múltiplas regiões${listTeeth(teethMap.periodontal)}` : `perda óssea periodontal${listTeeth(teethMap.periodontal)}`);
-        if(general.periapical) parts.push(general.periapical > 1 ? `alterações periapicais/perirradiculares${listTeeth(teethMap.periapical)}` : `lesão periapical ou perirradicular${listTeeth(teethMap.periapical)}`);
-        if(general.residual) parts.push(general.residual > 1 ? `raízes residuais${listTeeth(teethMap.residual)}` : `raiz residual${listTeeth(teethMap.residual)}`);
-        if(general.seio) parts.push('alterações relacionadas ao seio maxilar');
-        if(general.atm) parts.push('achados em ATM');
-        if(!parts.length) parts.push('achados radiográficos que merecem correlação clínica individualizada');
-        const intros = ['O exame radiográfico demonstra', 'A análise radiográfica evidencia', 'Observam-se, neste exame,', 'O estudo radiográfico revela'];
-        const endings = ['com necessidade de correlação clínica e definição da conduta adequada.', 'com importância para o planejamento clínico e acompanhamento radiográfico.', 'devendo os achados mais relevantes ser priorizados na avaliação clínica.', 'os quais devem ser interpretados em conjunto com o quadro clínico do paciente.'];
-        const seed = entries.length + parts.join('').length;
-        const intro = intros[seed % intros.length];
-        const ending = endings[seed % endings.length];
-        const body = parts.length === 1 ? parts[0] : `${parts.slice(0,-1).join(', ')} e ${parts.slice(-1)[0]}`;
-        return `${intro} ${body}, ${ending}`;
-    }
-    function renderRegionFilters(){ regionFiltersEl.innerHTML = regionOptions.map(r => `<button class="filter-chip ${r.id===currentRegionFilter?'active':''}" data-region="${r.id}">${r.label}</button>`).join(''); }
-
-    const sourceItems = Array.from(listEl.querySelectorAll('p[data-highlight-color]'));
-    document.getElementById('achados-count').textContent = `${sourceItems.length} achados`;
-    sourceItems.forEach((p, idx) => {
+    // CRIAR CARDS
+    items.forEach(p => {
+        p.classList.add('finding-item');
         const orig = p.innerHTML;
-        const cleanHTML = normalizeText(orig);
-        const cleanText = extractTextFromHTML(orig);
-        const sev = classifyText(cleanText);
-        const diag = getDiagnosticHypothesis(cleanText);
-        const region = detectRegion(cleanText);
-        const { label, number } = extractCardTitle(cleanText);
+        const tmp = document.createElement('div'); tmp.innerHTML = orig;
+        const text = tmp.textContent || tmp.innerText || '';
+        
+        const sev = classifyText(text);
+        p.dataset.severityColor = sev.color;
+        
+        const { label, number } = extractCardTitle(text);
         const hl = number ? `DENTE ${number}` : label;
         const catName = SEV_LABELS[sev.level] ? SEV_LABELS[sev.level].short.toUpperCase() : 'ACHADO';
-        const clinicalBadge = getClinicalBadge(sev.level);
-        const priorityScore = computePriorityScore(cleanText, sev.level);
-        const whyText = whyItMatters(cleanText, diag, region);
-        p.className = 'finding-item';
-        p.dataset.severityColor = sev.color;
-        p.dataset.severityLevel = sev.level;
-        p.dataset.region = region;
-        p.dataset.annotationId = p.dataset.annotationId || '';
-        p.dataset.priorityScore = priorityScore;
-        p.dataset.why = whyText;
-        p.dataset.cleanText = cleanText;
-        p.innerHTML = `<div class="item-header" style="border-bottom: 1px solid ${sev.color}20;"><div class="item-entity-wrap"><span class="item-entity-label" style="color:${sev.color}">${hl}</span><div class="item-meta-row"><span class="item-category-label" style="background:${sev.color}16; color:${sev.color}; border: 1px solid ${sev.color}35;">${catName}</span><span class="item-clinical-badge" style="background:${sev.color}12; color:${sev.color}; border:1px solid ${sev.color}28;">${clinicalBadge}</span><span class="item-region-badge">${regionLabel(region)}</span></div></div></div><div class="item-body"><div class="item-text">${cleanHTML}</div><div class="item-why">${whyText}</div><button class="btn-ver-mais">Ver mais...</button></div>`;
+        
+        const cleanHTML = orig.replace(/<br\s*\/?>\s*<br\s*\/?>/gi,' ').replace(/<br\s*\/?>/gi,' ').replace(/<\/p>\s*<p[^>]*>/gi,' ').replace(/<p[^>]*>/gi,'').replace(/<\/p>/gi,'').replace(/\s{2,}/g,' ').trim();
+        
+        p.innerHTML = `
+            <div class="item-header" style="border-bottom: 1px solid ${sev.color}30;">
+                <span class="item-entity-label" style="color:${sev.color}">${hl}</span>
+                <span class="item-category-label" style="background:${sev.color}15; color:${sev.color}; border: 1px solid ${sev.color}40;">${catName}</span>
+            </div>
+            <div class="item-body">
+                <div class="item-text">${cleanHTML}</div>
+                <button class="btn-ver-mais">Ver mais...</button>
+            </div>
+        `;
         p.style.borderLeftColor = sev.color;
+        p.style.borderRightColor = sev.color;
+
         const btnVerMais = p.querySelector('.btn-ver-mais');
         const itemText = p.querySelector('.item-text');
-        btnVerMais.addEventListener('click', (e) => { e.stopPropagation(); const isExpanded = itemText.classList.toggle('expanded'); btnVerMais.textContent = isExpanded ? 'Ver menos...' : 'Ver mais...'; if (isExpanded) setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }), 50); });
-        processedItems.push({ el:p, cleanText, sev, diag, region, whyText, priorityScore, annotationId:p.dataset.annotationId, idx });
+        btnVerMais.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isExpanded = itemText.classList.toggle('expanded');
+            btnVerMais.textContent = isExpanded ? 'Ver menos...' : 'Ver mais...';
+            if (isExpanded) {
+                setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }), 50);
+            }
+        });
     });
-    processedItems.sort((a,b)=> b.priorityScore - a.priorityScore || a.idx - b.idx);
-    const primaryEntry = processedItems[0] || null;
-    const complementEntries = processedItems.filter((e, i)=> i !== 0 && e.sev.level === 'complement');
-    const relatedEntries = processedItems.filter((e, i)=> i !== 0 && e.sev.level !== 'complement');
-    if(primaryEntry){ primarySlot.classList.add('has-primary'); primaryEntry.el.classList.add('is-primary'); primaryCard.appendChild(primaryEntry.el); primaryClinicalBadge.innerHTML = `<span class="item-clinical-badge" style="background:${primaryEntry.sev.color}12; color:${primaryEntry.sev.color}; border:1px solid ${primaryEntry.sev.color}28;">${getClinicalBadge(primaryEntry.sev.level)}</span>`; }
-    relatedEntries.forEach(e=> listEl.appendChild(e.el));
-    complementEntries.forEach(e=> { e.el.classList.add('is-complement'); complementaryList.appendChild(e.el); });
-    if(complementEntries.length){ complementarySection.classList.add('visible'); btnToggleComplements.textContent = `Ver complementares (${complementEntries.length})`; }
-    examSummaryText.textContent = buildExamSummary(processedItems);
-    renderRegionFilters();
 
-    function updateComplementSection(){ complementaryList.style.display = complementaryExpanded ? 'flex' : 'none'; btnToggleComplements.textContent = complementaryExpanded ? `Ocultar complementares (${complementEntries.length})` : `Ver complementares (${complementEntries.length})`; }
-    updateComplementSection();
-    function getAllDisplayedCards(){ const primary = primaryEntry ? [primaryEntry.el] : []; return [...primary, ...Array.from(listEl.querySelectorAll('.finding-item')), ...(complementaryExpanded ? Array.from(complementaryList.querySelectorAll('.finding-item')) : [])]; }
-    function updateTimeline(){ const cards = getAllDisplayedCards().filter(el => !el.classList.contains('filtered-out')); timelineEl.innerHTML = cards.map((card) => `<button class="timeline-dot ${activeAnnotationId===card.dataset.annotationId?'active':''}" data-annotation-id="${card.dataset.annotationId}" style="background:${card.dataset.severityColor || '#64748b'}"></button>`).join(''); }
-    function applyFilters(){ const allCards = [...document.querySelectorAll('.finding-item')]; allCards.forEach(card => { const byRegion = currentRegionFilter === 'todos' || card.dataset.region === currentRegionFilter; const byRelevant = !relevantOnlyMode || ['critical','semi'].includes(card.dataset.severityLevel); const visible = byRegion && byRelevant; card.classList.toggle('filtered-out', !visible); }); if(primaryEntry && primaryEntry.el.classList.contains('filtered-out')) primarySlot.style.display='none'; else primarySlot.style.display= primaryEntry ? '' : 'none'; updateTimeline(); updateNavMenu(); }
-
-    btnToggleComplements.addEventListener('click', ()=> { complementaryExpanded = !complementaryExpanded; updateComplementSection(); applyFilters(); });
-    regionFiltersEl.addEventListener('click', e => { const btn = e.target.closest('.filter-chip'); if(!btn) return; currentRegionFilter = btn.dataset.region; renderRegionFilters(); applyFilters(); });
-    btnRelevantOnly.addEventListener('click', ()=> { relevantOnlyMode = !relevantOnlyMode; btnRelevantOnly.classList.toggle('active', relevantOnlyMode); applyFilters(); });
-    btnExplainRequester.addEventListener('click', ()=> { explainModeEnabled = !explainModeEnabled; btnExplainRequester.classList.toggle('active', explainModeEnabled); requesterExplain.classList.toggle('visible', explainModeEnabled && !!activeAnnotationId); });
-    btnCopySummary.addEventListener('click', async ()=> { try { await navigator.clipboard.writeText(examSummaryText.textContent); btnCopySummary.textContent='Resumo copiado'; setTimeout(()=>btnCopySummary.textContent='Copiar resumo', 1300); } catch(e){} });
-    btnCopyConclusionTop.addEventListener('click', ()=> copyConclusionText());
-    btnResetFilters.addEventListener('click', ()=> { currentRegionFilter='todos'; relevantOnlyMode=false; renderRegionFilters(); btnRelevantOnly.classList.remove('active'); applyFilters(); });
-
-// CONTROLE DO NAV MENU E SCROLL
+    // CONTROLE DO NAV MENU E SCROLL
     const btnPrev = document.getElementById('nav-prev');
     const btnNext = document.getElementById('nav-next');
     const navCounter = document.getElementById('nav-counter');
@@ -944,14 +960,13 @@ if(!DATA){
         const isHorizontal = window.getComputedStyle(listEl).flexDirection === 'row';
         if (!isHorizontal) return; 
 
-        const items = Array.from(listEl.querySelectorAll('.finding-item')).filter(el => !el.classList.contains('filtered-out'));
-        const total = items.length + ((primaryEntry && !primaryEntry.el.classList.contains('filtered-out')) ? 1 : 0);
+        const total = items.length;
         if(total === 0) { navCounter.textContent = "0 / 0"; return; }
-        const cardWidth = 264 + 12;
+        const cardWidth = 260 + 12; 
         const scrollLeft = listEl.scrollLeft;
         let index = Math.round(scrollLeft / cardWidth) + 1;
-        if (primaryEntry && !primaryEntry.el.classList.contains('filtered-out')) index += 1;
         index = Math.max(1, Math.min(index, total));
+        
         navCounter.textContent = `${index} / ${total}`;
         
         btnPrev.style.opacity = index <= 1 ? "0.3" : "1";
@@ -962,10 +977,10 @@ if(!DATA){
 
     listEl.addEventListener('scroll', updateNavMenu);
     window.addEventListener('resize', updateNavMenu);
-    setTimeout(() => { applyFilters(); updateNavMenu(); }, 100);
+    setTimeout(updateNavMenu, 100);
 
-    btnPrev.addEventListener('click', () => { listEl.scrollBy({ left: -(264+12), behavior: 'smooth' }); });
-    btnNext.addEventListener('click', () => { listEl.scrollBy({ left: (264+12), behavior: 'smooth' }); });
+    btnPrev.addEventListener('click', () => { listEl.scrollBy({ left: -(260+12), behavior: 'smooth' }); });
+    btnNext.addEventListener('click', () => { listEl.scrollBy({ left: (260+12), behavior: 'smooth' }); });
 
     listEl.addEventListener('wheel', (e) => {
         const isHorizontal = window.getComputedStyle(listEl).flexDirection === 'row';
@@ -1062,8 +1077,8 @@ if(!DATA){
         ctx.beginPath(); ctx.arc(cxS, cyS, radius, 0, Math.PI * 2);
         ctx.strokeStyle = `rgba(255,255,255,${0.28 + pt * 0.14})`; 
         ctx.lineWidth = 2; 
-        ctx.shadowColor = hexAlpha((document.querySelector(`.finding-item[data-annotation-id="${activeAnnotationId}"]`)?.dataset.severityColor || '#60a5fa'), 0.75);
-        ctx.shadowBlur = 18;
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 10;
         ctx.stroke();
         ctx.restore();
     }
@@ -1120,28 +1135,31 @@ if(!DATA){
             ctx.fillStyle = grad; ctx.fill();
 
             buildSmoothPath(ctx, pts, true);
-            ctx.strokeStyle = hexAlpha(color, isActive ? 0.22 : 0.16);
-            ctx.lineWidth = strokeW + (isSuperZoom ? 0.8 : 2.2) * drawingScale;
-            ctx.shadowColor = hexAlpha(color, isActive ? 0.55 : 0.35);
-            ctx.shadowBlur = isActive ? 14 : 8;
+            ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+            ctx.lineWidth = strokeW + (isSuperZoom ? 1 : (isActive ? 3 : 7)) * drawingScale;
             ctx.stroke();
 
             buildSmoothPath(ctx, pts, true);
-            ctx.shadowBlur = 0;
+            ctx.strokeStyle = hexAlpha(color, 0.35);
+            ctx.lineWidth = strokeW + (isSuperZoom ? 0.5 : (isActive ? 1.5 : 4)) * drawingScale;
+            ctx.stroke();
+
+            buildSmoothPath(ctx, pts, true);
             ctx.strokeStyle = lineCol;
             ctx.lineWidth = strokeW;
             ctx.stroke();
 
             buildSmoothPath(ctx, pts, true);
-            ctx.strokeStyle = 'rgba(255,255,255,0.20)';
-            ctx.lineWidth = Math.max(1, strokeW * 0.18);
+            ctx.strokeStyle = isActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.28)';
+            ctx.lineWidth = strokeW * (isSuperZoom ? 0.4 : 0.22);
             ctx.stroke();
 
         } else if (anno.points) {
             const pts = anno.points.map(p => ({ x: p.x * img.naturalWidth, y: p.y * img.naturalHeight }));
-            buildSmoothPath(ctx, pts, false); ctx.strokeStyle = hexAlpha(color, isActive ? 0.22 : 0.16); ctx.lineWidth = strokeW + (isSuperZoom?0.8:2.4)*drawingScale; ctx.shadowColor = hexAlpha(color, isActive ? 0.52 : 0.32); ctx.shadowBlur = isActive ? 12 : 7; ctx.stroke();
-            buildSmoothPath(ctx, pts, false); ctx.shadowBlur = 0; ctx.strokeStyle = lineCol; ctx.lineWidth = strokeW; ctx.stroke();
-            buildSmoothPath(ctx, pts, false); ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = Math.max(1, strokeW*0.18); ctx.stroke();
+            buildSmoothPath(ctx, pts, false); ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = strokeW + (isSuperZoom?2:6)*drawingScale; ctx.stroke();
+            buildSmoothPath(ctx, pts, false); ctx.strokeStyle = hexAlpha(color, 0.4); ctx.lineWidth = strokeW + (isSuperZoom?1:3)*drawingScale; ctx.stroke();
+            buildSmoothPath(ctx, pts, false); ctx.strokeStyle = lineCol; ctx.lineWidth = strokeW; ctx.stroke();
+            buildSmoothPath(ctx, pts, false); ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = strokeW*0.2; ctx.stroke();
 
         } else if (anno.type && anno.size) {
             const x = anno.x * img.naturalWidth, y = anno.y * img.naturalHeight, s = anno.size * img.naturalWidth;
@@ -1149,37 +1167,37 @@ if(!DATA){
             ctx.translate(x, y); ctx.rotate(anno.rotation); ctx.scale(anno.scale || 1, anno.scale || 1);
             if(anno.type === 'normal'){
                 ctx.beginPath(); ctx.moveTo(-s/2+hL,0); ctx.lineTo(s/2,0); ctx.lineTo(s/2-hL,-hL/2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-hL,hL/2);
-                ctx.strokeStyle=hexAlpha(color,0.24); ctx.lineWidth=sW*(isSuperZoom?0.9:2.1); ctx.shadowColor=hexAlpha(color,0.45); ctx.shadowBlur=isActive?10:6; ctx.stroke();
+                ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=sW*(isSuperZoom?1:2.8); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(-s/2+hL,0); ctx.lineTo(s/2,0); ctx.lineTo(s/2-hL,-hL/2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-hL,hL/2);
-                ctx.shadowBlur=0; ctx.strokeStyle='rgba(255,255,255,0.22)'; ctx.lineWidth=sW*(isSuperZoom?0.28:0.65); ctx.stroke();
+                ctx.strokeStyle=hexAlpha(color,0.4); ctx.lineWidth=sW*(isSuperZoom?0.8:2.2); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(-s/2+hL,0); ctx.lineTo(s/2,0); ctx.lineTo(s/2-hL,-hL/2); ctx.moveTo(s/2,0); ctx.lineTo(s/2-hL,hL/2);
-                ctx.strokeStyle=lineCol; ctx.lineWidth=sW*(isSuperZoom?0.55:1.35); ctx.stroke();
+                ctx.fillStyle=lineCol; ctx.fill(); ctx.strokeStyle=lineCol; ctx.lineWidth=sW*(isSuperZoom?0.5:1.6); ctx.stroke();
             } else if(anno.type === 'outline'){
                 hL=s*0.4; sW=s*0.15;
                 const arrowPath=()=>{ctx.beginPath();ctx.moveTo(-s/2,-sW/2);ctx.lineTo(-s/2,sW/2);ctx.lineTo(s/2-hL,sW/2);ctx.lineTo(s/2-hL,hL/2);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/2);ctx.lineTo(s/2-hL,-sW/2);ctx.closePath();};
-                arrowPath(); ctx.strokeStyle=hexAlpha(color,0.22); ctx.lineWidth=isSuperZoom?1.2*drawingScale:(isActive?2.8:4.2)*drawingScale; ctx.lineJoin='round'; ctx.shadowColor=hexAlpha(color,0.42); ctx.shadowBlur=isActive?10:6; ctx.stroke();
-                arrowPath(); ctx.shadowBlur=0; ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=isSuperZoom?0.5*drawingScale:(isActive?0.9:1.3)*drawingScale; ctx.stroke();
-                arrowPath(); ctx.strokeStyle=lineCol; ctx.lineWidth=isSuperZoom?0.9*drawingScale:(isActive?1.6:2.4)*drawingScale; ctx.stroke();
+                arrowPath(); ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=isSuperZoom?2*drawingScale:(isActive?4:6)*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
+                arrowPath(); ctx.strokeStyle=hexAlpha(color,0.4); ctx.lineWidth=isSuperZoom?1.5*drawingScale:(isActive?3:5)*drawingScale; ctx.stroke();
+                arrowPath(); ctx.strokeStyle=lineCol; ctx.lineWidth=isSuperZoom?1*drawingScale:(isActive?2:3.5)*drawingScale; ctx.stroke();
             } else if(anno.type === 'complex'){
                 hL=s*0.4; sW=s*0.2;
                 ctx.beginPath();ctx.moveTo(-s/2,-sW/2);ctx.lineTo(-s/2,sW/2);ctx.lineTo(s/2-hL,sW/2);ctx.lineTo(s/2-hL,hL/1.5);ctx.lineTo(s/2,0);ctx.lineTo(s/2-hL,-hL/1.5);ctx.lineTo(s/2-hL,-sW/2);ctx.closePath();
-                ctx.fillStyle=hexAlpha(color,0.18); ctx.shadowColor=hexAlpha(color,0.4); ctx.shadowBlur=isActive?10:6; ctx.fill(); ctx.shadowBlur=0; ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=(isSuperZoom?0.35:(isActive?0.8:1.2))*drawingScale; ctx.stroke(); ctx.strokeStyle=lineCol; ctx.lineWidth=(isSuperZoom?0.5:(isActive?1:1.6))*drawingScale; ctx.lineJoin='round'; ctx.stroke();
+                ctx.fillStyle=lineCol; ctx.fill(); ctx.strokeStyle=lineCol; ctx.lineWidth=(isSuperZoom?0.5:(isActive?1:2))*drawingScale; ctx.lineJoin='miter'; ctx.stroke();
             }
         } else if (anno.text && anno.x !== undefined) {
             const x=anno.x*img.naturalWidth, y=anno.y*img.naturalHeight;
             const fs=(parseInt(anno.font)||24)*drawingScale*(isActive?1:1.15)*(isSuperZoom?0.8:1);
             ctx.font=`bold ${fs}px Arial`; ctx.textAlign='center';
-            ctx.lineWidth=(isSuperZoom?1:(isActive?2.5:3.4))*drawingScale; ctx.strokeStyle=hexAlpha(color,0.28); ctx.shadowColor=hexAlpha(color,0.45); ctx.shadowBlur=isActive?8:5; ctx.strokeText(anno.text,x,y); ctx.shadowBlur=0;
-            ctx.lineWidth=(isSuperZoom?0.5:(isActive?1.1:1.4))*drawingScale; ctx.strokeStyle='rgba(255,255,255,0.16)'; ctx.strokeText(anno.text,x,y);
+            ctx.lineWidth=(isSuperZoom?2:(isActive?5:7))*drawingScale; ctx.strokeStyle='rgba(0,0,0,0.9)'; ctx.strokeText(anno.text,x,y);
+            ctx.lineWidth=(isSuperZoom?1:(isActive?3:4.5))*drawingScale; ctx.strokeStyle=hexAlpha(color,0.4); ctx.strokeText(anno.text,x,y);
             ctx.fillStyle=lineCol; ctx.fillText(anno.text,x,y);
         } else if (anno.start && anno.end) {
             const p1={x:anno.start.x*img.naturalWidth, y:anno.start.y*img.naturalHeight};
             const p2={x:anno.end.x*img.naturalWidth, y:anno.end.y*img.naturalHeight};
             const lw=baseWidth*(isSuperZoom?0.3:(isActive?0.7:1.3));
             ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
-            ctx.strokeStyle=hexAlpha(color,0.22); ctx.lineWidth=lw+(isSuperZoom?0.8:(isActive?2:3.2))*drawingScale; ctx.shadowColor=hexAlpha(color,0.42); ctx.shadowBlur=isActive?8:5; ctx.stroke();
+            ctx.strokeStyle='rgba(0,0,0,0.8)'; ctx.lineWidth=lw+(isSuperZoom?1:(isActive?2:5))*drawingScale; ctx.stroke();
             ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
-            ctx.shadowBlur=0; ctx.strokeStyle='rgba(255,255,255,0.16)'; ctx.lineWidth=lw+(isSuperZoom?0.25:(isActive?0.7:1.1))*drawingScale; ctx.stroke();
+            ctx.strokeStyle=hexAlpha(color,0.4); ctx.lineWidth=lw+(isSuperZoom?0.5:(isActive?1:2.5))*drawingScale; ctx.stroke();
             ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
             ctx.strokeStyle=lineCol; ctx.lineWidth=lw; ctx.stroke();
             if(anno.text){
@@ -1231,7 +1249,12 @@ if(!DATA){
     }
 
     // INTERAÇÕES
-    function resetCardVisuals() {
+    function toggleAllAction() {
+        activeAnnotationId = null;
+        showAll = true;
+        superZoomMode = false;
+        document.getElementById('bottom-area').classList.remove('visible');
+        
         document.querySelectorAll('.finding-item').forEach(el => {
             el.classList.remove('active');
             el.style.background = '';
@@ -1241,43 +1264,62 @@ if(!DATA){
             const btn = el.querySelector('.btn-ver-mais');
             if(btn) btn.textContent = 'Ver mais...';
         });
-        document.querySelectorAll('.timeline-dot').forEach(dot => dot.classList.remove('active'));
-    }
-    function activateFocusedLayout() { viewer.classList.add('focus-mode-active'); focusWhyBox.classList.add('visible'); }
-    function toggleAllAction() {
-        activeAnnotationId = null; showAll = true; superZoomMode = false; document.getElementById('bottom-area').classList.remove('visible'); focusWhyBox.classList.remove('visible'); resetCardVisuals(); stopPulse();
+        
+        stopPulse();
         const fitS = Math.min(canvas.width/img.naturalWidth, canvas.height/img.naturalHeight);
         const fitPX = (canvas.width - img.naturalWidth*fitS)/2, fitPY = (canvas.height - img.naturalHeight*fitS)/2;
-        smoothZoomTo(fitS, fitPX, fitPY, 420); viewer.classList.remove('focus-mode-active'); updateTimeline();
+        smoothZoomTo(fitS, fitPX, fitPY, 420);
     }
-    btnFocusMode.addEventListener('click', () => { focusModeEnabled = true; btnFocusMode.classList.add('active'); btnPanoramaMode.classList.remove('active'); if(activeAnnotationId) activateFocusedLayout(); else toggleAllAction(); });
-    btnPanoramaMode.addEventListener('click', () => { focusModeEnabled = false; btnPanoramaMode.classList.add('active'); btnFocusMode.classList.remove('active'); toggleAllAction(); showAll = true; render(); });
-    listEl.addEventListener('click', e => { const item = e.target.closest('.finding-item'); if (!item || e.target.classList.contains('btn-ver-mais')) return; handleFindingSelection(item); });
-    primaryCard.addEventListener('click', e => { const item = e.target.closest('.finding-item'); if (!item || e.target.classList.contains('btn-ver-mais')) return; handleFindingSelection(item); });
-    complementaryList.addEventListener('click', e => { const item = e.target.closest('.finding-item'); if (!item || e.target.classList.contains('btn-ver-mais')) return; handleFindingSelection(item); });
-    function handleFindingSelection(item) {
-        resetCardVisuals();
-        const id = item.dataset.annotationId;
-        if (activeAnnotationId === id && !superZoomMode) { toggleAllAction(); return; }
-        activeAnnotationId = id; showAll = !focusModeEnabled; superZoomMode = false; item.classList.add('active');
-        const sevColor = item.dataset.severityColor || '#00ffff';
-        item.style.background = `linear-gradient(145deg, ${sevColor}18 0%, #111111 100%)`;
-        item.style.boxShadow = `0 10px 24px rgba(0,0,0,0.55), 0 0 0 1px ${sevColor}66, 0 0 18px ${sevColor}22`;
-        const anno = DATA.annotations.find(a => a.id === id);
-        if (anno) {
-            const bodyEl = item.querySelector('.item-text');
-            const cardText = (bodyEl ? bodyEl.innerText : item.innerText).replace(/\n/g, ' ').trim();
-            updateFindingActionCard(cardText, sevColor, anno.id);
-            focusWhyText.textContent = item.dataset.why || whyItMatters(cardText, getDiagnosticHypothesis(cardText), item.dataset.region || 'estruturas_adjacentes');
-            if (focusModeEnabled) { activateFocusedLayout(); zoomNatural(anno, 1.08); }
-            else { focusWhyBox.classList.remove('visible'); zoomNatural(anno, 0.94); }
-            item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); startPulse(); requesterExplain.classList.toggle('visible', explainModeEnabled); updateTimeline();
-        }
-    }
-    timelineEl.addEventListener('click', e => { const dot = e.target.closest('.timeline-dot'); if(!dot) return; const item = document.querySelector(`.finding-item[data-annotation-id="${dot.dataset.annotationId}"]`); if(item && !item.classList.contains('filtered-out')) item.click(); });
-    document.getElementById('action-card').addEventListener('click', () => { if (!activeAnnotationId || superZoomMode) return; superZoomMode = true; stopPulse(); const anno = DATA.annotations.find(a => a.id === activeAnnotationId); if (anno) { zoomNatural(anno, 2.2); render(); } });
-    document.getElementById('btn-copy-conclusion').addEventListener('click', (e) => { e.stopPropagation(); copyConclusionText(); });
 
+    document.getElementById('btn-visao-geral').addEventListener('click', toggleAllAction);
+
+    listEl.addEventListener('click', e => {
+        const item = e.target.closest('.finding-item');
+        if (!item || e.target.classList.contains('btn-ver-mais')) return;
+
+        document.querySelectorAll('.finding-item').forEach(el => {
+            el.classList.remove('active');
+            el.style.background = '';
+            el.style.boxShadow = '';
+        });
+
+        const id = item.dataset.annotationId;
+        if (activeAnnotationId === id && !superZoomMode) {
+            toggleAllAction(); 
+        } else {
+            activeAnnotationId = id;
+            showAll = false;
+            superZoomMode = false; 
+            item.classList.add('active');
+            
+            const sevColor = item.dataset.severityColor || '#00ffff';
+            
+            item.style.background = `linear-gradient(145deg, ${sevColor}1A 0%, #111111 100%)`;
+            item.style.boxShadow = `0 12px 30px rgba(0,0,0,0.85), 0 0 0 1.5px ${sevColor}, 0 6px 20px ${sevColor}33`;
+
+            const anno = DATA.annotations.find(a => a.id === id);
+            if (anno) {
+                const bodyEl = item.querySelector('.item-text');
+                const cardText = (bodyEl ? bodyEl.innerText : item.innerText).replace(/\n/g, ' ').trim();
+                
+                updateFindingActionCard(cardText, sevColor, anno.id);
+                zoomNatural(anno, 1.0); 
+                item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                startPulse();
+            }
+        }
+    });
+
+    document.getElementById('action-card').addEventListener('click', () => {
+        if (!activeAnnotationId || superZoomMode) return;
+        superZoomMode = true; 
+        stopPulse(); 
+        const anno = DATA.annotations.find(a => a.id === activeAnnotationId);
+        if (anno) {
+            zoomNatural(anno, 2.2); 
+            render();
+        }
+    });
 
     // MOUSE & TOUCH CANVAS EVENTS
     viewer.addEventListener('mousedown', e => { isDragging=true; startX=e.clientX-panX; startY=e.clientY-panY; startClickX=e.clientX; startClickY=e.clientY; });
