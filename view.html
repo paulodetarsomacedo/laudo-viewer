@@ -539,9 +539,14 @@ canvas { display: block; }
     width: 100%;
 }
 #signature-img { 
-    max-height: 25px; 
-    filter: brightness(0) invert(1); 
-    opacity: 0.82; 
+    max-height: 28px; /* AUMENTADO DE 25px */
+    opacity: 0.95; /* AUMENTADO DE 0.82 */
+    transition: all 0.3s ease;
+    filter: brightness(0) invert(1) drop-shadow(0 0 5px rgba(56, 189, 248, 0.25)); /* ADICIONADO GLOW */
+}
+#signature-area:hover #signature-img {
+    opacity: 1;
+    filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(56, 189, 248, 0.5));
 }
 
 /* ==========================================================
