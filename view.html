@@ -149,78 +149,137 @@ body {
     display: flex; 
     align-items: center; 
     justify-content: space-between;
-    padding: 4px 15px 0px 15px; 
+    padding: 8px 15px 4px 15px; 
+    gap: 10px;
+    flex-wrap: wrap; /* Permite que os botões caiam de linha se a tela for muito fina */
+}
+
+.header-titles {
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    flex: 1; 
+    min-width: 200px;
+}
+
+.header-text-container {
+    display: flex; 
+    flex-direction: column; 
+    gap: 2px; 
+    min-width: 0; /* Previne que o flex item vaze a tela */
 }
 
 .laudo-title { 
-    font-size: 13px; 
+    font-size: clamp(11px, 3.5vw, 13px); 
     font-weight: 800; 
     text-transform: uppercase; 
     letter-spacing: 1.5px; 
     color: var(--text-primary); 
+    white-space: nowrap;
 }
 
 .premium-subtitle {
-    font-size: 13px;
+    font-size: clamp(10px, 3.5vw, 13px);
     font-weight: 900;
     color: var(--neon-blue); 
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    line-height: 1.2;
+    /* Ajuste para não quebrar feio no mobile */
+    white-space: normal;
+    word-wrap: break-word;
 }
 
+.header-actions {
+    display: flex; 
+    align-items: center; 
+    gap: 8px;
+    justify-content: flex-end;
+}
 
+/* BOTÃO PREMIUM: RESUMO */
 #btn-resumo-exame {
-    background: var(--elevated-bg);
-    color: var(--text-primary);
-    border: var(--elevated-border);
+    background: linear-gradient(135deg, var(--med-blue-solid), var(--neon-blue));
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.2);
     border-radius: 12px;
-    padding: 4px 12px;
+    padding: 5px 14px;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 800;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: var(--elevated-shadow);
+    transition: all 0.3s ease;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.3), inset 0 1px 2px rgba(255,255,255,0.4);
+    animation: pulse-glow 2s infinite;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
-#btn-resumo-exame:active, .summary-modal-btn:active { background: var(--recessed-bg); box-shadow: var(--recessed-shadow); }
-.summary-modal-backdrop {
-    position: fixed; inset: 0; background: rgba(5,10,20,0.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    display: none; align-items: center; justify-content: center; z-index: 99999; padding: 18px;
+#btn-resumo-exame:active { transform: scale(0.95); }
+#btn-resumo-exame:hover {
+    background: linear-gradient(135deg, var(--neon-blue), #5eead4);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.6), inset 0 1px 2px rgba(255,255,255,0.6);
 }
-.summary-modal-backdrop.visible { display: flex; }
-.summary-modal {
-    width: min(92vw, 560px); max-height: 82vh; overflow: auto;
-    background: var(--panel-bg); color: var(--text-primary); border-radius: 22px;
-    border-top: 1px solid var(--panel-border-light); border-left: 1px solid var(--panel-border-light);
-    border-bottom: 1px solid var(--panel-border-dark); border-right: 1px solid var(--panel-border-dark);
-    box-shadow: var(--panel-shadow); padding: 16px;
-}
-.summary-modal-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px; }
-.summary-modal-title { font-size: 15px; font-weight: 800; letter-spacing: .4px; color: var(--text-primary); text-transform: uppercase; }
-.summary-modal-subtitle { font-size: 11px; color: var(--text-secondary); margin-top: 3px; }
-.summary-modal-close, .summary-modal-btn {
-    background: var(--elevated-bg); border: var(--elevated-border); box-shadow: var(--elevated-shadow); color: var(--text-primary);
-    border-radius: 12px; padding: 8px 12px; font-size: 11px; font-weight: 800; cursor:pointer;
-}
-.summary-modal-text {
-    background: var(--recessed-bg); border: var(--recessed-border); box-shadow: var(--recessed-shadow); color: var(--text-primary);
-    border-radius: 16px; padding: 14px 14px 16px; line-height: 1.65; font-size: 13px;
-}
-.summary-modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
 
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 8px rgba(56, 189, 248, 0.3); }
+    50% { box-shadow: 0 0 18px rgba(56, 189, 248, 0.7); }
+    100% { box-shadow: 0 0 8px rgba(56, 189, 248, 0.3); }
+}
+
+/* BOTÃO SECUNDÁRIO: VISÃO GERAL */
 #btn-visao-geral {
     background: var(--elevated-bg); 
     color: var(--text-primary); 
     border: var(--elevated-border);
     box-shadow: var(--elevated-shadow);
     border-radius: 12px; 
-    padding: 4px 12px; 
+    padding: 5px 12px; 
     font-size: 11px; 
     font-weight: 700; 
     cursor: pointer;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 #btn-visao-geral:active { background: var(--recessed-bg); box-shadow: var(--recessed-shadow); }
-#btn-visao-geral:hover, #btn-resumo-exame:hover, .summary-modal-btn:hover { background: var(--tab-sub-bg); color: var(--tab-sub-color); box-shadow: var(--tab-sub-shadow); border: var(--tab-sub-border); }
+#btn-visao-geral:hover { background: var(--tab-sub-bg); color: var(--tab-sub-color); box-shadow: var(--tab-sub-shadow); border: var(--tab-sub-border); }
+
+/* SUMMARY MODAL CSS */
+.summary-modal-backdrop {
+    position: fixed; inset: 0; background: rgba(5,10,20,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    display: none; align-items: center; justify-content: center; z-index: 99999; padding: 18px;
+}
+.summary-modal-backdrop.visible { display: flex; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.summary-modal {
+    width: min(95vw, 600px); max-height: 85vh; overflow: auto;
+    background: var(--panel-bg); color: var(--text-primary); border-radius: 22px;
+    border-top: 1px solid var(--panel-border-light); border-left: 1px solid var(--panel-border-light);
+    border-bottom: 1px solid var(--panel-border-dark); border-right: 1px solid var(--panel-border-dark);
+    box-shadow: var(--panel-shadow); padding: 20px;
+    display: flex; flex-direction: column; gap: 15px;
+}
+.summary-modal-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.summary-modal-title { font-size: 16px; font-weight: 900; letter-spacing: .5px; background: linear-gradient(90deg, #fff, var(--neon-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; }
+.summary-modal-subtitle { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+.summary-modal-close, .summary-modal-btn {
+    background: var(--elevated-bg); border: var(--elevated-border); box-shadow: var(--elevated-shadow); color: var(--text-primary);
+    border-radius: 12px; padding: 8px 14px; font-size: 11px; font-weight: 800; cursor:pointer; transition: all 0.2s;
+}
+.summary-modal-btn:hover { background: var(--tab-sub-bg); color: #fff; }
+.summary-modal-text {
+    background: var(--recessed-bg); border: var(--recessed-border); box-shadow: var(--recessed-shadow); color: var(--text-primary);
+    border-radius: 16px; padding: 16px; line-height: 1.7; font-size: 13px;
+    overflow-y: auto; max-height: 50vh;
+}
+/* Estilos para o HTML gerado cientificamente */
+.summary-modal-text ul { margin: 10px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+.summary-modal-text li::marker { color: var(--neon-blue); }
+.summary-modal-text b { color: #fff; }
+
+.summary-modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top: 5px; }
 
 /* CAROUSEL / LISTA DE ACHADOS */
 #findings-list {
@@ -229,7 +288,7 @@ body {
     overflow-x: auto; 
     overflow-y: hidden; 
     scroll-snap-type: x mandatory;
-    padding: 2px 15px 4px 15px; 
+    padding: 6px 15px 4px 15px; 
     gap: 12px; 
     scrollbar-width: none; /* Firefox */
     -webkit-overflow-scrolling: touch;
@@ -396,7 +455,6 @@ canvas { display: block; }
 }
 #action-card:hover { background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(0,0,0,0.24) 100%); }
 
-/* Flexbox dinâmico: Cria até 3 colunas de larguras iguais */
 .ac-grid {
     display: flex;
     gap: 8px;
@@ -431,7 +489,6 @@ canvas { display: block; }
     width: 100%;
 }
 
-/* Molduras padronizadas, sofisticadas e com quebra de linha ativada */
 .diag-tag, .impact-tag, .recommend-tag { 
     display: block; 
     width: 100%;
@@ -472,7 +529,7 @@ canvas { display: block; }
     font-weight: 700;
 }
 
-/* ÁREA DE ASSINATURA FIXA (Não esconde mais!) */
+/* ÁREA DE ASSINATURA FIXA */
 #signature-area { 
     flex-shrink: 0;
     text-align: center; 
@@ -551,21 +608,27 @@ canvas { display: block; }
 <div id="app-layout">
     <div id="top-area">
         <div id="app-header-row">
-            <div style="display:flex; align-items:center; gap:10px;">
+            <div class="header-titles">
                 <img src="sorriso.png" alt="Logo" style="max-height: 42px; width: auto; object-fit: contain; border-radius: 4px;" onerror="this.style.display='none'">
-                <div style="display:flex; flex-direction:column; gap:1px;">
+                <div class="header-text-container">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span class="laudo-title">Laudo Interativo</span>
                         <span id="achados-count" style="font-size:10px; color:#666; font-weight:700;"></span>
                     </div>
                     <span class="premium-subtitle">Achados Radiográficos</span>
-                    <span style="font-size: 8.5px; color: #888; font-weight: 600; letter-spacing: 0.3px;">Toque nos cards para explorar detalhes e condutas clínicas</span>
+                    <span style="font-size: 8px; color: #888; font-weight: 600; letter-spacing: 0.2px;">Toque nos cards para detalhes e condutas</span>
                 </div>
             </div>
-            <div style="display:flex; align-items:center; gap:8px;">
-            <button id="btn-resumo-exame">Resumo</button>
-            <button id="btn-visao-geral">Visão Geral</button>
-        </div>
+            <div class="header-actions">
+                <button id="btn-visao-geral">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    Visão Geral
+                </button>
+                <button id="btn-resumo-exame">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline><polyline points="7.5 19.79 7.5 14.6 3 12"></polyline><polyline points="21 12 16.5 14.6 16.5 19.79"></polyline><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    Resumo
+                </button>
+            </div>
         </div>
         
         <div id="findings-list">Carregando...</div>
@@ -603,32 +666,30 @@ canvas { display: block; }
         </div>
     </div>
     
-    <!-- ASSINATURA MOVIDA PARA FORA DO BOTTOM-AREA -->
     <div id="signature-area">
         <img id="signature-img" src="assinatura.png" alt="Assinatura" onerror="this.style.display='none'">
     </div>
 </div>
 
-
 <div id="summary-modal-backdrop" class="summary-modal-backdrop">
     <div class="summary-modal" role="dialog" aria-modal="true" aria-labelledby="summary-modal-title">
         <div class="summary-modal-header">
             <div>
-                <div id="summary-modal-title" class="summary-modal-title">Resumo do exame</div>
-                <div class="summary-modal-subtitle">Síntese radiográfica automática para leitura rápida</div>
+                <div id="summary-modal-title" class="summary-modal-title">Síntese do Exame</div>
+                <div class="summary-modal-subtitle">Relatório estruturado com terminologia radiológica avançada</div>
             </div>
             <button id="summary-modal-close" class="summary-modal-close">Fechar</button>
         </div>
         <div id="summary-modal-text" class="summary-modal-text">Gerando resumo...</div>
         <div class="summary-modal-actions">
-            <button id="summary-modal-copy" class="summary-modal-btn">Copiar resumo</button>
+            <button id="summary-modal-copy" class="summary-modal-btn">Copiar para Prontuário</button>
         </div>
     </div>
 </div>
 
 <script>
 // ============================================================
-// LÓGICA DO SPLASH SCREEN (3 SEGUNDOS)
+// LÓGICA DO SPLASH SCREEN
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
@@ -641,13 +702,13 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================================
-// SEV LABELS & RULES
+// SEV LABELS & RULES (USADO PARA ORDENAÇÃO E CORES)
 // ============================================================
 const SEV_LABELS = {
-    critical:   { short:'Crítico', bandColor:'#e53e3e', bandBg:'rgba(229,62,62,0.18)' },
-    semi:       { short:'Importante', bandColor:'#f6ad55', bandBg:'rgba(221,107,32,0.18)' },
-    attention:  { short:'Acompanhar', bandColor:'#f6e05e', bandBg:'rgba(214,158,46,0.18)' },
-    complement: { short:'Secundário', bandColor:'#68d391', bandBg:'rgba(56,161,105,0.18)' },
+    critical:   { short:'Crítico', bandColor:'#e53e3e', bandBg:'rgba(229,62,62,0.18)', weight: 1 },
+    semi:       { short:'Importante', bandColor:'#f6ad55', bandBg:'rgba(221,107,32,0.18)', weight: 2 },
+    attention:  { short:'Acompanhar', bandColor:'#f6e05e', bandBg:'rgba(214,158,46,0.18)', weight: 3 },
+    complement: { short:'Secundário', bandColor:'#68d391', bandBg:'rgba(56,161,105,0.18)', weight: 4 },
 };
 
 const SEV_RULES =[
@@ -658,12 +719,12 @@ const SEV_RULES =[
 
 function classifyText(t) {
     const l=t.toLowerCase();
-    for(const r of SEV_RULES) if(r.words.some(w=>l.includes(w))) return {level:r.level,color:r.color};
-    return {level:'complement',color:'#38a169'};
+    for(const r of SEV_RULES) if(r.words.some(w=>l.includes(w))) return {level:r.level,color:r.color,weight:SEV_LABELS[r.level].weight};
+    return {level:'complement',color:'#38a169',weight:SEV_LABELS['complement'].weight};
 }
 
 // ============================================================
-// BANCO DIAGNÓSTICO
+// BANCO DIAGNÓSTICO E REGRAS
 // ============================================================
 const DIAGNOSTIC_BANK =[
     { words:['reabsorção interna', 'reabsorcao interna'], diag: 'Reabsorção Radicular Interna' },
@@ -696,15 +757,11 @@ const DIAGNOSTIC_BANK =[
 
 function getDiagnosticHypothesis(text) {
     const lower = text.toLowerCase();
-    
-    // Regra de Ouro (Prioridade Máxima): Lesão Periapical Inflamatória
     const temRarefacaoPeriapical = (
         (['rarefação', 'rarefacao'].some(w => lower.includes(w)) &&['periápice', 'periapice', 'apical', 'periapical'].some(w => lower.includes(w))) ||['lesão periapical', 'lesao periapical', 'cicatriz óssea', 'cicatriz ossea', 'periodontite apical'].some(w => lower.includes(w))
     );
-    
     if (temRarefacaoPeriapical) return 'Lesão Periapical Inflamatória';
 
-    // Regra Específica: Cárie com Envolvimento Pulpar ou Cárie Profunda
     const temCarie = ['cárie', 'carie', 'cariosa'].some(w => lower.includes(w));
     const temPolpa =['envolvimento pulpar', 'comprometimento pulpar', 'exposição pulpar', 'exposicao pulpar'].some(w => lower.includes(w));
     const temCarieProfunda =['cárie profunda', 'carie profunda', 'lesão cariosa profunda'].some(w => lower.includes(w));
@@ -712,20 +769,15 @@ function getDiagnosticHypothesis(text) {
     if (temCarie && temPolpa) return 'Cárie com Envolvimento Pulpar';
     if (temCarieProfunda) return 'Cárie Profunda';
 
-    // Regra Específica: Rarefação Óssea Genérica (se não pegou no periapical acima)
     const temRarefacaoOssea =['rarefação óssea', 'rarefacao ossea'].some(w => lower.includes(w));
     if (temRarefacaoOssea) return 'Rarefação Óssea';
 
     for (const item of DIAGNOSTIC_BANK) {
         if (item.words.some(w => lower.includes(w))) return item.diag;
     }
-    
     return 'Achado Radiográfico (Avaliação Clínica)';
 }
 
-// ============================================================
-// DENTES E CARD TITLE
-// ============================================================
 const DENTES_ANTERIORES=['11','12','13','21','22','23','31','32','33','41','42','43'];
 const DENTES_DECIDUOS=['51','52','53','54','55','61','62','63','64','65','71','72','73','74','75','81','82','83','84','85'];
 
@@ -774,9 +826,6 @@ function extractCardTitle(text) {
     return {label:'ACHADO',number:null};
 }
 
-// ============================================================
-// CONDUTAS E EXAMES 
-// ============================================================
 function pickVar(annoId, variants) {
     if(!annoId||variants.length===1) return variants[0];
     const hash=(annoId+'').split('').reduce((a,c)=>a+c.charCodeAt(0),0);
@@ -784,7 +833,7 @@ function pickVar(annoId, variants) {
 }
 
 const IMPACT_BANK = {
-    endo_avaliacao:['Tratamento endodôntico - avaliação e planejamento'], // NOVA REGRA
+    endo_avaliacao:['Tratamento endodôntico - avaliação e planejamento'],
     endo_urgente:['Tratamento endodôntico de urgência','Pulpectomia indicada','Endodontia clínica com urgência'],
     endo_eletivo:['Tratamento endodôntico eletivo','Pulpectomia eletiva indicada','Canal radicular — avaliação e planejamento'],
     endo_retratamento:['Retratamento endodôntico indicado','Revisão do tratamento endodôntico','Avaliação para retratamento'],
@@ -856,7 +905,6 @@ function getImpactsAndRecommends(text, annoId, diag = '') {
     function addI(k){const v=pickVar(annoId,IMPACT_BANK[k]);if(!seenI.has(v)){impacts.push(v);seenI.add(v);}}
     function addR(k){const v=pickVar(annoId,RECOMMEND_BANK[k]);if(!seenR.has(v)){recommends.push(v);seenR.add(v);}}
     
-    // Identifica se cai na Nova Regra Endodôntica
     const diagReqEndo = (
         diag === 'Cárie Profunda' || 
         diag === 'Cárie com Envolvimento Pulpar' || 
@@ -879,7 +927,6 @@ function getImpactsAndRecommends(text, annoId, diag = '') {
     if(!temTratado&&!temResidual){
         if(temDeciduo&&temPulpar){addI('deciduo_pulpotomia');addR('periapical');}
         else if(!temDeciduo&&temPulpar){
-            // Injeção da Regra Prioritária
             if (diagReqEndo) {
                 addI('endo_avaliacao');
             } else if(hasAbscesso) {
@@ -935,7 +982,6 @@ function getImpactsAndRecommends(text, annoId, diag = '') {
 
 function updateFindingActionCard(text, sevColor, annoId) {
     const diag = getDiagnosticHypothesis(text);
-    // Passando o diag recém-gerado como argumento para garantir precisão
     const { impacts, recommends } = getImpactsAndRecommends(text, annoId, diag);
     
     document.querySelector('#ac-diagnostic .ac-content').innerHTML = `<span class="diag-tag">${diag}</span>`;
@@ -971,7 +1017,6 @@ function getAnnoCenterNorm(anno){
     return null;
 }
 
-// Proteção Robusta de Cores
 function parseColor(c) {
     if (!c) return { r: 0, g: 255, b: 255 };
     if (c.startsWith('#')) {
@@ -1003,25 +1048,35 @@ function boostColor(colorStr) {
 let DATA=null;
 try{const hash=window.location.hash.substring(1);if(hash){const json=decodeURIComponent(escape(atob(hash)));DATA=JSON.parse(json);}}catch(e){console.error(e);}
 
-
+// ============================================================
+// RESUMO CIENTÍFICO E ESTRUTURADO (MELHORADO)
+// ============================================================
 function normalizeSummaryLabel(label) {
     return label.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 }
 function extractToothListFromText(text) {
-    const matches = text.match(/([1-4][1-8]|[5-8][1-5])/g) || [];
+    const matches = text.match(/ ([1-4][1-8]|[5-8][1-5]) /g) || [];
     return [...new Set(matches)];
 }
 function formatTeethPhrase(teeth) {
     if (!teeth.length) return '';
-    if (teeth.length === 1) return ` no dente ${teeth[0]}`;
-    if (teeth.length <= 4) return ` nos dentes ${teeth.join(', ')}`;
-    return ' em múltiplos elementos dentários';
+    if (teeth.length === 1) return ` no elemento ${teeth[0]}`;
+    if (teeth.length <= 4) return ` nos elementos ${teeth.join(', ')}`;
+    return ' em múltiplos elementos';
 }
+
+window.summaryPlainText = ""; // Guardar texto limpo para o botão copiar
+
 function buildExamSummary() {
     const cards = [...document.querySelectorAll('.finding-item')];
-    if (!cards.length) return 'Exame radiográfico sem achados interativos disponíveis para síntese automática.';
+    if (!cards.length) {
+        window.summaryPlainText = 'Exame radiográfico sem achados interativos disponíveis para síntese automática.';
+        return '<p>Exame radiográfico sem achados interativos disponíveis para síntese automática.</p>';
+    }
+    
     const texts = cards.map(el => (el.querySelector('.item-text')?.innerText || el.innerText || '').replace(/\s+/g, ' ').trim());
     const joined = normalizeSummaryLabel(texts.join(' | '));
+    
     const groups = {
         carie: {count:0, teeth:new Set()},
         perirradicular: {count:0, teeth:new Set()},
@@ -1031,10 +1086,12 @@ function buildExamSummary() {
         sinusal: {count:0, teeth:new Set()},
         atm: {count:0, teeth:new Set()}
     };
+    
     texts.forEach(t => {
         const n = normalizeSummaryLabel(t);
         const teeth = extractToothListFromText(t);
         const add = (key) => { groups[key].count += 1; teeth.forEach(x => groups[key].teeth.add(x)); };
+        
         if (/carie|lesao cariosa|cariosa/.test(n)) add('carie');
         if (/lesao periapical|rarefacao|rarefacao ossea|lesao perirradicular|periodontite apical|periapi/.test(n)) add('perirradicular');
         if (/incluso|semi-incluso|semi incluso|impactado/.test(n)) add('incluso');
@@ -1043,38 +1100,66 @@ function buildExamSummary() {
         if (/seio maxilar|sinusite|espessamento mucoso|mucosite sinusal|velamento/.test(n)) add('sinusal');
         if (/atm|condilo|articulacao temporomandibular/.test(n)) add('atm');
     });
-    const parts = [];
-    const carieTeeth = [...groups.carie.teeth];
-    if (groups.carie.count) parts.push(groups.carie.count === 1 ? `presença de lesão cariosa${formatTeethPhrase(carieTeeth)}` : (carieTeeth.length <= 4 && carieTeeth.length > 1 ? `presença de lesões cariosas nos dentes ${carieTeeth.join(', ')}` : 'presença de lesões cariosas em múltiplos elementos dentários'));
-    const periTeeth = [...groups.perirradicular.teeth];
-    if (groups.perirradicular.count) parts.push(groups.perirradicular.count === 1 ? `presença de alteração perirradicular/periapical${formatTeethPhrase(periTeeth)}` : (periTeeth.length ? `presença de alterações perirradiculares/periapicais em dentes como ${periTeeth.slice(0,4).join(', ')}` : 'presença de alterações perirradiculares/periapicais'));
-    const inclTeeth = [...groups.incluso.teeth];
-    if (groups.incluso.count) parts.push(groups.incluso.count === 1 ? `presença de dente incluso ou semi-incluso${formatTeethPhrase(inclTeeth)}` : 'presença de dentes inclusos ou semi-inclusos');
-    const rrTeeth = [...groups.raizResidual.teeth];
-    if (groups.raizResidual.count) parts.push(groups.raizResidual.count === 1 ? `presença de raiz residual${formatTeethPhrase(rrTeeth)}` : (rrTeeth.length ? `presença de raízes residuais na região dos elementos ${rrTeeth.join(', ')}` : 'presença de raízes residuais'));
+    
+    let htmlParts = [];
+    let plainParts = [];
+    
+    const addPart = (html, plain) => { htmlParts.push(`<li>${html}</li>`); plainParts.push(`- ${plain}`); };
+
+    if (groups.carie.count) {
+        let tStr = formatTeethPhrase([...groups.carie.teeth]);
+        addPart(`<b>Suspeita de Cárie:</b> Áreas de radiolucidez coronária sugestivas de processo de desmineralização/lesão cariosa${tStr}.`, 
+                `Suspeita de Cárie: Áreas de radiolucidez coronária sugestivas de processo de desmineralização/lesão cariosa${tStr}.`);
+    }
+    if (groups.perirradicular.count) {
+        let tStr = formatTeethPhrase([...groups.perirradicular.teeth]);
+        addPart(`<b>Alteração Periapical:</b> Rarefações ósseas periapicais${tStr}, sugerindo processo inflamatório crônico de origem endodôntica.`, 
+                `Alteração Periapical: Rarefações ósseas periapicais${tStr}, sugerindo processo inflamatório crônico de origem endodôntica.`);
+    }
+    if (groups.incluso.count) {
+        addPart(`<b>Dentes Inclusos:</b> Elementos dentários retidos/impactados detectados, requerendo correlação para planejamento cirúrgico.`, 
+                `Dentes Inclusos: Elementos dentários retidos/impactados detectados, requerendo planejamento cirúrgico.`);
+    }
+    if (groups.raizResidual.count) {
+        let tStr = formatTeethPhrase([...groups.raizResidual.teeth]);
+        addPart(`<b>Raiz Residual:</b> Presença de remanescentes radiculares detectados na região alveolar${tStr}.`, 
+                `Raiz Residual: Presença de remanescentes radiculares detectados na região alveolar${tStr}.`);
+    }
     if (groups.perdaOssea.count) {
-        const phrase = /generalizada/.test(joined) ? 'perda óssea periodontal de padrão horizontal, com aspecto generalizado' : (/leve/.test(joined) ? 'perda óssea periodontal leve' : 'perda óssea periodontal');
-        parts.push(phrase);
+        const isGen = /generalizada/.test(joined);
+        const isLeve = /leve/.test(joined);
+        const adj = isGen ? 'de padrão generalizado' : (isLeve ? 'de severidade leve' : 'indicativo de alteração periodontal');
+        addPart(`<b>Perda Óssea:</b> Sinais radiográficos de reabsorção da crista óssea alveolar, ${adj}.`, 
+                `Perda Óssea: Sinais radiográficos de reabsorção da crista óssea alveolar, ${adj}.`);
     }
-    if (groups.sinusal.count) parts.push('alterações sinusais associadas ao seio maxilar');
-    if (groups.atm.count) parts.push('sinais radiográficos relacionados à ATM');
-    let summary = '';
-    const templates = [
-        (p) => `Exame radiográfico evidencia ${p.join(', ')}`,
-        (p) => `A análise radiográfica demonstra ${p.join(', ')}`,
-        (p) => `O exame evidencia ${p.join(', ')}`
-    ];
-    if (parts.length) {
-        const variant = templates[cards.length % templates.length];
-        summary = variant(parts) + '. Esses achados merecem correlação clínica individualizada.';
+    if (groups.sinusal.count) {
+        addPart(`<b>Alteração Sinusal:</b> Imagem sugestiva de espessamento da mucosa do seio maxilar e/ou processo inflamatório sinusal.`, 
+                `Alteração Sinusal: Imagem sugestiva de espessamento da mucosa do seio maxilar e/ou processo inflamatório sinusal.`);
+    }
+    if (groups.atm.count) {
+        addPart(`<b>Achados em ATM:</b> Sinais radiográficos que justificam avaliação morfológica/funcional complementar da articulação temporomandibular.`, 
+                `Achados em ATM: Sinais radiográficos requerendo avaliação morfológica da articulação temporomandibular.`);
+    }
+    
+    let htmlFinal = "";
+    if (htmlParts.length > 0) {
+        htmlFinal = `<p>A análise radiográfica/tomográfica interativa evidencia os seguintes achados principais:</p>
+                     <ul>${htmlParts.join('')}</ul>
+                     <p><i>Nota: Recomenda-se correlação clínica individualizada e avaliação criteriosa para definição do plano de tratamento definitivo.</i></p>`;
+        
+        window.summaryPlainText = "A análise radiográfica evidencia os seguintes achados principais:\n\n" + 
+                                  plainParts.join('\n') + 
+                                  "\n\nNota: Recomenda-se correlação clínica individualizada para definição do plano de tratamento definitivo.";
     } else {
-        summary = 'Exame radiográfico com achados descritos no laudo interativo, recomendando correlação clínica individualizada.';
+        htmlFinal = `<p>Exame radiográfico com achados descritos em detalhes nos cards interativos.</p><p><i>Recomenda-se exploração individual de cada achado para conduta clínica.</i></p>`;
+        window.summaryPlainText = "Exame radiográfico com achados descritos em detalhes nos cards interativos. Recomenda-se exploração individual de cada achado.";
     }
-    return summary;
+    
+    return htmlFinal;
 }
+
 function openSummaryModal() {
-    const text = buildExamSummary();
-    document.getElementById('summary-modal-text').textContent = text;
+    document.getElementById('summary-modal-text').innerHTML = buildExamSummary();
     document.getElementById('summary-modal-backdrop').classList.add('visible');
 }
 function closeSummaryModal() {
@@ -1085,48 +1170,54 @@ if(!DATA){
     document.getElementById('findings-list').innerHTML="<p style='text-align:center;color:red;padding:20px;width:100%;'>Erro ao carregar dados.</p>";
 } else {
     const listEl = document.getElementById('findings-list');
-    listEl.innerHTML = DATA.findingsHtml || "<p style='padding:10px;'>Nenhum achado interativo.</p>";
+    
+    // Processamento Inicial e ORDENAÇÃO Inteligente
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = DATA.findingsHtml || "<p style='padding:10px;'>Nenhum achado interativo.</p>";
+    
     if(DATA.signature) document.getElementById('signature-img').src=DATA.signature;
     
-    const items = listEl.querySelectorAll('p[data-highlight-color]');
-    document.getElementById('achados-count').textContent = `${items.length} achados`;
+    const rawItems = tempDiv.querySelectorAll('p[data-highlight-color]');
+    document.getElementById('achados-count').textContent = `${rawItems.length} achados`;
 
-    document.getElementById('btn-resumo-exame').addEventListener('click', openSummaryModal);
-    document.getElementById('summary-modal-close').addEventListener('click', closeSummaryModal);
-    document.getElementById('summary-modal-backdrop').addEventListener('click', e => { if (e.target.id === 'summary-modal-backdrop') closeSummaryModal(); });
-    document.getElementById('summary-modal-copy').addEventListener('click', async () => {
-        const txt = document.getElementById('summary-modal-text').textContent;
-        try { await navigator.clipboard.writeText(txt); document.getElementById('summary-modal-copy').textContent = 'Copiado'; setTimeout(() => document.getElementById('summary-modal-copy').textContent = 'Copiar resumo', 1200); } catch(e) {}
+    // Constrói um array para podermos ordenar
+    const cardsData = Array.from(rawItems).map(p => {
+        const text = p.textContent || p.innerText || '';
+        const sev = classifyText(text);
+        return { el: p, html: p.innerHTML, text: text, sev: sev };
     });
 
-    // CRIAR CARDS
-    items.forEach(p => {
-        p.classList.add('finding-item');
-        const orig = p.innerHTML;
-        const tmp = document.createElement('div'); tmp.innerHTML = orig;
-        const text = tmp.textContent || tmp.innerText || '';
+    // Ordenação: Menor peso primeiro (Crítico=1, Secundário=4)
+    cardsData.sort((a, b) => a.sev.weight - b.sev.weight);
+
+    // Limpa a lista antes de injetar os itens ordenados
+    listEl.innerHTML = '';
+
+    // CRIAR CARDS ORDENADOS
+    cardsData.forEach(itemData => {
+        const p = document.createElement('div');
+        p.className = 'finding-item';
+        p.dataset.annotationId = itemData.el.dataset.annotationId || '';
+        p.dataset.severityColor = itemData.sev.color;
         
-        const sev = classifyText(text);
-        p.dataset.severityColor = sev.color;
-        
-        const { label, number } = extractCardTitle(text);
+        const { label, number } = extractCardTitle(itemData.text);
         const hl = number ? `DENTE ${number}` : label;
-        const catName = SEV_LABELS[sev.level] ? SEV_LABELS[sev.level].short.toUpperCase() : 'ACHADO';
+        const catName = SEV_LABELS[itemData.sev.level] ? SEV_LABELS[itemData.sev.level].short.toUpperCase() : 'ACHADO';
         
-        const cleanHTML = orig.replace(/<br\s*\/?>\s*<br\s*\/?>/gi,' ').replace(/<br\s*\/?>/gi,' ').replace(/<\/p>\s*<p[^>]*>/gi,' ').replace(/<p[^>]*>/gi,'').replace(/<\/p>/gi,'').replace(/\s{2,}/g,' ').trim();
+        const cleanHTML = itemData.html.replace(/<br\s*\/?>\s*<br\s*\/?>/gi,' ').replace(/<br\s*\/?>/gi,' ').replace(/<\/p>\s*<p[^>]*>/gi,' ').replace(/<p[^>]*>/gi,'').replace(/<\/p>/gi,'').replace(/\s{2,}/g,' ').trim();
         
         p.innerHTML = `
-            <div class="item-header" style="border-bottom: 1px solid ${sev.color}30;">
-                <span class="item-entity-label" style="color:${sev.color}">${hl}</span>
-                <span class="item-category-label" style="background:${sev.color}15; color:${sev.color}; border: 1px solid ${sev.color}40;">${catName}</span>
+            <div class="item-header" style="border-bottom: 1px solid ${itemData.sev.color}30;">
+                <span class="item-entity-label" style="color:${itemData.sev.color}">${hl}</span>
+                <span class="item-category-label" style="background:${itemData.sev.color}15; color:${itemData.sev.color}; border: 1px solid ${itemData.sev.color}40;">${catName}</span>
             </div>
             <div class="item-body">
                 <div class="item-text">${cleanHTML}</div>
                 <button class="btn-ver-mais">Ver mais...</button>
             </div>
         `;
-        p.style.borderLeftColor = sev.color;
-        p.style.borderRightColor = sev.color;
+        p.style.borderLeftColor = itemData.sev.color;
+        p.style.borderRightColor = itemData.sev.color;
 
         const btnVerMais = p.querySelector('.btn-ver-mais');
         const itemText = p.querySelector('.item-text');
@@ -1138,6 +1229,28 @@ if(!DATA){
                 setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }), 50);
             }
         });
+
+        listEl.appendChild(p);
+    });
+
+    document.getElementById('btn-resumo-exame').addEventListener('click', openSummaryModal);
+    document.getElementById('summary-modal-close').addEventListener('click', closeSummaryModal);
+    document.getElementById('summary-modal-backdrop').addEventListener('click', e => { if (e.target.id === 'summary-modal-backdrop') closeSummaryModal(); });
+    
+    // Lógica de Cópia baseada no texto limpo (Plain Text)
+    document.getElementById('summary-modal-copy').addEventListener('click', async () => {
+        try { 
+            await navigator.clipboard.writeText(window.summaryPlainText); 
+            const btn = document.getElementById('summary-modal-copy');
+            btn.textContent = 'Copiado com sucesso ✓'; 
+            btn.style.background = 'var(--neon-green)';
+            btn.style.color = '#fff';
+            setTimeout(() => {
+                btn.textContent = 'Copiar para Prontuário'; 
+                btn.style.background = '';
+                btn.style.color = '';
+            }, 2000); 
+        } catch(e) { console.error('Erro ao copiar', e); }
     });
 
     // CONTROLE DO NAV MENU E SCROLL
@@ -1149,7 +1262,8 @@ if(!DATA){
         const isHorizontal = window.getComputedStyle(listEl).flexDirection === 'row';
         if (!isHorizontal) return; 
 
-        const total = items.length;
+        const cards = document.querySelectorAll('.finding-item');
+        const total = cards.length;
         if(total === 0) { navCounter.textContent = "0 / 0"; return; }
         const cardWidth = 260 + 12; 
         const scrollLeft = listEl.scrollLeft;
